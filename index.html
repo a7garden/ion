@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple SNS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <style>
+        :root {
+            --bg-primary: #FFFFFF;
+            --text-primary: #1A1A1A;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+            --card-bg: #F9FAFB;
+            --heart-inactive: #D1D5DB;
+            --heart-active: #EF4444;
+            --ghost-hover: rgba(0,0,0,0.05);
+            --transition-duration: 0.3s;
+        }
+
+        .dark {
+            --bg-primary: #0F0F0F;
+            --text-primary: #F5F5F5;
+            --text-secondary: #9CA3AF;
+            --border-color: #2D2D2D;
+            --card-bg: #1A1A1A;
+            --ghost-hover: rgba(255,255,255,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color var(--transition-duration), color var(--transition-duration);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            transition: background-color var(--transition-duration), border-color var(--transition-duration);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .ghost-btn {
+            background: transparent;
+            border: 1px solid var(--text-primary);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .ghost-btn:hover {
+            background: var(--ghost-hover);
+        }
+
+        .theme-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-btn.white {
+            background: #FFFFFF;
+        }
+
+        .theme-btn.black {
+            background: #1A1A1A;
+        }
+
+        .theme-btn::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn.white::after {
+            background: #1A1A1A;
+        }
+
+        .theme-btn.black::after {
+            background: #FFFFFF;
+        }
+
+        .main-container {
+            padding-top: 60px;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color var(--transition-duration), border-color var(--transition-duration);
+            position: fixed;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .add-friend-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .add-friend-form input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all var(--transition-duration);
+        }
+
+        .add-friend-form input:focus {
+            outline: none;
+            border-color: var(--heart-active);
+        }
+
+        .add-friend-form button {
+            padding: 8px 12px;
+            background-color: var(--text-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+
+        .add-friend-form button:hover {
+            opacity: 0.8;
+        }
+
+        .friend-list {
+            list-style: none;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background-color: var(--bg-primary);
+            transition: background-color var(--transition-duration);
+        }
+
+        .friend-item:hover {
+            background-color: var(--ghost-hover);
+        }
+
+        .friend-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .friend-delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .friend-delete-btn:hover {
+            color: var(--heart-active);
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .empty-friends {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            padding: 20px;
+        }
+
+        .feed-orbit {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .post-card {
+            position: absolute;
+            width: var(--post-size, 200px);
+            height: var(--post-size, 200px);
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                        width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.4s ease,
+                        background-color var(--transition-duration), 
+                        border-color var(--transition-duration);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .post-card:hover {
+            z-index: 100;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .post-author {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .post-content {
+            font-size: 11px;
+            font-weight: 400;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            flex: 1;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: auto;
+            padding-top: 8px;
+        }
+
+        .heart-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            transition: transform 0.2s ease;
+        }
+
+        .heart-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .heart-btn:active {
+            transform: scale(0.95);
+        }
+
+        .heart-icon {
+            width: 20px;
+            height: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .heart-icon.inactive {
+            fill: none;
+            stroke: var(--heart-inactive);
+            stroke-width: 2;
+        }
+
+        .heart-icon.active {
+            fill: var(--heart-active);
+            stroke: var(--heart-active);
+            stroke-width: 2;
+            animation: heartPop 0.3s ease;
+        }
+
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(var(--tx), var(--ty)) translateY(0);
+            }
+            50% {
+                transform: translate(var(--tx), var(--ty)) translateY(-12px);
+            }
+        }
+
+        .notification-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 200;
+        }
+
+        .notification-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slider-track {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 200px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            transition: background-color var(--transition-duration), border-color var(--transition-duration);
+        }
+
+        .slider-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            margin-bottom: 8px;
+        }
+
+        .slider-thumb {
+            width: 30px;
+            height: 30px;
+            background-color: var(--text-primary);
+            border-radius: 50%;
+            cursor: grab;
+            transition: transform 0.2s ease, background-color var(--transition-duration);
+            touch-action: none;
+        }
+
+        .slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        .slider-thumb-inner {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-arrow {
+            color: var(--bg-primary);
+            font-size: 14px;
+        }
+
+        .zoom-indicator {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            opacity: 0;
+            visibility: hidden;
+            transition: all0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            width: 360px;
+            max-width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s ease, background-color var(--transition-duration), border-color var(--transition-duration);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            margin-bottom: 12px;
+            transition: all var(--transition-duration);
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--heart-active);
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.8;
+        }
+
+        .modal-btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .logo {
+            cursor: pointer;
+        }
+
+        .world-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000000;
+            z-index: 400;
+            display: none;
+        }
+
+        .world-page.show {
+            display: block;
+        }
+
+        .world-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 401;
+            border-bottom: none;
+        }
+
+        .world-logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: #FFFFFF;
+            cursor: pointer;
+        }
+
+        .world-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .my-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            z-index: 400;
+            display: none;
+            overflow-y: auto;
+        }
+
+        .my-page.show {
+            display: block;
+        }
+
+        .my-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 401;
+        }
+
+        .my-logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .my-content {
+            padding-top: 80px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .my-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+        }
+
+        .my-post-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .my-post-author {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .my-post-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .my-post-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .my-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" id="logoBtn">i'm alone</div>
+        <div class="header-buttons">
+            <button class="ghost-btn" id="worldBtn">world</button>
+            <button class="ghost-btn" id="loginBtn">Login</button>
+            <button class="theme-btn white" id="themeBtn" title="Toggle Theme"></button>
+            <button class="ghost-btn" id="sliderBtn">☰</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar closed" id="sidebar">
+            <h3 class="sidebar-title">Friends</h3>
+            <form class="add-friend-form" id="addFriendForm">
+                <input type="text" id="friendInput" placeholder="Friend ID">
+                <button type="submit">Add</button>
+            </form>
+            <ul class="friend-list" id="friendList"></ul>
+        </aside>
+
+        <div class="feed-orbit" id="feedOrbit"></div>
+    </div>
+
+    <div class="slider-track" id="sliderTrack">
+        <span class="slider-label">ZOOM</span>
+        <div class="slider-thumb" id="sliderThumb">
+            <div class="slider-thumb-inner">
+                <span class="slider-arrow">☰</span>
+            </div>
+        </div>
+        <span class="zoom-indicator" id="zoomIndicator">50%</span>
+    </div>
+
+    <div class="notification-toast" id="toast"></div>
+
+    <div class="world-page" id="worldPage">
+        <header class="world-header">
+            <div class="world-logo" id="worldLogoBtn">i'm alone</div>
+        </header>
+        <canvas class="world-canvas" id="worldCanvas"></canvas>
+    </div>
+
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <div class="modal-title">Login</div>
+            <input type="text" class="modal-input" id="loginIdInput" placeholder="ID">
+            <input type="password" class="modal-input" id="loginPwInput" placeholder="Password">
+            <button class="modal-btn" id="loginSubmit">Login</button>
+            <button class="modal-btn secondary" id="loginCancel">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal">
+            <div class="modal-title" id="profileAuthor"></div>
+            <div id="profileContent" style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;"></div>
+            <button class="modal-btn secondary" id="profileClose">Close</button>
+        </div>
+    </div>
+
+    <div class="my-page" id="myPage">
+        <header class="my-header">
+            <div class="my-logo" id="myLogoBtn">i'm alone</div>
+        </header>
+        <div class="my-content">
+            <div class="my-title" id="myPageTitle">My Posts</div>
+            <div class="my-posts" id="myPosts"></div>
+        </div>
+    </div>
+
+    <script>
+        const sampleAuthors = [
+            'user_7823', 'user_1456', 'user_9021', 'user_3347', 'user_8890',
+            'user_4562', 'user_7234', 'user_1089', 'user_5678', 'user_9012',
+            'user_3456', 'user_6789', 'user_2341', 'user_8901', 'user_4123',
+            'user_5512', 'user_8763', 'user_2094', 'user_6347', 'user_3281'
+        ];
+
+        const sampleContents = [
+            '오늘 날씨가 정말 좋네요.',
+            '这部电影真不错，推荐大家看看。',
+            '新しいカフェを発見しました！',
+            'Just finished a great workout session.',
+            '正在学习新的编程语言，感觉很有趣。',
+            '여름이 다가오고 있다.',
+            'Coffee is the answer to everything.',
+            '旅行の計画を立てている最中です。',
+            '하늘이 맑아서 기분이 좋네요.',
+            'Reading a fascinating book these days.',
+            '새로운 프로젝트를 시작했어요.',
+            '오늘은 기분이 좋지 않다.',
+            '맛있는 음식을 먹었다.',
+            '영화관을 갔다.',
+            '산책을 했다.'
+        ];
+
+        const defaultData = {
+            posts: [],
+            friends: [],
+            theme: 'white',
+            sidebarOpen: false,
+            likedPosts: [],
+            zoomLevel: 10,
+            worldPageOpen: false,
+            currentUser: null,
+            userLikes: {},
+            isAdmin: false
+        };
+
+        let appData = loadData();
+        let posts = [];
+        let isDragging = false;
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('simpleSnsData');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    return { ...defaultData, ...parsed };
+                }
+            } catch (e) {
+                console.log('LocalStorage unavailable');
+            }
+            return { ...defaultData };
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('simpleSnsData', JSON.stringify(appData));
+            } catch (e) {
+                console.log('LocalStorage unavailable');
+            }
+        }
+
+        function generatePosts() {
+            const shuffledAuthors = [...sampleAuthors].sort(() => Math.random() - 0.5);
+            const shuffledContents = [...sampleContents].sort(() => Math.random() - 0.5);
+            const count = 15;
+            const newPosts = [];
+
+            for (let i = 0; i < count; i++) {
+                newPosts.push({
+                    id: 'post_' + Math.random().toString(36).substr(2, 9),
+                    authorId: shuffledAuthors[i % shuffledAuthors.length],
+                    content: shuffledContents[i % shuffledContents.length],
+                    angle: Math.random() * 360,
+                    radius: 0,
+                    floatOffset: Math.random() * 2 - 1,
+                    floatDelay: Math.random() * 3
+                });
+            }
+            return newPosts;
+        }
+
+        function generateSinglePost() {
+            const author = sampleAuthors[Math.floor(Math.random() * sampleAuthors.length)];
+            const content = sampleContents[Math.floor(Math.random() * sampleContents.length)];
+            return {
+                id: 'post_' + Math.random().toString(36).substr(2, 9),
+                authorId: author,
+                content: content,
+                angle: Math.random() * 360,
+                radius: 0,
+                floatOffset: Math.random() * 2 - 1,
+                floatDelay: Math.random() * 3
+            };
+        }
+
+        function applyTheme(theme) {
+            appData.theme = theme;
+            document.body.classList.toggle('dark', theme === 'black');
+            const themeBtn = document.getElementById('themeBtn');
+            themeBtn.classList.toggle('white', theme === 'white');
+            themeBtn.classList.toggle('black', theme === 'black');
+            saveData();
+        }
+
+        function toggleSidebar() {
+            appData.sidebarOpen = !appData.sidebarOpen;
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('closed', !appData.sidebarOpen);
+            document.getElementById('sliderBtn').textContent = appData.sidebarOpen ? '✕' : '☰';
+            saveData();
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        function notifyAuthor(postAuthor) {
+            setTimeout(() => {
+                showToast(`Someone liked ${postAuthor}'s post`);
+            }, 500);
+        }
+
+        function toggleLike(postId, authorId) {
+            event.stopPropagation();
+            const currentUser = appData.currentUser || 'guest';
+            if (!appData.userLikes[currentUser]) {
+                appData.userLikes[currentUser] = [];
+            }
+            const index = appData.userLikes[currentUser].indexOf(postId);
+            if (index === -1) {
+                appData.userLikes[currentUser].push(postId);
+                if (!appData.likedPosts.includes(postId)) {
+                    appData.likedPosts.push(postId);
+                }
+                notifyAuthor(authorId);
+            } else {
+                appData.userLikes[currentUser].splice(index, 1);
+            }
+            saveData();
+            renderFeed();
+        }
+
+        function getPostSize() {
+            const minSize = 120;
+            const maxSize = 300;
+            return minSize + (maxSize - minSize) * (appData.zoomLevel / 100);
+        }
+
+        function getVisibleCount() {
+            return Math.round(3 + (15 - 3) * (appData.zoomLevel / 100));
+        }
+
+        function renderFeed() {
+            const orbit = document.getElementById('feedOrbit');
+            const postSize = getPostSize();
+            const visibleCount = getVisibleCount();
+            const displayPosts = posts.slice(0, visibleCount);
+
+            const maxRadius = Math.min(window.innerWidth * 0.48, window.innerHeight * 0.45);
+            const baseRadius = maxRadius * (appData.zoomLevel / 100);
+
+            orbit.innerHTML = '';
+            const existingCards = orbit.querySelectorAll('.post-card');
+            existingCards.forEach(c => c.cleanup && c.cleanup());
+            const positions = [];
+
+            displayPosts.forEach((post, index) => {
+                const baseSize = postSize * (0.6 + 0.4 * (1 - (index + 1) / displayPosts.length));
+                let isPlaced = false;
+                let angle = post.angle * Math.PI / 180;
+                let radius = post.radius > 0 ? post.radius : baseRadius * ((index + 1) / displayPosts.length);
+                const originalAngle = angle;
+                const originalRadius = radius;
+
+                const tx = Math.cos(angle) * radius;
+                const ty = Math.sin(angle) * radius;
+
+                let hasOverlap = false;
+                for (const existing of positions) {
+                    const dx = tx - existing.x;
+                    const dy = ty - existing.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const minDist = (baseSize + existing.size) * 0.3;
+
+                    if (dist < minDist) {
+                        hasOverlap = true;
+                        break;
+                    }
+                }
+
+                if (!hasOverlap) {
+                    const currentSize = baseSize;
+                    positions.push({ x: tx, y: ty, size: currentSize });
+                    isPlaced = true;
+
+                    const isLiked = appData.likedPosts.includes(post.id);
+                    const card = document.createElement('div');
+                    card.className = 'post-card';
+                    card.dataset.postId = post.id;
+                    card.style.cssText = `
+                        --tx: ${tx}px;
+                        --ty: ${ty}px;
+                        width: ${currentSize}px;
+                        height: ${currentSize}px;
+                        left: calc(50% - ${currentSize / 2}px);
+                        top: calc(50% - ${currentSize / 2}px);
+                        transform: translate(${tx}px, ${ty}px);
+                        animation: float 4s ease-in-out ${post.floatDelay}s infinite;
+                        opacity: ${0.7 + 0.3 * (1 - (index + 1) / displayPosts.length)};
+                        z-index: ${Math.round(50 - ((index + 1) / displayPosts.length) * 50)};
+                    `;
+
+                    card.innerHTML = `
+                        <div class="post-author">${post.authorId}</div>
+                        <div class="post-content">${post.content}</div>
+                        <div class="post-actions">
+                            <button class="heart-btn" onclick="toggleLike('${post.id}', '${post.authorId}')">
+                                <svg class="heart-icon ${isLiked ? 'active' : 'inactive'}" viewBox="0 0 24 24">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+
+                    setupDragToRemove(card);
+                    orbit.appendChild(card);
+                } else {
+                    for (let attempt = 1; attempt < 50 && !isPlaced; attempt++) {
+                        angle += (Math.PI * 2) / attempt;
+                        radius += 8;
+                        const tx2 = Math.cos(angle) * radius;
+                        const ty2 = Math.sin(angle) * radius;
+
+                        let hasOverlap2 = false;
+                        for (const existing of positions) {
+                            const dx = tx2 - existing.x;
+                            const dy = ty2 - existing.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            const minDist = (baseSize + existing.size) * 0.3;
+
+                            if (dist < minDist) {
+                                hasOverlap2 = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasOverlap2) {
+                            const currentSize = baseSize;
+                            positions.push({ x: tx2, y: ty2, size: currentSize });
+                            isPlaced = true;
+
+                            const isLiked = appData.likedPosts.includes(post.id);
+                            const card = document.createElement('div');
+                            card.className = 'post-card';
+                            card.dataset.postId = post.id;
+                            card.style.cssText = `
+                                --tx: ${tx2}px;
+                                --ty: ${ty2}px;
+                                width: ${currentSize}px;
+                                height: ${currentSize}px;
+                                left: calc(50% - ${currentSize / 2}px);
+                                top: calc(50% - ${currentSize / 2}px);
+                                transform: translate(${tx2}px, ${ty2}px);
+                                animation: float 4s ease-in-out ${post.floatDelay}s infinite;
+                                opacity: ${0.7 + 0.3 * (1 - (index + 1) / displayPosts.length)};
+                                z-index: ${Math.round(50 - ((index + 1) / displayPosts.length) * 50)};
+                            `;
+
+                            card.innerHTML = `
+                                <div class="post-author">${post.authorId}</div>
+                                <div class="post-content">${post.content}</div>
+                                <div class="post-actions">
+                                    <button class="heart-btn" onclick="toggleLike('${post.id}', '${post.authorId}')">
+                                        <svg class="heart-icon ${isLiked ? 'active' : 'inactive'}" viewBox="0 0 24 24">
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            `;
+
+                            setupDragToRemove(card);
+                            orbit.appendChild(card);
+                        }
+                    }
+                }
+
+                if (!isPlaced) {
+                    const tx = Math.cos(angle) * radius;
+                    const ty = Math.sin(angle) * radius;
+                    const currentSize = baseSize;
+                    const isLiked = appData.likedPosts.includes(post.id);
+                    const card = document.createElement('div');
+                    card.className = 'post-card';
+                    card.dataset.postId = post.id;
+                    card.style.cssText = `
+                        --tx: ${tx}px;
+                        --ty: ${ty}px;
+                        width: ${currentSize}px;
+                        height: ${currentSize}px;
+                        left: calc(50% - ${currentSize / 2}px);
+                        top: calc(50% - ${currentSize / 2}px);
+                        transform: translate(${tx}px, ${ty}px);
+                        animation: float 4s ease-in-out ${post.floatDelay}s infinite;
+                        opacity: ${0.7 + 0.3 * (1 - (index + 1) / displayPosts.length)};
+                        z-index: ${Math.round(50 - ((index + 1) / displayPosts.length) * 50)};
+                    `;
+
+                    card.innerHTML = `
+                        <div class="post-author">${post.authorId}</div>
+                        <div class="post-content">${post.content}</div>
+                        <div class="post-actions">
+                            <button class="heart-btn" onclick="toggleLike('${post.id}', '${post.authorId}')">
+                                <svg class="heart-icon ${isLiked ? 'active' : 'inactive'}" viewBox="0 0 24 24">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+
+                    setupDragToRemove(card);
+                    orbit.appendChild(card);
+                }
+            });
+
+            document.getElementById('zoomIndicator').textContent = `${appData.zoomLevel}%`;
+        }
+
+        function setupDragToRemove(card) {
+            let startX, startY, isDragging = false, hasMoved = false;
+
+            const onStart = (e) => {
+                startX = e.clientX || e.touches?.[0]?.clientX;
+                startY = e.clientY || e.touches?.[0]?.clientY;
+                isDragging = true;
+                hasMoved = false;
+                card.style.animation = 'none';
+            };
+
+            const onMove = (e) => {
+                if (!isDragging) return;
+                const clientX = e.clientX || e.touches?.[0]?.clientX;
+                const clientY = e.clientY || e.touches?.[0]?.clientY;
+                const dx = Math.round(clientX - startX);
+                const dy = Math.round(clientY - startY);
+
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                    hasMoved = true;
+                    card.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                    card.style.opacity = '0.5';
+                    card.style.transition = 'transform 0.1s, opacity 0.1s';
+                }
+            };
+
+            const onEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+
+                if (hasMoved) {
+                    const transform = card.style.transform;
+                    const match = transform.match(/translate\(calc\(-50% \+ ([-\d.]+)px\), calc\(-50% \+ ([-\d.]+)px\)\)/);
+                    if (match) {
+                        const dx = parseFloat(match[1]);
+                        const dy = parseFloat(match[2]);
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance >= 10) {
+                            const postId = card.dataset.postId;
+                            posts = posts.filter(p => p.id !== postId);
+                            card.remove();
+                            renderFeed();
+                            return;
+                        }
+                    }
+
+                    card.style.transform = '';
+                    card.style.opacity = '';
+                    card.style.animation = '';
+                }
+            };
+
+            const onClick = (e) => {
+                if (hasMoved) return;
+                const postId = card.dataset.postId;
+                const post = posts.find(p => p.id === postId);
+                if (post) {
+                    openProfilePage(post.authorId, post.content);
+                }
+            };
+
+            card.addEventListener('mousedown', onStart);
+            card.addEventListener('touchstart', onStart, { passive: true });
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('touchmove', onMove, { passive: true });
+            document.addEventListener('mouseup', onEnd);
+            document.addEventListener('touchend', onEnd);
+            card.addEventListener('click', onClick);
+
+            card.cleanup = () => {
+                card.removeEventListener('mousedown', onStart);
+                card.removeEventListener('touchstart', onStart);
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('mouseup', onEnd);
+                document.removeEventListener('touchend', onEnd);
+                card.removeEventListener('click', onClick);
+            };
+        }
+
+        function renderFriends() {
+            const friendList = document.getElementById('friendList');
+
+            if (appData.friends.length === 0) {
+                friendList.innerHTML = '<li class="empty-friends">No friends yet</li>';
+                return;
+            }
+
+            friendList.innerHTML = appData.friends.map((friend, index) => `
+                <li class="friend-item">
+                    <span class="friend-name">${friend.name}</span>
+                    <button class="friend-delete-btn" onclick="deleteFriend(${index})">×</button>
+                </li>
+            `).join('');
+        }
+
+        function addFriend(name) {
+            if (!name.trim()) {
+                showToast('Please enter a friend ID');
+                return;
+            }
+            if (appData.friends.some(f => f.name === name.trim())) {
+                showToast('Friend already added');
+                return;
+            }
+            appData.friends.push({ name: name.trim() });
+            saveData();
+            renderFriends();
+            document.getElementById('friendInput').value = '';
+            showToast(`Added ${name.trim()} as friend`);
+        }
+
+        function deleteFriend(index) {
+            const deleted = appData.friends.splice(index, 1)[0];
+            saveData();
+            renderFriends();
+            showToast(`Removed ${deleted.name}`);
+        }
+
+        function handleSliderDrag(e) {
+            const track = document.getElementById('sliderTrack');
+            const thumb = document.getElementById('sliderThumb');
+            const rect = track.getBoundingClientRect();
+            const thumbRect = thumb.getBoundingClientRect();
+
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const relativeY = clientY - rect.top - thumbRect.height / 2;
+            const trackHeight = rect.height - thumbRect.height - 20;
+
+            let newZoom = 100 - ((relativeY / trackHeight) * 100);
+            newZoom = Math.max(10, Math.min(100, newZoom));
+
+            appData.zoomLevel = Math.round(newZoom);
+            saveData();
+
+            const thumbOffset = (1 - appData.zoomLevel / 100) * trackHeight;
+            thumb.style.transform = `translateY(${thumbOffset}px)`;
+
+            renderFeed();
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            if (appData.currentUser && appData.currentUser !== 'guest') {
+                openMyPage();
+            } else {
+                document.getElementById('loginModal').classList.add('show');
+            }
+        });
+
+        document.getElementById('loginCancel').addEventListener('click', () => {
+            document.getElementById('loginModal').classList.remove('show');
+        });
+
+        document.getElementById('loginSubmit').addEventListener('click', () => {
+            const id = document.getElementById('loginIdInput').value;
+            const pw = document.getElementById('loginPwInput').value;
+            if (id === 'admin' && pw === '1234') {
+                appData.currentUser = 'admin';
+                appData.isAdmin = true;
+                saveData();
+                showToast('Welcome, admin');
+                document.getElementById('loginModal').classList.remove('show');
+                document.getElementById('loginIdInput').value = '';
+                document.getElementById('loginPwInput').value = '';
+                document.getElementById('loginBtn').textContent = 'MY';
+            } else if (id && pw) {
+                appData.currentUser = id;
+                appData.isAdmin = false;
+                saveData();
+                showToast(`Welcome, ${id}`);
+                document.getElementById('loginModal').classList.remove('show');
+                document.getElementById('loginIdInput').value = '';
+                document.getElementById('loginPwInput').value = '';
+                document.getElementById('loginBtn').textContent = 'MY';
+            } else {
+                showToast('Please enter ID and Password');
+            }
+        });
+
+        document.getElementById('loginIdInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginSubmit').click();
+            }
+        });
+
+        document.getElementById('loginPwInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginSubmit').click();
+            }
+        });
+
+        document.getElementById('worldBtn').addEventListener('click', () => {
+            openWorldPage();
+        });
+
+        document.getElementById('logoBtn').addEventListener('click', () => {
+            window.location.href = window.location.pathname;
+        });
+
+        document.getElementById('profileClose').addEventListener('click', () => {
+            document.getElementById('profileModal').classList.remove('show');
+        });
+
+        function openWorldPage() {
+            const worldPage = document.getElementById('worldPage');
+            const canvas = document.getElementById('worldCanvas');
+            worldPage.classList.add('show');
+            appData.worldPageOpen = true;
+            saveData();
+
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            const currentUser = appData.currentUser || 'guest';
+
+            const allUsers = sampleAuthors;
+            const userPositions = {};
+
+            allUsers.forEach((author, i) => {
+                const margin = 80;
+                userPositions[author] = {
+                    x: margin + Math.random() * (canvas.width - margin * 2),
+                    y: margin + Math.random() * (canvas.height - margin * 2),
+                    author: author
+                };
+            });
+
+            const authorPosts = {};
+            posts.forEach(post => {
+                if (!authorPosts[post.authorId]) {
+                    authorPosts[post.authorId] = [];
+                }
+                authorPosts[post.authorId].push(post.id);
+            });
+
+            function hasMutualLike(userA, userB) {
+                const aLikesB = authorPosts[userB]?.some(postId =>
+                    appData.userLikes[userA]?.includes(postId)
+                );
+                const bLikesA = authorPosts[userA]?.some(postId =>
+                    appData.userLikes[userB]?.includes(postId)
+                );
+                return aLikesB && bLikesA;
+            }
+
+            const userLikeCounts = {};
+            allUsers.forEach((author, i) => {
+                userLikeCounts[author] = Math.floor(Math.random() * 5) + 1;
+            });
+
+            const connections = [];
+            const authors = Object.keys(userPositions);
+            for (let i = 0; i < authors.length; i++) {
+                for (let j = i + 1; j < authors.length; j++) {
+                    if (hasMutualLike(authors[i], authors[j])) {
+                        connections.push([userPositions[authors[i]], userPositions[authors[j]]]);
+                    }
+                }
+            }
+
+            const constellations = [
+                ['user_7823', 'user_1456', 'user_9021', 'user_3347', 'user_8890', 'user_4562'],
+                ['user_7234', 'user_1089', 'user_5678'],
+                ['user_9012', 'user_3456'],
+                ['user_6789', 'user_2341'],
+                ['user_8901', 'user_4123', 'user_5512', 'user_8763']
+            ];
+
+            function drawMoon(ctx, x, y, radius) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                const gradient = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
+                gradient.addColorStop(0, '#FFFFFF');
+                gradient.addColorStop(1, '#E0E0E0');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            function animate() {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const isLoggedIn = appData.currentUser && appData.currentUser !== 'guest';
+
+                if (isLoggedIn) {
+                    connections.forEach(([from, to]) => {
+                        ctx.beginPath();
+                        ctx.moveTo(from.x, from.y);
+                        ctx.lineTo(to.x, to.y);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    });
+
+                    Object.values(userPositions).forEach(user => {
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY);
+                        ctx.lineTo(user.x, user.y);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    });
+
+                    Object.values(userPositions).forEach(user => {
+                        ctx.beginPath();
+                        ctx.arc(user.x, user.y, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(user.x, user.y, 6, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    });
+
+                    drawMoon(ctx, centerX, centerY, 40);
+
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = '12px Pretendard, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(currentUser, centerX, centerY + 60);
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.font = '10px Pretendard, sans-serif';
+                    ctx.fillText(`subscribers: ${allUsers.length}`, centerX, centerY + 75);
+                } else {
+                    Object.values(userPositions).forEach(user => {
+                        ctx.beginPath();
+                        ctx.arc(user.x, user.y, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fill();
+                    });
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.font = '10px Pretendard, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`subscribers: ${allUsers.length}`, centerX, centerY + 20);
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        function closeWorldPage() {
+            document.getElementById('worldPage').classList.remove('show');
+            appData.worldPageOpen = false;
+            saveData();
+        }
+
+        function openMyPage() {
+            const myPage = document.getElementById('myPage');
+            myPage.classList.add('show');
+            renderMyPosts();
+        }
+
+        function closeMyPage() {
+            document.getElementById('myPage').classList.remove('show');
+        }
+
+        function renderMyPosts() {
+            const myPostsContainer = document.getElementById('myPosts');
+            const currentUser = appData.currentUser;
+
+            if (!currentUser || currentUser === 'guest') {
+                myPostsContainer.innerHTML = '<div class="my-empty">Please login to view your posts</div>';
+                return;
+            }
+
+            const userPosts = posts.filter(post => post.authorId === currentUser);
+
+            if (userPosts.length === 0) {
+                myPostsContainer.innerHTML = '<div class="my-empty">No posts yet</div>';
+                return;
+            }
+
+            myPostsContainer.innerHTML = userPosts.map(post => `
+                <div class="my-post-card">
+                    <div class="my-post-author">${post.authorId}</div>
+                    <div class="my-post-content">${post.content}</div>
+                    <div class="my-post-date">${new Date().toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('myLogoBtn').addEventListener('click', () => {
+            closeMyPage();
+        });
+
+        document.getElementById('worldLogoBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeWorldPage();
+        });
+
+        function openProfilePage(authorId, content) {
+            document.getElementById('profileAuthor').textContent = authorId;
+            document.getElementById('profileContent').innerHTML = `
+ <p style="margin-bottom: 16px;">This is the profile page of <strong>${authorId}</strong>.</p>
+                <p>${content}</p>
+            `;
+            document.getElementById('profileModal').classList.add('show');
+        }
+
+        document.getElementById('themeBtn').addEventListener('click', () => {
+            applyTheme(appData.theme === 'white' ? 'black' : 'white');
+        });
+
+        document.getElementById('sliderBtn').addEventListener('click', toggleSidebar);
+
+        document.getElementById('addFriendForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('friendInput');
+            addFriend(input.value);
+        });
+
+        const sliderThumb = document.getElementById('sliderThumb');
+        sliderThumb.addEventListener('mousedown', () => { isDragging = true; });
+        sliderThumb.addEventListener('touchstart', () => { isDragging = true; });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) handleSliderDrag(e);
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) handleSliderDrag(e);
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; });
+        document.addEventListener('touchend', () => { isDragging = false; });
+
+        window.addEventListener('resize', () => {
+            renderFeed();
+        });
+
+        document.addEventListener('wheel', (e) => {
+            if (e.deltaY < 0) {
+                appData.zoomLevel = Math.min(100, appData.zoomLevel + 5);
+            } else {
+                appData.zoomLevel = Math.max(10, appData.zoomLevel - 5);
+            }
+            saveData();
+            const trackHeight = 200 - 30 - 20;
+            const thumbOffset = (1 - appData.zoomLevel / 100) * trackHeight;
+            sliderThumb.style.transform = `translateY(${thumbOffset}px)`;
+            renderFeed();
+            document.getElementById('zoomIndicator').textContent = `${appData.zoomLevel}%`;
+        }, { passive: true });
+
+        applyTheme(appData.theme);
+
+        const track = document.getElementById('sliderTrack').getBoundingClientRect();
+        const thumbRect = sliderThumb.getBoundingClientRect();
+        const trackHeight = 200 - 30 - 20;
+        const thumbOffset = (1 - appData.zoomLevel / 100) * trackHeight;
+        sliderThumb.style.transform = `translateY(${thumbOffset}px)`;
+
+        if (appData.sidebarOpen) {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('closed');
+            document.getElementById('sliderBtn').textContent = '✕';
+        }
+
+        if (appData.worldPageOpen) {
+            openWorldPage();
+        }
+
+        if (appData.currentUser && appData.currentUser !== 'guest') {
+            document.getElementById('loginBtn').textContent = 'MY';
+        }
+
+        posts = generatePosts();
+        renderFeed();
+        renderFriends();
+    </script>
+</body>
+</html>
