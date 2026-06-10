@@ -1,199 +1,164 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useApp } from '@/hooks/AppProvider';
-import { Sidebar } from '@/components/Sidebar';
+import {
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  forceCenter,
+  forceCollide,
+  SimulationNodeDatum,
+  SimulationLinkDatum,
+} from 'd3-force';
 
-interface StarNode {
-  x: number;
-  y: number;
-  author: string;
-  isLiked: boolean;
+interface GraphNode extends SimulationNodeDatum {
+  id: string;
+  authorId: string;
+  radius: number;
+  isCurrentUser: boolean;
+}
+
+interface Edge extends SimulationLinkDatum<GraphNode> {
+  source: string | GraphNode;
+  target: string | GraphNode;
+  isMutual: boolean;
 }
 
 export function WorldPage() {
   const { state } = useApp();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const starsRef = useRef<StarNode[]>([]);
-  const [hoveredStar, setHoveredStar] = useState<string | null>(null);
+  const nodesRef = useRef<GraphNode[]>([]);
+  const simulationRef = useRef<ReturnType<typeof forceSimulation> | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const buildGraph = useCallback(() => {
+    const currentUser = state.currentUser || 'guest';
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const authorSet = new Set<string>();
+    state.posts.forEach(post => authorSet.add(post.authorId));
+    const authors = Array.from(authorSet);
 
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    const nodes: GraphNode[] = authors.map((author) => ({
+      id: author,
+      authorId: author,
+      radius: 6,
+      isCurrentUser: author === currentUser,
+      x: dimensions.width / 2 + (Math.random() - 0.5) * 100,
+      y: dimensions.height / 2 + (Math.random() - 0.5) * 100,
+    }));
 
-    const initStars = () => {
-      const currentUser = state.currentUser || 'guest';
+    const isMutualLike = (userA: string, userB: string): boolean => {
+      const aLikes = state.userLikes[userA] || [];
+      const bLikes = state.userLikes[userB] || [];
 
-      const authorSet = new Set<string>();
-      state.posts.forEach((post) => {
-        authorSet.add(post.authorId);
-      });
+      const aLikedBPosts = state.posts.some(p => p.authorId === userB && aLikes.includes(p.id));
+      const bLikedAPosts = state.posts.some(p => p.authorId === userA && bLikes.includes(p.id));
 
-      const likedAuthors = new Set<string>();
-      const userLikes = state.userLikes[currentUser] || [];
-      state.posts.forEach((post) => {
-        if (userLikes.includes(post.id)) {
-          likedAuthors.add(post.authorId);
-        }
-      });
-
-      const margin = 80;
-      const stars: StarNode[] = [];
-
-      authorSet.forEach((author) => {
-        const x = margin + Math.random() * (canvas.width - margin * 2);
-        const y = margin + Math.random() * (canvas.height - margin * 2);
-        stars.push({
-          x,
-          y,
-          author,
-          isLiked: likedAuthors.has(author) && author !== currentUser,
-        });
-      });
-
-      starsRef.current = stars;
+      return aLikedBPosts && bLikedAPosts;
     };
 
-    initStars();
-
-    const drawMoon = (x: number, y: number, radius: number) => {
-      const gradient = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
-      gradient.addColorStop(0, '#ffffff');
-      gradient.addColorStop(0.5, '#e8e8e8');
-      gradient.addColorStop(1, '#d0d0d0');
-
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = gradient;
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    };
-
-    const drawStar = (x: number, y: number, size: number) => {
-      ctx.beginPath();
-
-      const spikes = 4;
-      const outerRadius = size;
-      const innerRadius = size * 0.4;
-
-      for (let i = 0; i < spikes * 2; i++) {
-        const radius = i % 2 === 0 ? outerRadius : innerRadius;
-        const angle = (i * Math.PI) / spikes - Math.PI / 2;
-        const px = x + Math.cos(angle) * radius;
-        const py = y + Math.sin(angle) * radius;
-
-        if (i === 0) {
-          ctx.moveTo(px, py);
-        } else {
-          ctx.lineTo(px, py);
+    const edges: Edge[] = [];
+    for (let i = 0; i < authors.length; i++) {
+      for (let j = i + 1; j < authors.length; j++) {
+        if (isMutualLike(authors[i], authors[j])) {
+          edges.push({ source: authors[i], target: authors[j], isMutual: true });
         }
       }
+    }
 
-      ctx.closePath();
-      ctx.fill();
+    return { nodes, edges };
+  }, [state.posts, state.userLikes, state.currentUser, dimensions]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
     };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-    const draw = () => {
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const currentUser = state.currentUser || 'guest';
+  useEffect(() => {
+    if (dimensions.width === 0 || dimensions.height === 0) return;
 
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const { nodes, edges } = buildGraph();
+    nodesRef.current = nodes;
 
-      const likedStars = starsRef.current.filter((s) => s.isLiked);
+    simulationRef.current?.stop();
 
-      likedStars.forEach((star) => {
+    simulationRef.current = forceSimulation<GraphNode>(nodes)
+      .force('link', forceLink<GraphNode, Edge>(edges)
+        .id(d => d.id)
+        .distance(80)
+        .strength(0.3))
+      .force('charge', forceManyBody<GraphNode>()
+        .strength(-120)
+        .distanceMax(300))
+      .force('center', forceCenter(dimensions.width / 2, dimensions.height / 2))
+      .force('collide', forceCollide<GraphNode>()
+        .radius(d => d.radius + 2)
+        .strength(0.8))
+      .alphaDecay(0.02)
+      .velocityDecay(0.4);
+
+    simulationRef.current.on('tick', () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 0.5;
+
+      edges.forEach(edge => {
+        const source = edge.source as GraphNode;
+        const target = edge.target as GraphNode;
+
+        if (source.x === undefined || source.y === undefined ||
+            target.x === undefined || target.y === undefined) return;
+
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(star.x, star.y);
-        ctx.strokeStyle = 'rgba(147, 197, 253, 0.3)';
-        ctx.lineWidth = 1;
+        ctx.moveTo(source.x, source.y);
+        ctx.lineTo(target.x, target.y);
         ctx.stroke();
       });
 
-      drawMoon(centerX, centerY, 50);
+      nodes.forEach(node => {
+        if (node.x === undefined || node.y === undefined) return;
 
-      starsRef.current.forEach((star) => {
-        const isHovered = hoveredStar === star.author;
-        const size = isHovered ? 6 : 4;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
 
-        ctx.fillStyle = isHovered ? '#60a5fa' : 'rgba(255, 255, 255, 0.7)';
-        ctx.shadowColor = isHovered ? '#60a5fa' : '#ffffff';
-        ctx.shadowBlur = isHovered ? 12 : 6;
-
-        drawStar(star.x, star.y, size);
-
-        ctx.shadowBlur = 0;
-
-        if (isHovered) {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-          ctx.font = 'bold 10px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(star.author, star.x, star.y - 12);
+        if (node.isCurrentUser) {
+          ctx.shadowColor = '#fbbf24';
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = '#fef3c7';
+        } else {
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         }
+
+        ctx.fill();
+        ctx.shadowBlur = 0;
       });
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(
-        `current user: ${currentUser} | liked: ${likedStars.length} | total users: ${starsRef.current.length}`,
-        centerX,
-        canvas.height - 20
-      );
-
-      requestAnimationFrame(draw);
-    };
-
-    draw();
+    });
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      simulationRef.current?.stop();
     };
-  }, [state, state.posts, state.userLikes, state.currentUser, hoveredStar]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const hovered = starsRef.current.find((star) => {
-        const dx = x - star.x;
-        const dy = y - star.y;
-        return Math.sqrt(dx * dx + dy * dy) < 15;
-      });
-
-      setHoveredStar(hovered?.author || null);
-    };
-
-    canvas.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      canvas.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
+  }, [buildGraph, dimensions]);
 
   return (
-    <div className="fixed inset-0 bg-slate-900 z-[400] pt-[60px]">
-      <Sidebar />
-      <canvas ref={canvasRef} className="w-full h-full cursor-pointer" />
+    <div className="fixed inset-0 bg-[#1a1a1a] z-[400] pt-[60px]">
+      <canvas
+        ref={canvasRef}
+        width={dimensions.width}
+        height={dimensions.height}
+        className="w-full h-full"
+      />
     </div>
   );
 }

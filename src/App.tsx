@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { AppProvider, useApp } from '@/hooks/AppProvider';
 import { Header } from '@/components/Header';
-import { Sidebar } from '@/components/Sidebar';
 import { FeedView } from '@/components/FeedView';
 import { ZoomSlider } from '@/components/ZoomSlider';
 import { LoginModal } from '@/components/LoginModal';
+import { CreatePostModal } from '@/components/CreatePostModal';
 import { ProfileModal } from '@/components/ProfileModal';
 import { WorldPage } from '@/components/WorldPage';
 import { MyPage } from '@/components/MyPage';
@@ -17,6 +17,7 @@ function AppContent() {
   const { state, logout } = useApp();
   const [currentView, setCurrentView] = useState<View>('feed');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileData, setProfileData] = useState({ authorId: '', content: '' });
   const { toast } = useToast();
@@ -65,15 +66,19 @@ function AppContent() {
 
       {currentView === 'feed' && (
         <>
-          <Sidebar />
           <main className="pt-[60px] w-full h-screen relative flex">
-            <FeedView onCardClick={openProfile} onToggleLike={handleToggleLike} onDelete={() => {}} />
+            <FeedView onCardClick={openProfile} onToggleLike={handleToggleLike} onDelete={() => {}} onCreatePostClick={() => setCreatePostModalOpen(true)} />
           </main>
           <ZoomSlider />
         </>
       )}
 
-      {currentView === 'world' && <WorldPage />}
+      {currentView === 'world' && (
+        <>
+          <WorldPage />
+          <ZoomSlider />
+        </>
+      )}
 
       {currentView === 'my' && isLoggedIn && (
         <MyPage onLogout={handleLogout} />
@@ -82,6 +87,11 @@ function AppContent() {
       <LoginModal
         open={loginModalOpen}
         onOpenChange={setLoginModalOpen}
+      />
+
+      <CreatePostModal
+        open={createPostModalOpen}
+        onOpenChange={setCreatePostModalOpen}
       />
 
       <ProfileModal
