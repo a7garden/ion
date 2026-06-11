@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useApp } from '@/hooks/AppProvider';
 import { positionStore } from '@/stores/positionStore';
+import type { Post } from '@/types';
 
 interface FloatingNode {
   id: string;
@@ -13,10 +14,17 @@ interface FloatingNode {
   authorId: string;
   content: string;
   media?: string;
+  targetOpacity: number;
+}
+
+interface CardPosition {
+  x: number;
+  y: number;
+  size: number;
 }
 
 interface FeedPhysicsProps {
-  onCardClick: (authorId: string, content: string) => void;
+  onCardClick: (post: Post, cardRect: CardPosition) => void;
   onDelete: (postId: string) => void;
 }
 
@@ -24,10 +32,44 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
   const { state, deletePost } = useApp();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<FloatingNode[]>([]);
-  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
+  const draggingNodeIdRef = useRef<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<FloatingNode | null>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const animationRef = useRef<number | undefined>(undefined);
+  const initializedRef = useRef(false);
+
+  const isDarkMode = state.theme === 'black';
+
+  const getCardCount = useCallback((zoomLevel: number): number => {
+    return Math.round(3 + (zoomLevel / 100) * 22);
+  }, []);
+
+  const initNodes = useCallback((canvas: HTMLCanvasElement) => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const maxCards = getCardCount(state.zoomLevel);
+    const posts = state.posts.slice(0, maxCards);
+
+    nodesRef.current = posts.map((post) => {
+      const baseSize = 70 + (state.zoomLevel / 100) * 60;
+      const size = baseSize + Math.random() * 25;
+      const padding = size;
+      return {
+        id: post.id,
+        x: padding + Math.random() * (canvas.width - padding * 2),
+        y: padding + Math.random() * (canvas.height - padding * 2),
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        size,
+        opacity: 0,
+        targetOpacity: 1,
+        authorId: post.authorId,
+        content: post.content,
+        media: post.media,
+      };
+    });
+  }, [state.posts, state.zoomLevel, getCardCount]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -38,39 +80,64 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
       canvas.height = window.innerHeight;
     };
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
 
-    const initNodes = () => {
-      const posts = state.posts.slice(0, 15);
-
-      nodesRef.current = posts.map((post) => {
-        const size = 80 + Math.random() * 60;
-        const padding = size;
-        return {
-          id: post.id,
-          x: padding + Math.random() * (canvas.width - padding * 2),
-          y: padding + Math.random() * (canvas.height - padding * 2),
-          vx: (Math.random() - 0.5) * 0.6,
-          vy: (Math.random() - 0.5) * 0.6,
-          size,
-          opacity: 0.6 + Math.random() * 0.4,
-          authorId: post.authorId,
-          content: post.content,
-          media: post.media,
-        };
-      });
+    const handleResize = () => {
+      resizeCanvas();
     };
+    window.addEventListener('resize', handleResize);
 
-    initNodes();
+    initNodes(canvas);
 
     const animate = () => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = isDarkMode ? 'hsl(20, 15%, 5%)' : 'hsl(60, 20%, 97%)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const colors = isDarkMode ? {
+        fill: 'hsl(20, 12%, 9%)',
+        stroke: 'hsl(20, 8%, 20%)',
+        selectedFill: 'hsl(38, 75%, 60% / 0.25)',
+        selectedStroke: 'hsl(38, 75%, 60% / 0.8)',
+        shadow: 'rgba(0, 0, 0, 0.4)',
+      } : {
+        fill: 'hsl(40, 15%, 96%)',
+        stroke: 'hsl(30, 10%, 85%)',
+        selectedFill: 'hsl(38, 70%, 55% / 0.18)',
+        selectedStroke: 'hsl(38, 70%, 55%)',
+        shadow: 'rgba(0, 0, 0, 0.08)',
+      };
+
+      const isDraggingAny = draggingNodeIdRef.current !== null || positionStore.getDraggingId() !== null;
 
       nodesRef.current.forEach((node) => {
-        if (draggingNodeId !== node.id) {
+        const isDragged = node.id === draggingNodeIdRef.current || node.id === positionStore.getDraggingId();
+
+        if (isDraggingAny) {
+          if (isDragged) {
+            node.vx = 0;
+            node.vy = 0;
+          } else {
+            node.x += node.vx;
+            node.y += node.vy;
+
+            if (node.x < node.size / 2 || node.x > canvas.width - node.size / 2) {
+              node.vx *= -1;
+              node.x = Math.max(node.size / 2, Math.min(canvas.width - node.size / 2, node.x));
+            }
+            if (node.y < node.size / 2 || node.y > canvas.height - node.size / 2) {
+              node.vy *= -1;
+              node.y = Math.max(node.size / 2, Math.min(canvas.height - node.size / 2, node.y));
+            }
+
+            if (Math.abs(node.vx) < 0.08 && Math.abs(node.vy) < 0.08) {
+              node.vx = (Math.random() - 0.5) * 0.2;
+              node.vy = (Math.random() - 0.5) * 0.2;
+            }
+          }
+        } else {
           node.x += node.vx;
           node.y += node.vy;
 
@@ -83,27 +150,40 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
             node.y = Math.max(node.size / 2, Math.min(canvas.height - node.size / 2, node.y));
           }
 
-          if (Math.abs(node.vx) < 0.12 && Math.abs(node.vy) < 0.12) {
-            node.vx = (Math.random() - 0.5) * 0.6;
-            node.vy = (Math.random() - 0.5) * 0.6;
+          if (Math.abs(node.vx) < 0.08 && Math.abs(node.vy) < 0.08) {
+            node.vx = (Math.random() - 0.5) * 0.2;
+            node.vy = (Math.random() - 0.5) * 0.2;
           }
         }
 
+        node.opacity += (node.targetOpacity - node.opacity) * 0.05;
+
         ctx.save();
-        ctx.globalAlpha = node.opacity;
+        ctx.globalAlpha = Math.max(0, Math.min(1, node.opacity));
 
-        ctx.fillStyle = selectedNode?.id === node.id ? '#dbeafe' : '#f3f4f6';
-        ctx.strokeStyle = selectedNode?.id === node.id ? '#3b82f6' : '#e5e7eb';
-        ctx.lineWidth = selectedNode?.id === node.id ? 3 : 1;
-
+        const isSelected = selectedNode?.id === node.id;
         const radius = node.size / 2;
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-        ctx.shadowBlur = 20;
+
+        ctx.shadowColor = colors.shadow;
+        ctx.shadowBlur = isSelected ? 18 : 10;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 3;
+
+        ctx.fillStyle = isSelected ? colors.selectedFill : colors.fill;
+        ctx.strokeStyle = isSelected ? colors.selectedStroke : colors.stroke;
+        ctx.lineWidth = isSelected ? 2 : 1;
+
         ctx.beginPath();
         ctx.roundRect(node.x - radius, node.y - radius, node.size, node.size, 12);
         ctx.fill();
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+
+        if (isSelected) {
+          ctx.strokeStyle = colors.selectedStroke;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        } else {
+          ctx.stroke();
+        }
 
         ctx.restore();
       });
@@ -115,7 +195,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
           y: node.y,
           size: node.size,
           opacity: node.opacity,
-          isDragging: node.id === draggingNodeId,
+          isDragging: node.id === draggingNodeIdRef.current,
         }))
       );
 
@@ -125,12 +205,53 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
     animate();
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', handleResize);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [state.posts, state.userLikes, state.currentUser, draggingNodeId, selectedNode]);
+  }, [state.userLikes, state.currentUser, selectedNode, isDarkMode, initNodes]);
+
+  useEffect(() => {
+    if (!canvasRef.current || state.posts.length === 0) return;
+
+    const canvas = canvasRef.current;
+    const maxCards = getCardCount(state.zoomLevel);
+    const posts = state.posts.slice(0, maxCards);
+
+    const existingIds = new Set(nodesRef.current.map(n => n.id));
+    const postsToAdd = posts.filter(p => !existingIds.has(p.id));
+
+    postsToAdd.forEach((post) => {
+      const baseSize = 70 + (state.zoomLevel / 100) * 60;
+      const size = baseSize + Math.random() * 25;
+      const padding = size;
+      nodesRef.current.push({
+        id: post.id,
+        x: padding + Math.random() * (canvas.width - padding * 2),
+        y: padding + Math.random() * (canvas.height - padding * 2),
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        size,
+        opacity: 0,
+        targetOpacity: 1,
+        authorId: post.authorId,
+        content: post.content,
+        media: post.media,
+      });
+    });
+
+    nodesRef.current.forEach((node) => {
+      const shouldExist = posts.some(p => p.id === node.id);
+      if (shouldExist) {
+        node.targetOpacity = 1;
+      } else {
+        node.targetOpacity = 0;
+      }
+    });
+
+    nodesRef.current = nodesRef.current.filter(node => node.opacity > 0.01 || node.targetOpacity > 0);
+  }, [state.zoomLevel, state.posts, getCardCount]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -148,7 +269,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
       });
 
       if (clickedNode) {
-        setDraggingNodeId(clickedNode.id);
+        draggingNodeIdRef.current = clickedNode.id;
         setSelectedNode(clickedNode);
         dragOffset.current = { x: x - clickedNode.x, y: y - clickedNode.y };
         positionStore.setDragging(clickedNode.id);
@@ -157,27 +278,28 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
     };
 
     const handlePointerMove = (e: PointerEvent) => {
-      if (!draggingNodeId) return;
+      if (!draggingNodeIdRef.current) return;
 
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      const node = nodesRef.current.find((n) => n.id === draggingNodeId);
+      const node = nodesRef.current.find((n) => n.id === draggingNodeIdRef.current);
       if (node) {
         node.x = x - dragOffset.current.x;
         node.y = y - dragOffset.current.y;
         node.vx = 0;
         node.vy = 0;
+        positionStore.updateSinglePosition(node.id, node.x, node.y);
       }
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-      if (!draggingNodeId) return;
+      if (!draggingNodeIdRef.current) return;
 
       const trashZoneX = canvas.width / 2;
       const trashZoneY = canvas.height - 80;
-      const node = nodesRef.current.find((n) => n.id === draggingNodeId);
+      const node = nodesRef.current.find((n) => n.id === draggingNodeIdRef.current);
 
       if (node) {
         const dx = node.x - trashZoneX;
@@ -191,12 +313,12 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
             setSelectedNode(null);
           }
         } else {
-          node.vx = (Math.random() - 0.5) * 0.6;
-          node.vy = (Math.random() - 0.5) * 0.6;
+          node.vx = (Math.random() - 0.5) * 0.4;
+          node.vy = (Math.random() - 0.5) * 0.4;
         }
       }
 
-      setDraggingNodeId(null);
+      draggingNodeIdRef.current = null;
       positionStore.setDragging(null);
       canvas.releasePointerCapture(e.pointerId);
     };
@@ -212,8 +334,11 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
         return Math.sqrt(dx * dx + dy * dy) < node.size / 2;
       });
 
-      if (clickedNode && draggingNodeId !== clickedNode.id) {
-        onCardClick(clickedNode.authorId, clickedNode.content);
+      if (clickedNode && draggingNodeIdRef.current !== clickedNode.id) {
+        const post = state.posts.find((p) => p.id === clickedNode.id);
+        if (post) {
+          onCardClick(post, { x: clickedNode.x, y: clickedNode.y, size: clickedNode.size });
+        }
       }
     };
 
@@ -228,7 +353,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
       canvas.removeEventListener('pointerup', handlePointerUp);
       canvas.removeEventListener('dblclick', handleDoubleClick);
     };
-  }, [draggingNodeId, selectedNode, deletePost, onCardClick, onDelete]);
+  }, [selectedNode, deletePost, onCardClick, onDelete]);
 
   return (
     <div className="fixed inset-0">
