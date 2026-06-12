@@ -43,7 +43,9 @@ export const getUserProfile = (user: FirebaseUser): UserProfile => ({
 
 export async function uploadPostMedia(file: File, uid: string): Promise<string> {
   const extension = file.name.split('.').pop() || 'jpg';
-  const path = `posts/${uid}/${Date.now()}.${extension}`;
+  const mimeType = file.type;
+  const basePath = mimeType.startsWith('video/') ? 'videos' : mimeType.startsWith('audio/') ? 'audio' : 'posts';
+  const path = `${basePath}/${uid}/${Date.now()}.${extension}`;
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);

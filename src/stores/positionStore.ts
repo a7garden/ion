@@ -11,8 +11,11 @@ type Listener = () => void;
 
 interface PositionStoreAPI {
   updatePositions: (nodes: NodePosition[]) => void;
+  updateSinglePosition: (id: string, x: number, y: number) => void;
   setDragging: (id: string | null) => void;
   getDraggingId: () => string | null;
+  setDeleteMode: (id: string | null) => void;
+  getDeleteModeId: () => string | null;
   subscribe: (listener: Listener) => () => void;
   getSnapshot: () => NodePosition[];
 }
@@ -20,8 +23,8 @@ interface PositionStoreAPI {
 const positions = new Map<string, NodePosition>();
 const listeners = new Set<Listener>();
 let draggingId: string | null = null;
+let deleteModeId: string | null = null;
 let cachedSnapshot: NodePosition[] = [];
-let version = 0;
 
 const notifyListeners = () => {
   listeners.forEach((listener) => listener());
@@ -34,8 +37,17 @@ const positionStore: PositionStoreAPI = {
       positions.set(node.id, node);
     });
     cachedSnapshot = Array.from(positions.values());
-    version++;
     notifyListeners();
+  },
+
+  updateSinglePosition(id: string, x: number, y: number) {
+    const node = positions.get(id);
+    if (node) {
+      node.x = x;
+      node.y = y;
+      cachedSnapshot = Array.from(positions.values());
+      notifyListeners();
+    }
   },
 
   setDragging(id: string | null) {
@@ -45,6 +57,15 @@ const positionStore: PositionStoreAPI = {
 
   getDraggingId() {
     return draggingId;
+  },
+
+  setDeleteMode(id: string | null) {
+    deleteModeId = id;
+    notifyListeners();
+  },
+
+  getDeleteModeId() {
+    return deleteModeId;
   },
 
   subscribe(listener: Listener) {

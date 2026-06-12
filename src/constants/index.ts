@@ -25,13 +25,12 @@ export const SAMPLE_CONTENTS = [
 
 export const DEFAULT_STATE = {
   posts: [],
-  friends: [],
   theme: 'white' as const,
-  sidebarOpen: false,
   likedPosts: [],
   zoomLevel: 50,
   worldPageOpen: false,
   currentUser: null,
+  userName: null,
   userLikes: {},
   isAdmin: false
 };

@@ -2,12 +2,12 @@ import { useSyncExternalStore } from 'react';
 import { positionStore } from '@/stores/positionStore';
 
 export function TrashZone() {
-  const isDragging = useSyncExternalStore(
+  const draggingId = useSyncExternalStore(
     positionStore.subscribe,
-    () => positionStore.getDraggingId() !== null
+    positionStore.getDraggingId
   );
 
-  if (!isDragging) return null;
+  if (!draggingId) return null;
 
   return (
     <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-50">

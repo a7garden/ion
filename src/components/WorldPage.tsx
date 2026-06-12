@@ -414,17 +414,16 @@ const handleWheel = useCallback((e: WheelEvent) => {
     const currentScale = transformRef.current.scale;
     const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * delta));
 
-    const myNode = nodesRef.current.find(n => n.isCurrentUser);
-    const centerX = myNode?.x ?? dimensions.width / 2;
-    const centerY = myNode?.y ?? dimensions.height / 2;
     const currentTransform = transformRef.current;
+    const mouseX = (e.clientX - currentTransform.x) / currentScale;
+    const mouseY = (e.clientY - currentTransform.y) / currentScale;
 
-    const newX = currentTransform.x + centerX * (currentScale - newScale);
-    const newY = currentTransform.y + centerY * (currentScale - newScale);
+    const newX = currentTransform.x - mouseX * (newScale - currentScale);
+    const newY = currentTransform.y - mouseY * (newScale - currentScale);
 
     setTransform({ x: newX, y: newY, scale: newScale });
     startRenderLoop();
-  }, [startRenderLoop, dimensions]);
+  }, [startRenderLoop]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isDraggingRef.current = true;
@@ -481,16 +480,19 @@ const handleWheel = useCallback((e: WheelEvent) => {
         y: prev.y + dy,
       }));
       startRenderLoop();
-    } else if (e.touches.length === 2 && touchStateRef.current.initialPinchDistance) {
+} else if (e.touches.length === 2 && touchStateRef.current.initialPinchDistance) {
       const currentDistance = getTouchDistance(e.touches);
       const scale = currentDistance / touchStateRef.current.initialPinchDistance;
       const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, touchStateRef.current.initialScale * scale));
-      const myNode = nodesRef.current.find(n => n.isCurrentUser);
-      const centerX = myNode?.x ?? dimensions.width / 2;
-      const centerY = myNode?.y ?? dimensions.height / 2;
+
+      const touchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const touchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       const currentTransform = transformRef.current;
-      const newX = currentTransform.x + centerX * (touchStateRef.current.initialScale - newScale);
-      const newY = currentTransform.y + centerY * (touchStateRef.current.initialScale - newScale);
+      const pinchCenterX = (touchCenterX - currentTransform.x) / currentTransform.scale;
+      const pinchCenterY = (touchCenterY - currentTransform.y) / currentTransform.scale;
+
+      const newX = currentTransform.x - pinchCenterX * (newScale - currentTransform.scale);
+      const newY = currentTransform.y - pinchCenterY * (newScale - currentTransform.scale);
       setTransform({ x: newX, y: newY, scale: newScale });
       startRenderLoop();
     }
@@ -544,7 +546,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 11 0 14 7 7 0 0 1 0-14z" />
             )}
           </svg>
-          {viewMode === 'full' ? '蹂몄씤 以묒떖' : '?占쎌껜 洹몃옒??}
+          {viewMode === 'full' ? '전체 보기' : '특정 보기'}
         </button>
       </div>
 
@@ -593,7 +595,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <span className="world-page__slider-value">{cohesion.linkStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">諛섎컻??/span>
+              <span className="world-page__slider-label">충전 강도</span>
               <input
                 type="range"
                 className="world-page__slider"

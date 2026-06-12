@@ -1,60 +1,87 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AppState, Post } from '@/types';
-import { DEFAULT_STATE, STORAGE_KEY, SAMPLE_AUTHORS, SAMPLE_CONTENTS } from '@/constants';
+import { DEFAULT_STATE, STORAGE_KEY } from '@/constants';
+import { getRandomPosts, createPost as createPostInDb, deletePost as deletePostFromDb, markPostAsViewed, addLike, removeLike, getUserLikedPostIds, type NeonPost } from '@/lib/neon';
 
-function loadData(): AppState {
+function loadLocalData(): Partial<AppState> {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      return { ...DEFAULT_STATE, ...parsed };
+      return {
+        theme: parsed.theme || 'white',
+        likedPosts: parsed.likedPosts || [],
+        zoomLevel: parsed.zoomLevel || 50,
+        worldPageOpen: parsed.worldPageOpen || false,
+        userLikes: parsed.userLikes || {},
+      };
     }
   } catch (e) {
     console.log('LocalStorage unavailable');
   }
-  return { ...DEFAULT_STATE };
+  return {};
 }
 
-function saveData(data: AppState) {
+function saveLocalData(data: Partial<AppState>) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const existing = localStorage.getItem(STORAGE_KEY);
+    const parsed = existing ? JSON.parse(existing) : {};
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...parsed, ...data }));
   } catch (e) {
     console.log('LocalStorage unavailable');
   }
 }
 
-function generatePosts(): Post[] {
-  const shuffledAuthors = [...SAMPLE_AUTHORS].sort(() => Math.random() - 0.5);
-  const shuffledContents = [...SAMPLE_CONTENTS].sort(() => Math.random() - 0.5);
-  const count = 15;
-  const newPosts: Post[] = [];
-
-  for (let i = 0; i < count; i++) {
-    newPosts.push({
-      id: 'post_' + Math.random().toString(36).substr(2, 9),
-      authorId: shuffledAuthors[i % shuffledAuthors.length],
-      content: shuffledContents[i % shuffledContents.length],
-      angle: Math.random() * 360,
-      radius: 0,
-      floatOffset: Math.random() * 2 - 1,
-      floatDelay: Math.random() * 3
-    });
-  }
-  return newPosts;
+function neonPostToPost(neonPost: NeonPost): Post {
+  return {
+    id: neonPost.id,
+    authorId: neonPost.author_uid,
+    authorName: neonPost.author_name,
+    content: neonPost.content,
+    angle: neonPost.angle,
+    radius: neonPost.radius,
+    floatOffset: neonPost.float_offset,
+    floatDelay: neonPost.float_delay,
+    media: neonPost.media_url || undefined,
+    bgm: neonPost.bgm_name || undefined,
+  };
 }
 
 export function useAppState() {
-  const [state, setState] = useState<AppState>(() => {
-    const data = loadData();
-    if (data.posts.length === 0) {
-      data.posts = generatePosts();
-    }
-    return data;
-  });
+  const localData = loadLocalData();
+
+  const [state, setState] = useState<AppState>(() => ({
+    ...DEFAULT_STATE,
+    ...localData,
+    posts: [],
+    currentUser: null,
+    userName: null,
+  }));
+
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
   useEffect(() => {
-    saveData(state);
-  }, [state]);
+    saveLocalData({
+      theme: state.theme,
+      likedPosts: state.likedPosts,
+      zoomLevel: state.zoomLevel,
+      worldPageOpen: state.worldPageOpen,
+      userLikes: state.userLikes,
+    });
+  }, [state.theme, state.likedPosts, state.zoomLevel, state.worldPageOpen, state.userLikes]);
+
+  const loadRandomPosts = useCallback(async (userUid: string, limit: number = 10) => {
+    setIsLoadingPosts(true);
+    try {
+      const neonPosts = await getRandomPosts(userUid, limit);
+      const posts = neonPosts.map(neonPostToPost);
+      setState(prev => ({ ...prev, posts }));
+    } catch (error) {
+      console.error('Failed to load posts:', error);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }, []);
 
   const toggleTheme = useCallback(() => {
     setState(prev => ({
@@ -63,16 +90,13 @@ export function useAppState() {
     }));
   }, []);
 
-  const toggleSidebar = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      sidebarOpen: !prev.sidebarOpen
-    }));
-  }, []);
+  const toggleLike = useCallback(async (postId: string, _authorId: string) => {
+    const currentUser = state.currentUser;
+    if (!currentUser) return;
 
-  const toggleLike = useCallback((postId: string, _authorId: string) => {
+    const isCurrentlyLiked = state.userLikes[currentUser]?.includes(postId) || false;
+
     setState(prev => {
-      const currentUser = prev.currentUser || 'guest';
       const userLikes = { ...prev.userLikes };
       if (!userLikes[currentUser]) {
         userLikes[currentUser] = [];
@@ -95,25 +119,17 @@ export function useAppState() {
         return { ...prev, userLikes };
       }
     });
-  }, []);
 
-  const addFriend = useCallback((name: string) => {
-    setState(prev => {
-      if (!name.trim()) return prev;
-      if (prev.friends.some(f => f.name === name.trim())) return prev;
-      return {
-        ...prev,
-        friends: [...prev.friends, { id: Math.random().toString(36).substr(2, 9), name: name.trim() }]
-      };
-    });
-  }, []);
-
-  const deleteFriend = useCallback((index: number) => {
-    setState(prev => ({
-      ...prev,
-      friends: prev.friends.filter((_, i) => i !== index)
-    }));
-  }, []);
+    try {
+      if (isCurrentlyLiked) {
+        await removeLike(currentUser, postId);
+      } else {
+        await addLike(currentUser, postId);
+      }
+    } catch (error) {
+      console.error('Failed to update like in DB:', error);
+    }
+  }, [state.currentUser, state.userLikes]);
 
   const setZoomLevel = useCallback((level: number) => {
     setState(prev => ({
@@ -122,11 +138,12 @@ export function useAppState() {
     }));
   }, []);
 
-  const login = useCallback((id: string, pw: string) => {
+  const login = useCallback((id: string, pw: string, displayName?: string | null) => {
     if (id === 'admin' && pw === '1234') {
       setState(prev => ({
         ...prev,
         currentUser: 'admin',
+        userName: 'Admin',
         isAdmin: true
       }));
       return { success: true, message: 'Welcome, admin' };
@@ -134,17 +151,27 @@ export function useAppState() {
       setState(prev => ({
         ...prev,
         currentUser: id,
+        userName: displayName || null,
         isAdmin: false
       }));
-      return { success: true, message: `Welcome, ${id}` };
+      return { success: true, message: `Welcome, ${displayName || id}` };
     }
     return { success: false, message: 'Please enter ID and Password' };
+  }, []);
+
+  const setUserName = useCallback((name: string) => {
+    setState(prev => ({
+      ...prev,
+      userName: name
+    }));
   }, []);
 
   const logout = useCallback(() => {
     setState(prev => ({
       ...prev,
       currentUser: null,
+      userName: null,
+      posts: [],
       isAdmin: false
     }));
   }, []);
@@ -159,38 +186,99 @@ export function useAppState() {
   const goToMain = useCallback(() => {
     setState(prev => ({
       ...prev,
-      worldPageOpen: false,
-      sidebarOpen: false
+      worldPageOpen: false
     }));
   }, []);
 
-  const addPost = useCallback((post: Omit<Post, 'id'>) => {
-    setState(prev => ({
-      ...prev,
-      posts: [{ ...post, id: 'post_' + Math.random().toString(36).substr(2, 9) }, ...prev.posts]
-    }));
+  const addPost = useCallback(async (post: Omit<Post, 'id'>) => {
+    try {
+      const neonPost = await createPostInDb({
+        author_uid: post.authorId,
+        author_name: post.authorName || 'Anonymous',
+        content: post.content,
+        media_url: post.media,
+        bgm_name: post.bgm,
+        angle: post.angle,
+        radius: post.radius,
+        float_offset: post.floatOffset,
+        float_delay: post.floatDelay,
+      });
+
+      const newPost = neonPostToPost(neonPost);
+      setState(prev => ({
+        ...prev,
+        posts: [newPost, ...prev.posts]
+      }));
+    } catch (error) {
+      console.error('Failed to create post:', error);
+      throw error;
+    }
   }, []);
 
-  const deletePost = useCallback((postId: string) => {
-    setState(prev => ({
-      ...prev,
-      posts: prev.posts.filter(p => p.id !== postId)
-    }));
+  const dismissPost = useCallback(async (postId: string) => {
+    const currentUser = state.currentUser;
+    if (!currentUser) return;
+
+    try {
+      await markPostAsViewed(currentUser, postId);
+      setState(prev => ({
+        ...prev,
+        posts: prev.posts.filter(p => p.id !== postId)
+      }));
+    } catch (error) {
+      console.error('Failed to dismiss post:', error);
+    }
+  }, [state.currentUser]);
+
+  const deletePost = useCallback(async (postId: string) => {
+    const currentUser = state.currentUser;
+    if (!currentUser) return false;
+
+    try {
+      const success = await deletePostFromDb(postId, currentUser);
+      if (success) {
+        setState(prev => ({
+          ...prev,
+          posts: prev.posts.filter(p => p.id !== postId)
+        }));
+      }
+      return success;
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      return false;
+    }
+  }, [state.currentUser]);
+
+  const loadUserLikes = useCallback(async (userUid: string) => {
+    try {
+      const likedPostIds = await getUserLikedPostIds(userUid);
+      setState(prev => ({
+        ...prev,
+        userLikes: {
+          ...prev.userLikes,
+          [userUid]: likedPostIds,
+        },
+      }));
+    } catch (error) {
+      console.error('Failed to load user likes:', error);
+    }
   }, []);
 
   return {
     state,
+    isLoadingPosts,
     toggleTheme,
-    toggleSidebar,
     toggleLike,
-    addFriend,
-    deleteFriend,
     setZoomLevel,
     login,
     logout,
+    setUserName,
     setWorldPageOpen,
     goToMain,
     addPost,
-    deletePost
+    dismissPost,
+    deletePost,
+    loadRandomPosts,
+    loadUserLikes,
   };
 }

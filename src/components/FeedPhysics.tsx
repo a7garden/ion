@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useApp } from '@/hooks/AppProvider';
 import { positionStore } from '@/stores/positionStore';
+import { useDeviceSize, getCardCountForBreakpoint, getDynamicCardSize } from '@/hooks/useDeviceSize';
 import type { Post } from '@/types';
 
 interface FloatingNode {
@@ -30,6 +31,7 @@ interface FeedPhysicsProps {
 
 export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
   const { state, deletePost } = useApp();
+  const { breakpoint, width } = useDeviceSize();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<FloatingNode[]>([]);
   const draggingNodeIdRef = useRef<string | null>(null);
@@ -41,8 +43,12 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
   const isDarkMode = state.theme === 'black';
 
   const getCardCount = useCallback((zoomLevel: number): number => {
-    return Math.round(3 + (zoomLevel / 100) * 22);
-  }, []);
+    return getCardCountForBreakpoint(breakpoint, zoomLevel);
+  }, [breakpoint]);
+
+  const getCardSize = useCallback((zoomLevel: number): number => {
+    return getDynamicCardSize(width, zoomLevel);
+  }, [width]);
 
   const initNodes = useCallback((canvas: HTMLCanvasElement) => {
     if (initializedRef.current) return;
@@ -50,10 +56,10 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
 
     const maxCards = getCardCount(state.zoomLevel);
     const posts = state.posts.slice(0, maxCards);
+    const baseSize = getCardSize(state.zoomLevel);
 
     nodesRef.current = posts.map((post) => {
-      const baseSize = 70 + (state.zoomLevel / 100) * 60;
-      const size = baseSize + Math.random() * 25;
+      const size = baseSize + Math.random() * 20;
       const padding = size;
       return {
         id: post.id,
@@ -69,7 +75,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
         media: post.media,
       };
     });
-  }, [state.posts, state.zoomLevel, getCardCount]);
+  }, [state.posts, state.zoomLevel, getCardCount, getCardSize]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -83,6 +89,11 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
 
     const handleResize = () => {
       resizeCanvas();
+
+      nodesRef.current.forEach(node => {
+        node.x = Math.max(node.size / 2, Math.min(canvas.width - node.size / 2, node.x));
+        node.y = Math.max(node.size / 2, Math.min(canvas.height - node.size / 2, node.y));
+      });
     };
     window.addEventListener('resize', handleResize);
 
@@ -223,8 +234,8 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
     const postsToAdd = posts.filter(p => !existingIds.has(p.id));
 
     postsToAdd.forEach((post) => {
-      const baseSize = 70 + (state.zoomLevel / 100) * 60;
-      const size = baseSize + Math.random() * 25;
+      const baseSize = getCardSize(state.zoomLevel);
+      const size = baseSize + Math.random() * 20;
       const padding = size;
       nodesRef.current.push({
         id: post.id,
@@ -251,7 +262,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
     });
 
     nodesRef.current = nodesRef.current.filter(node => node.opacity > 0.01 || node.targetOpacity > 0);
-  }, [state.zoomLevel, state.posts, getCardCount]);
+  }, [state.zoomLevel, state.posts, getCardCount, getCardSize]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -274,6 +285,12 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
         dragOffset.current = { x: x - clickedNode.x, y: y - clickedNode.y };
         positionStore.setDragging(clickedNode.id);
         canvas.setPointerCapture(e.pointerId);
+
+        setTimeout(() => {
+          if (draggingNodeIdRef.current === clickedNode.id) {
+            positionStore.setDeleteMode(clickedNode.id);
+          }
+        }, 500);
       }
     };
 
@@ -297,25 +314,19 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
     const handlePointerUp = (e: PointerEvent) => {
       if (!draggingNodeIdRef.current) return;
 
-      const trashZoneX = canvas.width / 2;
-      const trashZoneY = canvas.height - 80;
       const node = nodesRef.current.find((n) => n.id === draggingNodeIdRef.current);
+      const deleteModeId = positionStore.getDeleteModeId();
+
+      if (node && deleteModeId === node.id) {
+        draggingNodeIdRef.current = null;
+        positionStore.setDragging(null);
+        canvas.releasePointerCapture(e.pointerId);
+        return;
+      }
 
       if (node) {
-        const dx = node.x - trashZoneX;
-        const dy = node.y - trashZoneY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < 80) {
-          deletePost(node.id);
-          onDelete(node.id);
-          if (selectedNode?.id === node.id) {
-            setSelectedNode(null);
-          }
-        } else {
-          node.vx = (Math.random() - 0.5) * 0.4;
-          node.vy = (Math.random() - 0.5) * 0.4;
-        }
+        node.vx = (Math.random() - 0.5) * 0.4;
+        node.vy = (Math.random() - 0.5) * 0.4;
       }
 
       draggingNodeIdRef.current = null;
@@ -324,6 +335,9 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
     };
 
     const handleDoubleClick = (e: MouseEvent) => {
+      const deleteModeId = positionStore.getDeleteModeId();
+      if (deleteModeId) return;
+
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
