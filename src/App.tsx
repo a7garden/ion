@@ -12,16 +12,15 @@ import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/components/ui/use-toast';
 import type { Post } from '@/types';
 import { onAuthChange, getUserProfile } from '@/lib/firebase';
-import { upsertUser, getUserByUid, updateUserDisplayName } from '@/lib/neon';
+import { upsertUser, getUserByUid } from '@/lib/neon';
 
 type View = 'feed' | 'world' | 'my';
 
 function AppContent() {
-  const { state, logout, toggleLike, login, setUserName, dismissPost, loadRandomPosts } = useApp();
+  const { state, logout, toggleLike, login, setUserName, dismissPost, loadRandomPosts, loadUserLikes } = useApp();
   const [currentView, setCurrentView] = useState<View>('feed');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
-  const [setUsernameModalOpen, setSetUsernameModalOpen] = useState(false);
   const [expandedPost, setExpandedPost] = useState<{ post: Post; cardRect: { x: number; y: number; size: number } } | null>(null);
   const { toast } = useToast();
 
@@ -54,8 +53,9 @@ function AppContent() {
   useEffect(() => {
     if (state.currentUser && state.currentUser !== 'guest') {
       loadRandomPosts(state.currentUser, 10);
+      loadUserLikes(state.currentUser);
     }
-  }, [state.currentUser, loadRandomPosts]);
+  }, [state.currentUser, loadRandomPosts, loadUserLikes]);
 
   const showToast = (message: string) => {
     toast({
@@ -70,11 +70,12 @@ function AppContent() {
     }, 500);
   };
 
-  const handleToggleLike = (postId: string, authorId: string) => {
+  const handleToggleLike = async (postId: string, authorId: string) => {
+    await toggleLike(postId, authorId);
     const currentUser = state.currentUser || 'guest';
     const isLiked = state.userLikes[currentUser]?.includes(postId) || false;
 
-    if (!isLiked) {
+    if (isLiked) {
       notifyAuthor(authorId);
     }
   };
