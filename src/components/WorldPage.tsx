@@ -408,14 +408,15 @@ export function WorldPage() {
     }
   }, [startRenderLoop, dimensions]);
 
-  const handleWheel = useCallback((e: WheelEvent) => {
+const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const currentScale = transformRef.current.scale;
     const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * delta));
 
-    const centerX = dimensions.width / 2;
-    const centerY = dimensions.height / 2;
+    const myNode = nodesRef.current.find(n => n.isCurrentUser);
+    const centerX = myNode?.x ?? dimensions.width / 2;
+    const centerY = myNode?.y ?? dimensions.height / 2;
     const currentTransform = transformRef.current;
 
     const newX = currentTransform.x + centerX * (currentScale - newScale);
@@ -484,8 +485,9 @@ export function WorldPage() {
       const currentDistance = getTouchDistance(e.touches);
       const scale = currentDistance / touchStateRef.current.initialPinchDistance;
       const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, touchStateRef.current.initialScale * scale));
-      const centerX = dimensions.width / 2;
-      const centerY = dimensions.height / 2;
+      const myNode = nodesRef.current.find(n => n.isCurrentUser);
+      const centerX = myNode?.x ?? dimensions.width / 2;
+      const centerY = myNode?.y ?? dimensions.height / 2;
       const currentTransform = transformRef.current;
       const newX = currentTransform.x + centerX * (touchStateRef.current.initialScale - newScale);
       const newY = currentTransform.y + centerY * (touchStateRef.current.initialScale - newScale);
