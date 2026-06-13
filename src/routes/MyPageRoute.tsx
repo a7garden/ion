@@ -74,7 +74,7 @@ export function MyPageRoute() {
       />
       {CropModal}
       {logoutToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 bg-card border border-border/50 rounded-xl text-sm text-foreground shadow-lg z-notification">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 bg-card border border-border/50 rounded-xl text-sm text-foreground shadow-lg z-[600]">
           Logged out
         </div>
       )}
