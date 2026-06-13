@@ -22,10 +22,8 @@ export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProp
     positionStore.subscribe,
     positionStore.getSnapshot
   );
-  const deleteModeId = useSyncExternalStore(
-    positionStore.subscribe,
-    positionStore.getDeleteModeId
-  );
+// deleteModeId를 positions 변경 시 함께 계산하여 불필요한 리렌더링 방지
+  const deleteModeId = positions.length > 0 ? positionStore.getDeleteModeId() : null;
 
   const currentUser = state.currentUser || '';
 

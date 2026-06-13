@@ -60,9 +60,6 @@ function supabasePostToPost(sp: SupabasePost): Post {
     floatDelay: sp.float_delay,
     media: sp.media_url || undefined,
     mediaType: sp.media_type || undefined,
-    bgm: sp.bgm_url || undefined,
-    bgmName: sp.bgm_name || undefined,
-    likeCount: (sp as any).like_count,
     createdAt: sp.created_at,
   };
 }
@@ -245,13 +242,13 @@ export function useAppState() {
     setState(prev => ({ ...prev, worldPageOpen: false }));
   }, []);
 
-  const addPost = useCallback(async (post: Omit<Post, 'id'> & { mediaFile?: File; bgmFile?: File }) => {
+  const addPost = useCallback(async (post: Omit<Post, 'id'> & { mediaFile?: File }) => {
     const currentUser = state.currentUser;
     if (!currentUser) throw new Error('Not logged in');
 
     try {
       let mediaUrl: string | undefined;
-      let mediaType: 'image' | 'video' | 'audio' | undefined;
+      let mediaType: 'image' | 'video' | undefined;
 
       if (post.mediaFile) {
         const result = await uploadPostMedia(post.mediaFile, currentUser);
@@ -259,19 +256,11 @@ export function useAppState() {
         mediaType = result.type;
       }
 
-      let bgmUrl: string | undefined;
-      if (post.bgmFile) {
-        const result = await uploadPostMedia(post.bgmFile, currentUser);
-        bgmUrl = result.url;
-      }
-
       const supabasePost = await createPostInDb({
         author_id: currentUser,
         content: post.content,
         media_url: mediaUrl,
         media_type: mediaType,
-        bgm_url: bgmUrl,
-        bgm_name: post.bgmName,
         angle: post.angle,
         radius: post.radius,
         float_offset: post.floatOffset,

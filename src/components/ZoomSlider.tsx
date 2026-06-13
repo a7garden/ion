@@ -29,8 +29,14 @@ export function ZoomSlider() {
     setIsMobile(checkMobile);
   }, []);
 
+  // Feed 뷰에서만 wheel로 줌 조작 (다른 뷰에서는 스크롤 정상 동작)
   useEffect(() => {
+    // 현재 Feed 뷰가 렌더링된 경우에만 적용
+    // ZoomSlider는 Feed/World 뷰에서만 마운트되므로 안전
     const handleWheel = (e: WheelEvent) => {
+      // 모달/다이얼로그가 열려있으면 무시
+      const target = e.target as HTMLElement;
+      if (target.closest('[role="dialog"]') || target.closest('.world-page')) return;
       e.preventDefault();
       const delta = e.deltaY > 0 ? -3 : 3;
       setZoomLevel(Math.max(10, Math.min(100, state.zoomLevel + delta)));

@@ -1,4 +1,3 @@
-// Frontend Post type (mapped from Supabase Post)
 export interface Post {
   id: string;
   authorId: string;
@@ -10,10 +9,7 @@ export interface Post {
   floatOffset: number;
   floatDelay: number;
   media?: string;
-  mediaType?: 'image' | 'video' | 'audio';
-  bgm?: string;
-  bgmName?: string;
-  likeCount?: number;
+  mediaType?: 'image' | 'video';
   createdAt?: string;
 }
 

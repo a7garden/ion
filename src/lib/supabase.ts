@@ -31,9 +31,7 @@ export interface Post {
   author_id: string;
   content: string;
   media_url: string | null;
-  media_type: 'image' | 'video' | 'audio' | null;
-  bgm_url: string | null;
-  bgm_name: string | null;
+  media_type: 'image' | 'video' | null;
   angle: number;
   radius: number;
   float_offset: number;
@@ -130,15 +128,13 @@ export async function updateUsername(userId: string, username: string): Promise<
 export async function uploadPostMedia(
   file: File,
   userId: string
-): Promise<{ url: string; type: 'image' | 'video' | 'audio' }> {
+): Promise<{ url: string; type: 'image' | 'video' }> {
   const ext = file.name.split('.').pop() || 'bin';
   const type = file.type.startsWith('video/')
     ? 'video' as const
-    : file.type.startsWith('audio/')
-    ? 'audio' as const
     : 'image' as const;
 
-  const folder = type === 'video' ? 'videos' : type === 'audio' ? 'audio' : 'images';
+  const folder = type === 'video' ? 'videos' : 'images';
   const path = `${folder}/${userId}/${Date.now()}.${ext}`;
 
   const { error: uploadError } = await supabase.storage
@@ -165,9 +161,7 @@ export async function createPost(post: {
   author_id: string;
   content: string;
   media_url?: string;
-  media_type?: 'image' | 'video' | 'audio';
-  bgm_url?: string;
-  bgm_name?: string;
+  media_type?: 'image' | 'video';
   angle: number;
   radius?: number;
   float_offset: number;
@@ -180,8 +174,6 @@ export async function createPost(post: {
       content: post.content,
       media_url: post.media_url || null,
       media_type: post.media_type || null,
-      bgm_url: post.bgm_url || null,
-      bgm_name: post.bgm_name || null,
       angle: post.angle,
       radius: post.radius || 0,
       float_offset: post.float_offset,
@@ -319,27 +311,5 @@ export async function markPostAsViewed(userId: string, postId: string): Promise<
 }
 
 // ============================================
-// Comments (향후 확장)
+// Comments — 댓글 시스템 없음
 // ============================================
-
-export async function getComments(postId: string): Promise<any[]> {
-  const { data, error } = await supabase
-    .from('comments')
-    .select(`
-      *,
-      profiles:author_id (display_name, avatar_url)
-    `)
-    .eq('post_id', postId)
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-}
-
-export async function createComment(postId: string, authorId: string, content: string): Promise<void> {
-  const { error } = await supabase
-    .from('comments')
-    .insert({ post_id: postId, author_id: authorId, content });
-
-  if (error) throw error;
-}

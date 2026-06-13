@@ -21,9 +21,6 @@ export function MyPage({ onLogout }: MyPageProps) {
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   const userPosts = state.posts.filter((post) => post.authorId === state.currentUser);
-  const totalLikes = state.posts
-    .filter(post => post.authorId === state.currentUser)
-    .reduce((count, post) => count + (post.likeCount || 0), 0);
 
   const handleSaveDisplayName = async () => {
     if (!newDisplayName.trim()) return;
@@ -102,11 +99,6 @@ export function MyPage({ onLogout }: MyPageProps) {
                 <p className="text-lg sm:text-xl font-bold text-foreground">{userPosts.length}</p>
                 <p className="text-xs text-muted-foreground">Posts</p>
               </div>
-              <div className="w-px h-6 sm:h-8 bg-border" />
-              <div className="text-center">
-                <p className="text-lg sm:text-xl font-bold text-foreground">{totalLikes}</p>
-                <p className="text-xs text-muted-foreground">Likes</p>
-              </div>
             </div>
           </motion.div>
         </div>
@@ -180,16 +172,7 @@ export function MyPage({ onLogout }: MyPageProps) {
                       <div className="flex items-center gap-2 sm:gap-3">
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Heart className="w-3.5 h-3.5" />
-                          <span>
-                            {post.likeCount || 0} likes
-                          </span>
                         </div>
-                        {post.bgm && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
-                            <span className="text-base">🎵</span>
-                            <span className="truncate max-w-[80px] sm:max-w-[120px]">{post.bgm}</span>
-                          </div>
-                        )}
                       </div>
                       <Button
                         size="sm"
