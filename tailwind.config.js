@@ -52,6 +52,20 @@ export default {
       fontFamily: {
         display: ['Hahmlet', 'Georgia', 'serif'],
         sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+      },
+      fontSize: {
+        // DESIGN.md typography scale
+        'display': ['48px', { lineHeight: '1.10', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'h1': ['36px', { lineHeight: '1.20', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'h2': ['28px', { lineHeight: '1.30', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'h3': ['22px', { lineHeight: '1.35', fontWeight: '600' }],
+        'body-lg': ['18px', { lineHeight: '1.60', fontWeight: '400' }],
+        'body': ['16px', { lineHeight: '1.60', fontWeight: '400' }],
+        'body-sm': ['14px', { lineHeight: '1.50', fontWeight: '400' }],
+        'label': ['13px', { lineHeight: '1.40', fontWeight: '500' }],
+        'caption': ['11px', { lineHeight: '1.40', fontWeight: '400' }],
+        'button': ['14px', { lineHeight: '1.00', fontWeight: '500' }],
       },
       boxShadow: {
         'ds-sm': 'var(--shadow-sm)',
