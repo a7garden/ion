@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Toaster } from '@/components/ui/toaster';
@@ -5,6 +6,14 @@ import { useClient } from '@/hooks/ClientProvider';
 
 export function Layout() {
   const { theme } = useClient();
+
+  useEffect(() => {
+    if (theme === 'black') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-500 grain-overlay ${theme === 'black' ? 'dark' : ''}`}>
