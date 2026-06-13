@@ -13,7 +13,7 @@ export function Header() {
   const isLoggedIn = !!user;
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 sm:h-[64px] bg-background/80 backdrop-blur-xl border-b border-border/50 z-[500] grid grid-cols-3 items-center px-4 sm:px-6 pt-[var(--safe-area-top)]">
+    <header className="fixed top-0 left-0 right-0 h-14 sm:h-[64px] bg-background/80 backdrop-blur-xl border-b border-border/50 z-modal grid grid-cols-3 items-center px-4 sm:px-6 pt-[var(--safe-area-top)]">
       {/* Left: Logo */}
       <div className="flex items-center justify-start">
         <NavLink

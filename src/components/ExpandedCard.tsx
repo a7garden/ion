@@ -26,7 +26,7 @@ export function ExpandedCard({
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
+            className="fixed inset-0 z-dropdown bg-foreground/20 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -34,7 +34,7 @@ export function ExpandedCard({
             onClick={onClose}
           />
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-[var(--safe-area-bottom)]"
+            className="fixed inset-0 z-dropdown flex items-center justify-center p-4 pb-[var(--safe-area-bottom)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
