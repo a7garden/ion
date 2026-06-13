@@ -31,4 +31,25 @@
   --radius-lg: 16px;
 
   --dialog-backdrop: oklch(0 0 0 / 0.4);
+
+  /* Backward compat: old shadcn-style variable names -> DS variables */
+  --background: var(--surface-default);
+  --foreground: var(--text-primary);
+  --card: var(--surface-subtle);
+  --card-foreground: var(--text-primary);
+  --primary: var(--text-primary);
+  --primary-foreground: var(--surface-default);
+  --secondary: var(--interactive-bg);
+  --secondary-foreground: var(--interactive-text);
+  --muted: var(--surface-muted);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--interactive-primary);
+  --accent-foreground: var(--text-inverse);
+  --destructive: var(--state-error);
+  --destructive-foreground: var(--text-inverse);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--border-focus);
+  --card-hover: var(--surface-muted);
+  --border-hover: var(--border-strong);
 }
