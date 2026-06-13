@@ -2,30 +2,26 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FeedPhysics } from './FeedPhysics';
 import { FeedCards } from './FeedCards';
-import { FloatingActionButton } from './FloatingActionButton';
 import { PostCard } from './PostCard';
 import { Button } from '@/components/ui/button';
 import type { Post } from '@/types';
-import { useApp } from '@/hooks/AppProvider';
+import { useClient } from '@/hooks/ClientProvider';
 import { useDeviceSize, getDynamicCardSize } from '@/hooks/useDeviceSize';
 
-interface CardPosition {
-  x: number;
-  y: number;
-  size: number;
-}
-
 interface FeedViewProps {
-  onCardClick: (post: Post, cardRect: CardPosition) => void;
+  posts: Post[];
+  likedIds: string[];
+  onCardClick: (post: Post) => void;
   onToggleLike: (postId: string) => void;
   onDelete: (postId: string) => void;
   onCreatePostClick: () => void;
   expandedPostId?: string | null;
+  onRefetch: () => void;
 }
 
-function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewProps) {
-  const { state, toggleLike, removePost } = useApp();
-  const { width, height } = useDeviceSize();
+function SwipeFeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, onCreatePostClick }: FeedViewProps) {
+  const { zoomLevel } = useClient();
+  const { width } = useDeviceSize();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -34,7 +30,6 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
   const currentTranslateXRef = useRef(0);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const posts = state.posts;
   const currentPost = posts[currentIndex];
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current) {
@@ -72,7 +67,6 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
     }
 
     const threshold = window.innerWidth * 0.2;
-    // 왼쪽 스와이프 → 다음, 오른쪽 스와이프 → 이전 (캐러셀 표준)
     if (translateX < -threshold && currentIndex < posts.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else if (translateX > threshold && currentIndex > 0) {
@@ -84,7 +78,6 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
 
   const handleDelete = () => {
     if (currentPost) {
-      removePost(currentPost.id);
       onDelete(currentPost.id);
       if (currentIndex >= posts.length - 1 && currentIndex > 0) {
         setCurrentIndex(currentIndex - 1);
@@ -115,7 +108,7 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
     );
   }
 
-  const isLiked = state.likedPostIds.includes(currentPost.id);
+  const isLiked = likedIds.includes(currentPost.id);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-card/10 grain-overlay">
@@ -136,17 +129,16 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
             post={currentPost}
             x={0}
             y={0}
-            size={getDynamicCardSize(width, state.zoomLevel)}
+            size={getDynamicCardSize(width, zoomLevel)}
             opacity={1}
             isDragging={isDragging}
             isDeleteMode={isDeleteMode}
             isLiked={isLiked}
             onClick={() => {
               if (isDeleteMode) return;
-              const rect = { x: width / 2, y: height / 2, size: getDynamicCardSize(width, state.zoomLevel) };
-              onCardClick(currentPost, rect);
+              onCardClick(currentPost);
             }}
-            onToggleLike={() => toggleLike(currentPost.id)}
+            onToggleLike={() => onToggleLike(currentPost.id)}
             onDelete={handleDelete}
           />
         </div>
@@ -175,7 +167,7 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
   );
 }
 
-export function FeedView({ onCardClick, onToggleLike, onDelete, onCreatePostClick, expandedPostId }: FeedViewProps) {
+export function FeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, onCreatePostClick, expandedPostId, onRefetch }: FeedViewProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -190,18 +182,29 @@ export function FeedView({ onCardClick, onToggleLike, onDelete, onCreatePostClic
 
   if (isMobile) {
     return (
-      <>
-        <SwipeFeedView onCardClick={onCardClick} onToggleLike={onToggleLike} onDelete={onDelete} onCreatePostClick={onCreatePostClick} />
-        <FloatingActionButton onClick={onCreatePostClick} />
-      </>
+      <SwipeFeedView
+        posts={posts}
+        likedIds={likedIds}
+        onCardClick={onCardClick}
+        onToggleLike={onToggleLike}
+        onDelete={onDelete}
+        onCreatePostClick={onCreatePostClick}
+        onRefetch={onRefetch}
+      />
     );
   }
 
   return (
     <>
-      <FeedPhysics />
-      <FeedCards onCardClick={onCardClick} onToggleLike={onToggleLike} onDelete={onDelete} expandedPostId={expandedPostId} />
-      <FloatingActionButton onClick={onCreatePostClick} />
+      <FeedPhysics posts={posts} />
+      <FeedCards
+        posts={posts}
+        likedIds={likedIds}
+        onCardClick={onCardClick}
+        onToggleLike={onToggleLike}
+        onDelete={onDelete}
+        expandedPostId={expandedPostId}
+      />
     </>
   );
 }

@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useApp } from '@/hooks/AppProvider';
-import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/AuthProvider';
 import {
   Dialog,
   DialogContent,
@@ -10,14 +9,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Image, X, Loader2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useToast } from '@/components/ui/use-toast';
 
 interface CreatePostModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (opts: { content: string; mediaFile?: File }) => Promise<void>;
+  requestImageCrop: (file: File) => Promise<Blob>;
 }
 
-export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
-  const { state, addPost } = useApp();
+export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop }: CreatePostModalProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -37,15 +39,32 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
     }
   }, [open]);
 
+  const previewFile = (file: File) => {
+    setMediaFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setMediaPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageFile = async (file: File) => {
+    try {
+      const blob = await requestImageCrop(file);
+      const croppedFile = new File([blob], 'cropped.jpg', { type: 'image/jpeg' });
+      previewFile(croppedFile);
+    } catch {
+      // User cancelled crop — do nothing
+    }
+  };
+
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
-      setMediaFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setMediaPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (file.type.startsWith('video/')) {
+      previewFile(file);
+    } else if (file.type.startsWith('image/')) {
+      handleImageFile(file);
     }
   };
 
@@ -55,15 +74,10 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
       return;
     }
 
-    if (!state.currentUser) {
-      toast({ description: '로그인이 필요합니다', duration: 2000 });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      await addPost({
+      await onSubmit({
         content: content,
         mediaFile: mediaFile || undefined,
       });
@@ -95,10 +109,10 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
             <div className="flex items-center gap-2.5 sm:gap-3">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-sm">
                 <span className="text-sm font-semibold text-primary-foreground">
-                  {(state.userName || state.currentUser)?.[0]?.toUpperCase()}
+                  {(user?.displayName || user?.id)?.[0]?.toUpperCase()}
                 </span>
               </div>
-              <span className="font-semibold text-sm text-foreground">{state.userName || state.currentUser}</span>
+              <span className="font-semibold text-sm text-foreground">{user?.displayName}</span>
             </div>
 
             <textarea
@@ -156,13 +170,11 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
                     e.preventDefault();
                     setIsDragOver(false);
                     const file = e.dataTransfer.files[0];
-                    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
-                      setMediaFile(file);
-                      const reader = new FileReader();
-                      reader.onload = (e) => {
-                        setMediaPreview(e.target?.result as string);
-                      };
-                      reader.readAsDataURL(file);
+                    if (!file) return;
+                    if (file.type.startsWith('video/')) {
+                      previewFile(file);
+                    } else if (file.type.startsWith('image/')) {
+                      handleImageFile(file);
                     }
                   }}
                 >

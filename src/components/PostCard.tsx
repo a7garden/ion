@@ -214,7 +214,7 @@ export function PostCard({
                 <div className="relative">
                   <video
                     src={post.media}
-                    className="w-full h-20 object-cover transition-transform duration-300"
+                    className="w-full aspect-square object-cover transition-transform duration-300"
                     preload="metadata"
                     playsInline
                     muted
@@ -231,7 +231,7 @@ export function PostCard({
                 <img
                   src={post.media}
                   alt="Post media"
-                  className="w-full h-20 object-cover transition-transform duration-300"
+                  className="w-full aspect-square object-cover transition-transform duration-300"
                   draggable={false}
                 />
               )}

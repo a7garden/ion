@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Post } from '@/types';
+import { PlanetAvatar } from '@/components/PlanetAvatar';
 
 interface ExpandedCardProps {
   open: boolean;
@@ -74,15 +75,7 @@ export function ExpandedCard({
                 </motion.button>
 
                 <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-5">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-sm overflow-hidden">
-                    {post.authorAvatar ? (
-                      <img src={post.authorAvatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-sm font-semibold text-primary-foreground">
-                        {post.authorName?.[0]?.toUpperCase() || '?'}
-                      </span>
-                    )}
-                  </div>
+                  <PlanetAvatar planet={post.authorPlanet} size={40} />
                   <div>
                     <h2 className="text-base sm:text-lg font-semibold text-foreground">{post.authorName || 'Anonymous'}</h2>
                     <p className="text-xs text-muted-foreground">Posted recently</p>
@@ -99,7 +92,7 @@ export function ExpandedCard({
                     {post.mediaType === 'video' ? (
                       <video
                         src={post.media}
-                        className="w-full max-h-[50vw] sm:max-h-72 object-cover"
+                        className="w-full max-h-[50vw] sm:max-h-72 object-contain bg-black/5 rounded-lg"
                         controls
                         muted={false}
                       />
@@ -107,7 +100,7 @@ export function ExpandedCard({
                       <img
                         src={post.media}
                         alt="Post media"
-                        className="w-full max-h-[50vw] sm:max-h-72 object-cover"
+                        className="w-full max-h-[50vw] sm:max-h-72 object-contain rounded-lg"
                       />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-card/40 to-transparent pointer-events-none" />

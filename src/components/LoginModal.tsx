@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
 import { LogIn, User } from 'lucide-react';
-import { useApp } from '@/hooks/AppProvider';
+import { useAuth } from '@/hooks/AuthProvider';
 
 interface LoginModalProps {
   open: boolean;
@@ -11,7 +11,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
-  const { login } = useApp();
+  const { login } = useAuth();
   const { toast } = useToast();
 
   const handleGoogleLogin = async () => {
