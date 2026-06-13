@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
+    /* === Layout === */
     --radius: 0.75rem;
-
     --breakpoint-sm: 640px;
     --breakpoint-md: 768px;
     --breakpoint-lg: 1024px;
@@ -21,57 +21,113 @@
     --safe-area-left: env(safe-area-inset-left, 0px);
     --safe-area-right: env(safe-area-inset-right, 0px);
 
-    --background: 60 20% 97%;
-    --foreground: 20 15% 10%;
-    --card: 40 15% 96%;
-    --card-foreground: 20 15% 10%;
-    --primary: 25 40% 15%;
-    --primary-foreground: 40 20% 96%;
-    --secondary: 30 10% 92%;
-    --secondary-foreground: 20 15% 25%;
-    --muted: 30 8% 88%;
-    --muted-foreground: 20 8% 45%;
-    --accent: 210 60% 35%;
-    --accent-foreground: 40 15% 96%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 30 10% 85%;
-    --input: 30 10% 88%;
-    --ring: 210 60% 35%;
+    /* === Color tokens — values from DESIGN.md OKLCH, expressed as HSL channels for Tailwind opacity modifiers === */
 
-    --blue-glow: 210 65% 50%;
-    --cool-shadow: 210 50% 40%;
+    /* Surfaces */
+    --background: 50 20% 97%;          /* surface-default:  oklch(0.9809 0.0040 107.0) */
+    --foreground: 25 18% 15%;          /* text-primary:     oklch(0.2151 0.0095 48.2) */
+    --card: 45 12% 96%;               /* surface-subtle:   oklch(0.9713 0.0028 84.6) */
+    --card-foreground: 25 18% 15%;     /* text-primary */
+    --primary: 225 32% 42%;            /* interactive-primary: oklch(0.4566 0.1043 251.2) */
+    --primary-foreground: 45 12% 96%;  /* text-inverse:     oklch(0.9713 0.0028 84.6) */
+    --secondary: 40 14% 93%;           /* interactive-bg:   oklch(0.9399 0.0034 67.4) */
+    --secondary-foreground: 25 18% 30%;/* interactive-text: oklch(0.3698 0.0209 48.1) */
+    --muted: 40 12% 90%;              /* surface-muted:    oklch(0.9091 0.0042 67.5) */
+    --muted-foreground: 25 14% 50%;    /* text-secondary:   oklch(0.5535 0.0180 48.3) */
+    --accent: 225 32% 42%;             /* interactive-primary (brand accent) */
+    --accent-foreground: 45 12% 96%;   /* text-inverse */
+    --destructive: 5 65% 48%;          /* state-error:      oklch(0.5786 0.2137 27.2) */
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 10% 87%;             /* border-default:   oklch(0.8865 0.0066 67.6) */
+    --input: 40 12% 90%;              /* surface-muted     */
+    --ring: 225 32% 42%;              /* border-focus:     oklch(0.4566 0.1043 251.2) */
+
+    /* Shadow & Glow (keep HSL channels for hsl() composition) */
+    --blue-glow: 225 50% 50%;
+    --cool-shadow: 225 45% 40%;
     --warm-shadow: 25 15% 35%;
     --gold-glow: 40 60% 55%;
-    --card-hover: 40 15% 94%;
-    --border-hover: 30 10% 78%;
+    --card-hover: 45 12% 94%;
+    --border-hover: 40 10% 78%;
+
+    /* === Semantic aliases (DESIGN.md naming — usable in new components) === */
+    --surface-default: var(--background);
+    --surface-subtle: var(--card);
+    --surface-muted: var(--muted);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+    --text-tertiary: 40 15% 60%;
+    --interactive-primary: var(--accent);
+    --interactive-primary-hover: 225 32% 47%;
+    --interactive-primary-active: 225 32% 37%;
+    --interactive-bg: var(--secondary);
+    --interactive-text: var(--secondary-foreground);
+    --border-subtle: 40 12% 90%;
+    --border-default: var(--border);
+    --border-strong: 40 15% 60%;
+    --border-focus: var(--ring);
+    --state-error: var(--destructive);
+    --state-error-bg: 5 65% 48%;
+    --state-warning: 40 90% 50%;
+    --state-warning-bg: 40 90% 50%;
+    --state-success: 150 50% 40%;
+    --state-success-bg: 150 50% 40%;
+    --state-info: 225 32% 42%;
+    --state-info-bg: 225 32% 42%;
   }
 
   .dark {
-    --background: 20 15% 5%;
-    --foreground: 40 15% 92%;
-    --card: 20 12% 9%;
-    --card-foreground: 40 15% 92%;
-    --primary: 40 15% 92%;
-    --primary-foreground: 20 15% 5%;
-    --secondary: 20 10% 14%;
-    --secondary-foreground: 40 15% 85%;
-    --muted: 20 8% 18%;
-    --muted-foreground: 30 8% 55%;
-    --accent: 210 55% 45%;
-    --accent-foreground: 40 15% 96%;
-    --destructive: 0 72% 51%;
+    /* Surfaces */
+    --background: 25 15% 8%;           /* surface-default:  oklch(0.1576 0.0051 48.3) */
+    --foreground: 40 15% 93%;          /* text-primary:     oklch(0.9424 0.0058 84.6) */
+    --card: 25 13% 13%;               /* surface-subtle:   oklch(0.2040 0.0069 48.3) */
+    --card-foreground: 40 15% 93%;     /* text-primary */
+    --primary: 225 35% 48%;            /* interactive-primary: oklch(0.5439 0.1184 250.9) */
+    --primary-foreground: 25 15% 8%;   /* text-inverse:     oklch(0.1576 0.0051 48.3) */
+    --secondary: 25 13% 20%;           /* interactive-bg:   oklch(0.2585 0.0085 48.3) */
+    --secondary-foreground: 40 14% 87%;/* interactive-text: oklch(0.8913 0.0111 84.6) */
+    --muted: 25 12% 24%;              /* surface-muted:    oklch(0.3002 0.0084 48.3) */
+    --muted-foreground: 40 14% 60%;    /* text-secondary:   oklch(0.6462 0.0173 67.5) */
+    --accent: 225 35% 48%;             /* interactive-primary */
+    --accent-foreground: 25 15% 8%;    /* text-inverse */
+    --destructive: 5 65% 48%;          /* state-error (same as light) */
     --destructive-foreground: 0 0% 98%;
-    --border: 20 8% 20%;
-    --input: 20 8% 18%;
-    --ring: 210 55% 45%;
+    --border: 25 12% 26%;             /* border-default:   oklch(0.3205 0.0091 48.3) */
+    --input: 25 12% 24%;              /* surface-muted     */
+    --ring: 225 35% 48%;              /* border-focus:     oklch(0.5439 0.1184 250.9) */
 
-    --blue-glow: 210 60% 55%;
-    --cool-shadow: 210 55% 45%;
+    /* Shadow & Glow */
+    --blue-glow: 225 50% 55%;
+    --cool-shadow: 225 45% 47%;
     --warm-shadow: 25 15% 15%;
     --gold-glow: 40 55% 45%;
-    --card-hover: 20 12% 12%;
-    --border-hover: 20 8% 26%;
+    --card-hover: 25 13% 16%;
+    --border-hover: 25 12% 30%;
+
+    /* Semantic aliases (re-aliased to inherit dark values) */
+    --surface-default: var(--background);
+    --surface-subtle: var(--card);
+    --surface-muted: var(--muted);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+    --text-tertiary: 40 14% 60%;
+    --interactive-primary: var(--accent);
+    --interactive-primary-hover: 225 35% 53%;
+    --interactive-primary-active: 225 35% 43%;
+    --interactive-bg: var(--secondary);
+    --interactive-text: var(--secondary-foreground);
+    --border-subtle: 25 12% 24%;
+    --border-default: var(--border);
+    --border-strong: 40 14% 60%;
+    --border-focus: var(--ring);
+    --state-error: var(--destructive);
+    --state-error-bg: 5 65% 48%;
+    --state-warning: 40 90% 50%;
+    --state-warning-bg: 40 90% 50%;
+    --state-success: 150 50% 40%;
+    --state-success-bg: 150 50% 40%;
+    --state-info: 225 35% 48%;
+    --state-info-bg: 225 35% 48%;
   }
 }
 

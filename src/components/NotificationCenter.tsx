@@ -29,7 +29,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative w-9 h-9 flex items-center justify-center hover:bg-accent/10 transition-colors touch-target rounded-[var(--radius-md)]"
+        className="relative w-9 h-9 flex items-center justify-center hover:bg-accent/10 transition-colors touch-target rounded-md"
         aria-label={t('notification.title')}
       >
         <Bell className="w-4 h-4 text-muted-foreground" />
