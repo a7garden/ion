@@ -9,16 +9,26 @@ import type { Post } from '@/types';
 
 // 세션 내에서 치운(dismiss) post id 추적. 사용자별로 격리.
 // 영속화하지 않으므로 새로고침하면 초기화. 새 카드 보충/재fetch 시 제외 대상으로 사용.
+// 비로그인은 'anon' 키로 격리 — 로그인 후 다른 풀을 보게 된다.
+const ANON_KEY = 'anon';
 const dismissedByUser = new Map<string, Set<string>>();
 function getDismissed(userId: string): Set<string> {
-  let s = dismissedByUser.get(userId);
-  if (!s) { s = new Set(); dismissedByUser.set(userId, s); }
+  const key = userId || ANON_KEY;
+  let s = dismissedByUser.get(key);
+  if (!s) { s = new Set(); dismissedByUser.set(key, s); }
   return s;
 }
 
 // 사용자별 보충(fetch) 직렬화 체인. 빠른 연속 dismiss에서 보충 fetch가 동시에 날아가
 // exclude 계산이 엇나가 같은 post가 중복 보충되는(race condition) 것을 막는다.
 const refillChainByUser = new Map<string, Promise<void>>();
+function getRefillChain(userId: string): Promise<void> {
+  const key = userId || ANON_KEY;
+  return refillChainByUser.get(key) ?? Promise.resolve();
+}
+function setRefillChain(userId: string, p: Promise<void>) {
+  refillChainByUser.set(userId || ANON_KEY, p);
+}
 
 export function useFeedQuery(userId: string) {
   const { zoomLevel } = useClient();
@@ -32,19 +42,19 @@ export function useFeedQuery(userId: string) {
     return Math.max(k + 8, 16);
   }, [width, height, zoomLevel]);
 
+  // 비로그인도 피드를 본다. userId가 비어 있어도 쿼리를 실행한다.
   return useQuery({
-    queryKey: queryKeys.feed(userId),
+    queryKey: queryKeys.feed(userId || ANON_KEY),
     queryFn: async () => {
       const rows = await getFeed(userId, batchSize, Array.from(getDismissed(userId)));
       return rows.map(toPost);
     },
-    enabled: !!userId,
   });
 }
 
 export function useDismissPost(userId: string) {
   const queryClient = useQueryClient();
-  const key = queryKeys.feed(userId);
+  const key = queryKeys.feed(userId || ANON_KEY);
 
   return useCallback(
     (postId: string) => {
@@ -77,8 +87,8 @@ export function useDismissPost(userId: string) {
           // 보충 실패해도 dismiss 자체는 유지
         }
       };
-      const prev = refillChainByUser.get(userId) ?? Promise.resolve();
-      refillChainByUser.set(userId, prev.then(run));
+      const prev = getRefillChain(userId);
+      setRefillChain(userId, prev.then(run));
     },
     [queryClient, key, userId]
   );
@@ -87,6 +97,6 @@ export function useDismissPost(userId: string) {
 export function useRefetchFeed(userId: string) {
   const queryClient = useQueryClient();
   return useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.feed(userId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.feed(userId || ANON_KEY) });
   }, [queryClient, userId]);
 }

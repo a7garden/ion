@@ -40,6 +40,10 @@ export const en = {
   'myPage.createFirstPost': 'Create your first post',
   'myPage.deleted': 'Deleted',
   'myPage.settings': 'Settings',
+  'myPage.guestTitle': 'Sign in required',
+  'myPage.guestDesc': 'Sign in to view your page\nand create your first post.',
+  'myPage.guestLogin': 'Sign in',
+  'myPage.guestFeed': 'Back to feed',
 
   // MyPageRoute
   'myPageRoute.loggedOut': 'Logged out',

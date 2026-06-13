@@ -40,6 +40,10 @@ export const ko = {
   'myPage.createFirstPost': '첫 게시물 작성하기',
   'myPage.deleted': '삭제되었습니다',
   'myPage.settings': '설정',
+  'myPage.guestTitle': '로그인이 필요해요',
+  'myPage.guestDesc': '마이페이지는 로그인 후 볼 수 있어요.\n로그인하고 첫 글을 작성해보세요.',
+  'myPage.guestLogin': '로그인하기',
+  'myPage.guestFeed': '피드로 돌아가기',
 
   // MyPageRoute
   'myPageRoute.loggedOut': '로그아웃되었습니다',

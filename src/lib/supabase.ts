@@ -149,7 +149,8 @@ export async function getFeed(
   excludeIds: string[] = []
 ): Promise<FeedRow[]> {
   const { data, error } = await supabase.rpc('feed_random', {
-    viewer_id: viewerId,
+    // 비로그인(anon) 호출 허용 — feed_random은 viewer_id가 NULL이면 자기 글 제외를 건너뛴다.
+    viewer_id: viewerId || null,
     batch_size: batchSize,
     exclude_ids: excludeIds,
   });

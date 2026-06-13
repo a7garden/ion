@@ -65,7 +65,7 @@ export function FeedRoute() {
     setExpandedPostId(post.id);
   };
 
-  if (authLoading || (isLoggedIn && feedLoading)) {
+  if (authLoading || feedLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />

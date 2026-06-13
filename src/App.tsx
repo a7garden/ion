@@ -10,7 +10,6 @@ import { WorldRoute } from '@/routes/WorldRoute';
 import { MyPageRoute } from '@/routes/MyPageRoute';
 import { PrivacyRoute } from '@/routes/PrivacyRoute';
 import { TermsRoute } from '@/routes/TermsRoute';
-import { RequireAuth } from '@/routes/RequireAuth';
 
 export default function App() {
   return (
@@ -25,9 +24,7 @@ export default function App() {
                   <Route path="world" element={<WorldRoute />} />
                   <Route path="privacy" element={<PrivacyRoute />} />
                   <Route path="terms" element={<TermsRoute />} />
-                  <Route element={<RequireAuth />}>
-                    <Route path="my" element={<MyPageRoute />} />
-                  </Route>
+                  <Route path="my" element={<MyPageRoute />} />
                 </Route>
               </Routes>
             </I18nProvider>
