@@ -41,6 +41,10 @@
 
     --blue-glow: 210 65% 50%;
     --cool-shadow: 210 50% 40%;
+    --warm-shadow: 25 15% 35%;
+    --gold-glow: 40 60% 55%;
+    --card-hover: 40 15% 94%;
+    --border-hover: 30 10% 78%;
   }
 
   .dark {
@@ -64,6 +68,10 @@
 
     --blue-glow: 210 60% 55%;
     --cool-shadow: 210 55% 45%;
+    --warm-shadow: 25 15% 15%;
+    --gold-glow: 40 55% 45%;
+    --card-hover: 20 12% 12%;
+    --border-hover: 20 8% 26%;
   }
 }
 
