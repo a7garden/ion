@@ -4,13 +4,12 @@ import { useMyPostsQuery, useCreatePost, useDeletePost } from '@/hooks/queries/u
 import { useUpdateProfile, useUpdatePlanet } from '@/hooks/queries/useProfile';
 import { MyPage as MyPageComponent } from '@/components/MyPage';
 import { useImageCropper } from '@/hooks/useImageCropper';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { deleteAccount } from '@/lib/supabase';
 import type { PlanetKey } from '@/constants/planets';
 
 export function MyPageRoute() {
   const { user, logout, setPlanet, setDisplayName } = useAuth();
-  const { toast } = useToast();
   const userId = user?.id ?? '';
   const authorName = user?.displayName ?? '';
   const authorPlanet = user?.planet ?? 'moon';
@@ -48,10 +47,10 @@ export function MyPageRoute() {
     try {
       await deleteAccount(userId);
       await logout();
-      toast({ description: '탈퇴되었습니다', duration: 2000 });
+      toast('탈퇴되었습니다', { duration: 2000 });
     } catch (err) {
       console.error('Account deletion failed:', err);
-      toast({ description: '탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해주세요.', duration: 3000 });
+      toast('탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해주세요.', { duration: 3000 });
       setDeletingAccount(false);
     }
   };

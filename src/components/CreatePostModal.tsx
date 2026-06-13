@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Image, X, Loader2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 interface CreatePostModalProps {
   open: boolean;
@@ -20,7 +20,6 @@ interface CreatePostModalProps {
 
 export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop }: CreatePostModalProps) {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -70,7 +69,7 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
 
   const handleSubmit = async () => {
     if (!content.trim() && !mediaFile) {
-      toast({ description: '내용 또는 사진/동영상을 추가해주세요', duration: 2000 });
+      toast('내용 또는 사진/동영상을 추가해주세요', { duration: 2000 });
       return;
     }
 
@@ -82,11 +81,11 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
         mediaFile: mediaFile || undefined,
       });
 
-      toast({ description: '게시물이 생성되었습니다!', duration: 2000 });
+      toast('게시물이 생성되었습니다!', { duration: 2000 });
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to create post:', error);
-      toast({ description: '게시물 생성에 실패했습니다', duration: 2000 });
+      toast('게시물 생성에 실패했습니다', { duration: 2000 });
     } finally {
       setIsSubmitting(false);
     }
