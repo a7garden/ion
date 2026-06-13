@@ -100,7 +100,10 @@ export function getCardCountForBreakpoint(breakpoint: Breakpoint, zoomLevel: num
   };
 
   const base = baseCounts[breakpoint];
-  const zoomBonus = Math.round((zoomLevel / 100) * 8);
+  // 줌인(zoomLevel 높음) → 카드 커짐 → 적은 카드
+  // 줌아웃(zoomLevel 낮음) → 카드 작아짐 → 많은 카드
+  const inverseZoom = 100 - zoomLevel;
+  const zoomBonus = Math.round((inverseZoom / 100) * 8);
 
-  return base + zoomBonus;
+  return Math.max(Math.round(base * 0.5), base + zoomBonus);
 }

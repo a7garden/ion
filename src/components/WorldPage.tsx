@@ -18,6 +18,8 @@ interface GraphNode {
   y?: number;
   vx?: number;
   vy?: number;
+  fx?: number | null;
+  fy?: number | null;
   radius: number;
   isCurrentUser: boolean;
   color: string;
@@ -66,28 +68,12 @@ const MAX_SCALE = 3.0;
 interface WorldPageProps {
   posts: Post[];
   likedIds: string[];
+  connections: string[];
   currentUserId: string;
   currentUserPlanet: string;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
-}
-
-function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, outerRadius: number, innerRadius: number, points: number, rotation: number) {
-  ctx.beginPath();
-  for (let i = 0; i < points * 2; i++) {
-    const radius = i % 2 === 0 ? outerRadius : innerRadius;
-    const angle = (i * Math.PI) / points - Math.PI / 2 + rotation;
-    const x = cx + Math.cos(angle) * radius;
-    const y = cy + Math.sin(angle) * radius;
-    if (i === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
-  }
-  ctx.closePath();
-  ctx.fill();
 }
 
 const PLANET_COLORS: Record<string, { light: string; mid: string; dark: string; glow: string }> = {
@@ -131,9 +117,12 @@ function drawPlanet(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
   }
 }
 
-export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, isLoading, isError, onRetry }: WorldPageProps) {
+export function WorldPage({ posts, likedIds, connections, currentUserId, currentUserPlanet, isLoading, isError, onRetry }: WorldPageProps) {
   const { t } = useI18n();
-  const { setZoomLevel } = useClient();
+  const { theme, setZoomLevel } = useClient();
+  const isDarkMode = theme === 'black';
+  const isDarkModeRef = useRef(isDarkMode);
+  useEffect(() => { isDarkModeRef.current = isDarkMode; }, [isDarkMode]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<GraphNode[]>([]);
   const edgesRef = useRef<Edge[]>([]);
@@ -181,40 +170,58 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
   const buildGraph = useCallback(() => {
     const authorSet = new Set<string>();
     posts.forEach(post => authorSet.add(post.authorId));
-    const authors = Array.from(authorSet);
+    const allAuthors = Array.from(authorSet);
+    const myConnections = new Set(connections);
 
-    const graphNodes: GraphNode[] = authors.map((author, idx) => ({
+    const MAX_NODES = 100;
+
+    // 1. Divide authors: current user, connected, unconnected
+    const connected = allAuthors.filter(a => myConnections.has(a));
+    const unconnected = allAuthors.filter(a => !myConnections.has(a) && a !== currentUserId);
+    // Shuffle unconnected for random fill
+    for (let i = unconnected.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [unconnected[i], unconnected[j]] = [unconnected[j], unconnected[i]];
+    }
+
+    // 2. Select nodes up to limit
+    const remaining = MAX_NODES - 1; // minus current user
+    const connectedCount = Math.min(connected.length, remaining);
+    const unconnectedCount = Math.min(unconnected.length, remaining - connectedCount);
+
+    const selected = [
+      currentUserId,
+      ...connected.slice(0, connectedCount),
+      ...unconnected.slice(0, unconnectedCount),
+    ];
+
+    const cx = dimensions.width / 2;
+    const cy = dimensions.height / 2;
+
+    const graphNodes: GraphNode[] = selected.map((author) => ({
       id: author,
       authorId: author,
-      radius: 10 + Math.random() * 6,
+      radius: author === currentUserId ? 50 : 3 + Math.random() * 2,
       isCurrentUser: author === currentUserId,
-      x: dimensions.width / 2 + (Math.random() - 0.5) * 200,
-      y: dimensions.height / 2 + (Math.random() - 0.5) * 200,
-      color: `hsla(${38 + idx * 15}, 70%, ${60 + Math.random() * 20}%, 0.9)`,
+      x: author === currentUserId ? cx : cx + (Math.random() - 0.5) * dimensions.width * 0.6,
+      y: author === currentUserId ? cy : cy + (Math.random() - 0.5) * dimensions.height * 0.6,
+      fx: author === currentUserId ? cx : null,
+      fy: author === currentUserId ? cy : null,
+      color: 'hsla(0, 0%, 100%, 0.7)',
       glowColor: author === currentUserId
         ? 'hsla(45, 90%, 65%, 0.6)'
-        : 'hsla(38, 80%, 55%, 0.3)',
+        : 'hsla(0, 0%, 100%, 0.15)',
     }));
 
-    const isMutualLike = (userA: string, userB: string): boolean => {
-      const aLiked = likedIds.some(pid =>
-        posts.some(p => p.id === pid && p.authorId === userB));
-      const bLiked = likedIds.some(pid =>
-        posts.some(p => p.id === pid && p.authorId === userA));
-      return aLiked && bLiked;
-    };
-
+    // 3. Only edges from current user to connected (selected) users
+    const connectedSelected = new Set(selected.filter(a => myConnections.has(a)));
     const graphEdges: Edge[] = [];
-    for (let i = 0; i < authors.length; i++) {
-      for (let j = i + 1; j < authors.length; j++) {
-        if (isMutualLike(authors[i], authors[j])) {
-          graphEdges.push({ source: authors[i], target: authors[j], isMutual: true });
-        }
-      }
+    for (const conn of connectedSelected) {
+      graphEdges.push({ source: currentUserId, target: conn, isMutual: true });
     }
 
     return { nodes: graphNodes, edges: graphEdges };
-  }, [posts, likedIds, currentUserId, dimensions]);
+  }, [posts, connections, currentUserId, dimensions]);
 
   const renderLoopRef = useRef<(() => void) | null>(null);
 
@@ -308,7 +315,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
 
       let targetX = screenCenterX;
       let targetY = screenCenterY;
-      if (currentViewMode === 'centered' && myNode && myNode.x !== undefined && myNode.y !== undefined) {
+      if (myNode && myNode.x !== undefined && myNode.y !== undefined) {
         targetX = myNode.x;
         targetY = myNode.y;
       }
@@ -321,6 +328,59 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
       const moonYOffset = (1 - t) * 120;
       const moonRadius = moonBaseRadius * moonScale;
 
+      // Draw edges: only from current user to connected users
+      const currentEdges = edgesRef.current;
+      const dark = isDarkModeRef.current;
+      for (let i = 0; i < currentEdges.length; i++) {
+        const edge = currentEdges[i];
+        const source = edge.source as GraphNode;
+        const target = edge.target as GraphNode;
+
+        if (source.x === undefined || source.y === undefined ||
+            target.x === undefined || target.y === undefined) continue;
+
+        const edgeColor = dark
+          ? ['hsla(45, 80%, 70%, 0.3)', 'hsla(50, 90%, 80%, 0.5)', 'hsla(45, 80%, 70%, 0.3)']
+          : ['hsla(45, 90%, 70%, 0.5)', 'hsla(50, 100%, 80%, 0.7)', 'hsla(45, 90%, 70%, 0.5)'];
+
+        const gradient = ctx.createLinearGradient(source.x, source.y, target.x, target.y);
+        gradient.addColorStop(0, edgeColor[0]);
+        gradient.addColorStop(0.5, edgeColor[1]);
+        gradient.addColorStop(1, edgeColor[2]);
+
+        ctx.beginPath();
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2;
+        ctx.moveTo(source.x, source.y);
+        ctx.lineTo(target.x, target.y);
+        ctx.stroke();
+
+        // Outer glow
+        const glowAlpha = dark ? 0.15 : 0.25;
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(45, 100%, 85%, ${glowAlpha})`;
+        ctx.lineWidth = 5;
+        ctx.moveTo(source.x, source.y);
+        ctx.lineTo(target.x, target.y);
+        ctx.stroke();
+      }
+
+      // Draw other nodes as circles
+      const currentNodes = nodesRef.current;
+      const nodeOpacity = dark ? 0.5 : 0.7;
+      for (let i = 0; i < currentNodes.length; i++) {
+        const node = currentNodes[i];
+        if (node.x === undefined || node.y === undefined) continue;
+        if (node.isCurrentUser) continue;
+
+        const r = 4;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(0, 0%, 100%, ${nodeOpacity})`;
+        ctx.fill();
+      }
+
+      // Draw moon on TOP (last, so it's never obscured)
       drawPlanet(ctx, moonX, moonY + moonYOffset, moonRadius, currentUserPlanet);
 
       if (t < 1 && moonRadius > 5) {
@@ -332,68 +392,6 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
         ctx.arc(moonX, moonY + moonYOffset, moonRadius * 2.5, 0, Math.PI * 2);
         ctx.fillStyle = glowGrad;
         ctx.fill();
-      }
-
-      const currentEdges = edgesRef.current;
-      for (let i = 0; i < currentEdges.length; i++) {
-        const edge = currentEdges[i];
-        const source = edge.source as GraphNode;
-        const target = edge.target as GraphNode;
-
-        if (source.x === undefined || source.y === undefined ||
-            target.x === undefined || target.y === undefined) continue;
-
-        const gradient = ctx.createLinearGradient(source.x, source.y, target.x, target.y);
-        gradient.addColorStop(0, 'hsla(38, 70%, 55%, 0.3)');
-        gradient.addColorStop(0.5, 'hsla(45, 80%, 70%, 0.5)');
-        gradient.addColorStop(1, 'hsla(38, 70%, 55%, 0.3)');
-
-        ctx.beginPath();
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 1.5;
-        ctx.moveTo(source.x, source.y);
-        ctx.lineTo(target.x, target.y);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.strokeStyle = 'hsla(45, 90%, 80%, 0.2)';
-        ctx.lineWidth = 3;
-        ctx.moveTo(source.x, source.y);
-        ctx.lineTo(target.x, target.y);
-        ctx.stroke();
-      }
-
-      const currentNodes = nodesRef.current;
-      const now = Date.now();
-      const rotation = now * 0.0005;
-
-      for (let i = 0; i < currentNodes.length; i++) {
-        const node = currentNodes[i];
-        if (node.x === undefined || node.y === undefined) continue;
-
-        if (node.isCurrentUser) continue;
-
-        const starOuterRadius = node.radius * 0.375;
-        const starInnerRadius = node.radius * 0.15;
-        const starRotation = rotation + i;
-
-        const starGradient = ctx.createRadialGradient(
-          node.x - starOuterRadius * 0.2,
-          node.y - starOuterRadius * 0.2,
-          0,
-          node.x,
-          node.y,
-          starOuterRadius
-        );
-        starGradient.addColorStop(0, 'hsl(40, 85%, 78%)');
-        starGradient.addColorStop(0.6, 'hsl(38, 75%, 55%)');
-        starGradient.addColorStop(1, 'hsl(32, 65%, 42%)');
-
-        ctx.fillStyle = starGradient;
-        drawStar(ctx, node.x, node.y, starOuterRadius, starInnerRadius, 5, starRotation);
-
-        ctx.fillStyle = 'hsla(0, 0%, 100%, 0.5)';
-        drawStar(ctx, node.x - starOuterRadius * 0.15, node.y - starOuterRadius * 0.15, starOuterRadius * 0.25, starInnerRadius * 0.25, 5, starRotation);
       }
 
       ctx.restore();

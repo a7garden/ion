@@ -14,7 +14,7 @@ export function useWorldGraphQuery(userId: string) {
     queryFn: async (): Promise<WorldGraphData> => {
       const [connections, rows] = await Promise.all([
         getMutualConnections(userId),
-        getFeed(userId, 50),
+        getFeed(userId, 200),
       ]);
       return {
         connections,

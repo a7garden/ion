@@ -198,6 +198,12 @@ export async function getMyLikedPostIds(userId: string): Promise<string[]> {
 // World — 상호 연결
 // ============================================
 
+export async function getAllMutualConnections(): Promise<{ user_a: string; user_b: string }[]> {
+  const { data, error } = await supabase.rpc('all_mutual_connections');
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getMutualConnections(viewerId: string): Promise<string[]> {
   const { data, error } = await supabase.rpc('mutual_connections', { viewer_id: viewerId });
   if (error) throw error;

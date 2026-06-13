@@ -15,6 +15,7 @@ export function WorldRoute() {
     <WorldPageComponent
       posts={worldQuery.data?.posts ?? []}
       likedIds={likedIdsData ?? []}
+      connections={worldQuery.data?.connections ?? []}
       currentUserId={userId}
       currentUserPlanet={currentUserPlanet}
       isLoading={worldQuery.isLoading}
