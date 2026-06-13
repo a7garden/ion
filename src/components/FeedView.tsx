@@ -3,11 +3,10 @@ import { motion } from 'framer-motion';
 import { FeedPhysics } from './FeedPhysics';
 import { FeedCards } from './FeedCards';
 import { PostCard } from './PostCard';
-import { Button } from '@/design-system';
+import { Button } from '@/components/ui/button';
 import type { Post } from '@/types';
 import { useClient } from '@/hooks/ClientProvider';
 import { useDeviceSize, getDynamicCardSize } from '@/hooks/useDeviceSize';
-import { useI18n } from '@/i18n';
 
 interface FeedViewProps {
   posts: Post[];
@@ -23,7 +22,6 @@ interface FeedViewProps {
 function SwipeFeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, onCreatePostClick }: FeedViewProps) {
   const { zoomLevel } = useClient();
   const { width } = useDeviceSize();
-  const { t } = useI18n();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -97,13 +95,13 @@ function SwipeFeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, o
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
-          <p className="text-muted-foreground text-sm">{t('feed.noPosts')}</p>
-          <p className="text-muted-foreground/60 text-xs mt-1">{t('feed.noPostsHint')}</p>
+          <p className="text-muted-foreground text-sm">No posts yet</p>
+          <p className="text-muted-foreground/60 text-xs mt-1">Create your first post to see it here</p>
           <Button
             onClick={onCreatePostClick}
             className="mt-4 bg-accent hover:bg-accent/90 text-accent-foreground"
           >
-            {t('feed.createPost')}
+            Create Post
           </Button>
         </div>
       </div>

@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Card, CardContent } from '@/design-system';
+import { Card, CardContent } from '@/components/ui/card';
 import { CreatePostModal } from '@/components/CreatePostModal';
-import { Button } from '@/design-system';
+import { Button } from '@/components/ui/button';
 import { Plus, Image, Trash2, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 import { PlanetAvatar } from '@/components/PlanetAvatar';
 import { PlanetSelector } from '@/components/PlanetSelector';
 import { SettingsModal } from '@/components/SettingsModal';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import { useI18n } from '@/i18n';
 import type { PlanetKey } from '@/constants/planets';
 import type { Post } from '@/types';
@@ -43,17 +44,24 @@ export function MyPage({
   onChangePlanet,
   requestImageCrop,
 }: MyPageProps) {
+  const { toast } = useToast();
   const { t } = useI18n();
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [planetSelectorOpen, setPlanetSelectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleDelete = async (postId: string) => {
     setDeletingPostId(postId);
     onDeletePost(postId);
-    toast(t('myPage.deleted'), { duration: 2000 });
+    toast({ description: t('myPage.deleted'), duration: 2000 });
     setDeletingPostId(null);
+  };
+
+  const handleDeleteAccount = async () => {
+    setSettingsOpen(false);
+    setDeleteDialogOpen(true);
   };
 
   if (isLoading) {
@@ -101,9 +109,8 @@ export function MyPage({
             </div>
             <Button
               variant="ghost"
-              size="small"
+              size="icon"
               onClick={() => setSettingsOpen(true)}
-              className="shrink-0 hover:bg-accent/10 hover:text-accent"
               aria-label={t('myPage.settings')}
             >
               <Settings className="w-4 h-4" />
@@ -114,7 +121,7 @@ export function MyPage({
         {/* Actions Bar */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-base sm:text-lg font-semibold text-foreground">{t('myPage.myPosts')}</h2>
-          <Button variant="outline" size="small" onClick={() => setCreatePostOpen(true)}
+          <Button variant="outline" size="sm" onClick={() => setCreatePostOpen(true)}
             className="gap-1.5 border-accent/30 hover:bg-accent/10">
             <Plus className="w-4 h-4" /><span>{t('myPage.new')}</span>
           </Button>
@@ -127,7 +134,7 @@ export function MyPage({
               <Image className="w-8 h-8 text-muted-foreground/50" />
             </div>
             <p className="text-muted-foreground mb-4">{t('myPage.noPosts')}</p>
-            <Button onClick={() => setCreatePostOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Button onClick={() => setCreatePostOpen(true)} variant="default" className="bg-accent hover:bg-accent/90 text-accent-foreground">
               <Plus className="w-4 h-4 mr-2" />{t('myPage.createFirstPost')}
             </Button>
           </motion.div>
@@ -150,7 +157,7 @@ export function MyPage({
                       <p className="text-sm text-foreground leading-relaxed mb-3 whitespace-pre-wrap">{post.content}</p>
                     )}
                     <div className="flex items-center justify-end pt-2 border-t border-border/30">
-                      <Button size="small" variant="ghost" onClick={() => handleDelete(post.id)}
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(post.id)}
                         disabled={deletingPostId === post.id}
                         className="hover:bg-destructive/10 hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
@@ -184,9 +191,14 @@ export function MyPage({
         onChangeName={onChangeName}
         onChangePlanet={onChangePlanet}
         onLogout={onLogout}
-        onDeleteAccount={() => {
-          setSettingsOpen(false);
-          setTimeout(() => onDeleteAccount(), 200);
+        onDeleteAccount={handleDeleteAccount}
+      />
+      <DeleteAccountDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={async () => {
+          await onDeleteAccount();
+          setDeleteDialogOpen(false);
         }}
       />
     </div>

@@ -21,14 +21,49 @@
     --safe-area-left: env(safe-area-inset-left, 0px);
     --safe-area-right: env(safe-area-inset-right, 0px);
 
-    --blue-glow: oklch(0.5903 0.1492 252.0);
-    --cool-shadow: oklch(0.4993 0.0987 250.4);
+    --background: 60 20% 97%;
+    --foreground: 20 15% 10%;
+    --card: 40 15% 96%;
+    --card-foreground: 20 15% 10%;
+    --primary: 25 40% 15%;
+    --primary-foreground: 40 20% 96%;
+    --secondary: 30 10% 92%;
+    --secondary-foreground: 20 15% 25%;
+    --muted: 30 8% 88%;
+    --muted-foreground: 20 8% 45%;
+    --accent: 210 60% 35%;
+    --accent-foreground: 40 15% 96%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 10% 85%;
+    --input: 30 10% 88%;
+    --ring: 210 60% 35%;
+
+    --blue-glow: 210 65% 50%;
+    --cool-shadow: 210 50% 40%;
   }
 
-  :root[data-theme='dark'],
   .dark {
-    --blue-glow: oklch(0.6273 0.1257 250.5);
-    --cool-shadow: oklch(0.5439 0.1184 250.9);
+    --background: 20 15% 5%;
+    --foreground: 40 15% 92%;
+    --card: 20 12% 9%;
+    --card-foreground: 40 15% 92%;
+    --primary: 40 15% 92%;
+    --primary-foreground: 20 15% 5%;
+    --secondary: 20 10% 14%;
+    --secondary-foreground: 40 15% 85%;
+    --muted: 20 8% 18%;
+    --muted-foreground: 30 8% 55%;
+    --accent: 210 55% 45%;
+    --accent-foreground: 40 15% 96%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 20 8% 20%;
+    --input: 20 8% 18%;
+    --ring: 210 55% 45%;
+
+    --blue-glow: 210 60% 55%;
+    --cool-shadow: 210 55% 45%;
   }
 }
 
@@ -46,14 +81,14 @@
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Hahmlet', 'Pretendard', Georgia, serif;
+    font-family: 'Cormorant Garamond', 'Pretendard', Georgia, serif;
     font-weight: 600;
     letter-spacing: -0.02em;
   }
 
   ::selection {
-    background: var(--interactive-primary, oklch(0.4566 0.1043 251.2 / 0.3));
-    color: var(--text-primary);
+    background: hsl(var(--accent) / 0.3);
+    color: hsl(var(--foreground));
   }
 
   ::-webkit-scrollbar {
@@ -62,17 +97,17 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--surface-muted, oklch(0.9091 0.0042 67.5 / 0.5));
+    background: hsl(var(--muted) / 0.5);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--interactive-primary, oklch(0.4566 0.1043 251.2 / 0.4));
+    background: hsl(var(--accent) / 0.4);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--interactive-primary, oklch(0.4566 0.1043 251.2 / 0.6));
+    background: hsl(var(--accent) / 0.6);
   }
 }
 
@@ -93,27 +128,27 @@
 
   .cool-glow {
     box-shadow:
-      0 0 20px var(--blue-glow, oklch(0.5903 0.1492 252.0 / 0.15)),
-      0 0 40px var(--blue-glow, oklch(0.5903 0.1492 252.0 / 0.08)),
-      0 8px 32px var(--cool-shadow, oklch(0.4993 0.0987 250.4 / 0.12));
+      0 0 20px hsl(var(--blue-glow) / 0.15),
+      0 0 40px hsl(var(--blue-glow) / 0.08),
+      0 8px 32px hsl(var(--cool-shadow) / 0.12);
   }
 
   .cool-glow-hover:hover {
     box-shadow:
-      0 0 24px var(--blue-glow, oklch(0.5903 0.1492 252.0 / 0.25)),
-      0 0 48px var(--blue-glow, oklch(0.5903 0.1492 252.0 / 0.12)),
-      0 12px 40px var(--cool-shadow, oklch(0.4993 0.0987 250.4 / 0.18));
+      0 0 24px hsl(var(--blue-glow) / 0.25),
+      0 0 48px hsl(var(--blue-glow) / 0.12),
+      0 12px 40px hsl(var(--cool-shadow) / 0.18);
   }
 
   .text-gradient-cool {
-    background: linear-gradient(135deg, var(--interactive-primary) 0%, var(--interactive-primary, oklch(0.4566 0.1043 251.2 / 0.8)) 100%);
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent) / 0.8) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .border-glow {
-    border: 1px solid var(--interactive-primary, oklch(0.4566 0.1043 251.2 / 0.3));
+    border: 1px solid hsl(var(--accent) / 0.3);
   }
 
   .animate-float {

@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ['selector', '[data-theme="dark"]'],
+  darkMode: ["class"],
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -14,49 +14,49 @@ export default {
     },
     extend: {
       colors: {
-        border: "var(--border-default)",
-        input: "var(--border-default)",
-        ring: "var(--border-focus)",
-        background: "var(--surface-default)",
-        foreground: "var(--text-primary)",
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "var(--text-primary)",
-          foreground: "var(--surface-default)",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "var(--interactive-bg)",
-          foreground: "var(--interactive-text)",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "var(--state-error)",
-          foreground: "var(--text-inverse)",
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "var(--surface-muted)",
-          foreground: "var(--text-secondary)",
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "var(--interactive-primary)",
-          foreground: "var(--text-inverse)",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         card: {
-          DEFAULT: "var(--surface-subtle)",
-          foreground: "var(--text-primary)",
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
       },
       borderRadius: {
-        lg: "var(--radius-lg)",
-        md: "var(--radius-md)",
-        sm: "var(--radius-sm, 6px)",
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        display: ['Hahmlet', 'Georgia', 'serif'],
+        display: ['Cormorant Garamond', 'Georgia', 'serif'],
         sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       boxShadow: {
-        'cool': '0 4px 20px var(--cool-shadow, oklch(0.4993 0.0987 250.4 / 0.08))',
-        'cool-lg': '0 8px 32px var(--cool-shadow, oklch(0.4993 0.0987 250.4 / 0.12))',
-        'blue-glow': '0 0 20px var(--blue-glow, oklch(0.5903 0.1492 252.0 / 0.15)), 0 0 40px var(--blue-glow, oklch(0.5903 0.1492 252.0 / 0.08))',
+        'cool': '0 4px 20px hsl(var(--cool-shadow) / 0.08)',
+        'cool-lg': '0 8px 32px hsl(var(--cool-shadow) / 0.12)',
+        'blue-glow': '0 0 20px hsl(var(--blue-glow) / 0.15), 0 0 40px hsl(var(--blue-glow) / 0.08)',
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',

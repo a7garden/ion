@@ -4,9 +4,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
-  Input,
-} from '@/design-system';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   User,
   Globe,
@@ -86,16 +86,15 @@ export function SettingsModal({
                 <Input
                   value={nameInput}
                   onChange={e => setNameInput(e.target.value)}
-                  inputSize="small"
-                  className="flex-1"
+                  className="flex-1 h-8 text-[13px]"
                   maxLength={20}
                   autoFocus
                   onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') handleCancelName(); }}
                 />
-                <Button size="x-small" variant="ghost" onClick={handleSaveName} disabled={saving}>
+                <Button size="sm" variant="ghost" onClick={handleSaveName} disabled={saving}>
                   <Check className="w-3.5 h-3.5" />
                 </Button>
-                <Button size="x-small" variant="ghost" onClick={handleCancelName}>
+                <Button size="sm" variant="ghost" onClick={handleCancelName}>
                   <X className="w-3.5 h-3.5" />
                 </Button>
               </div>

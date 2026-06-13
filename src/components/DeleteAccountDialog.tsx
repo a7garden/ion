@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
-import { Button } from '@/design-system';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { AlertTriangle, Loader2 } from 'lucide-react';
-import { useI18n } from '@/i18n';
 
 interface DeleteAccountDialogProps {
   open: boolean;
@@ -11,8 +10,6 @@ interface DeleteAccountDialogProps {
 }
 
 export function DeleteAccountDialog({ open, onOpenChange, onConfirm }: DeleteAccountDialogProps) {
-  const { t, locale } = useI18n();
-  const confirmKeyword = t('deleteAccount.confirmKeyword');
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -27,7 +24,7 @@ export function DeleteAccountDialog({ open, onOpenChange, onConfirm }: DeleteAcc
     }
   }, [open]);
 
-  const canDelete = confirmText === confirmKeyword;
+  const canDelete = confirmText === '탈퇴';
 
   const handleConfirm = async () => {
     if (!canDelete) return;
@@ -47,21 +44,21 @@ export function DeleteAccountDialog({ open, onOpenChange, onConfirm }: DeleteAcc
           <div className="mx-auto mb-3 w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center">
             <AlertTriangle className="w-6 h-6 text-destructive" />
           </div>
-          <DialogTitle className="text-lg font-semibold text-foreground">{t('deleteAccount.title')}</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-foreground">회원 탈퇴</DialogTitle>
         </DialogHeader>
         <div className="relative px-5 sm:px-6 space-y-3">
           <div className="bg-muted/30 rounded-xl p-3 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
-            <p>{t('deleteAccount.warning')}</p>
+            <p>탈퇴 시 다음 데이터가 <span className="text-destructive font-medium">영구적으로 삭제</span>됩니다:</p>
             <ul className="list-disc list-inside space-y-1 pl-1">
-              <li>{t('deleteAccount.posts')}</li>
-              <li>{t('deleteAccount.likes')}</li>
-              <li>{t('deleteAccount.profile')}</li>
+              <li>작성한 모든 게시물과 미디어</li>
+              <li>좋아요, 공명, 차단 목록</li>
+              <li>행성 정보, 표시 이름</li>
             </ul>
-            <p className="pt-1">{t('deleteAccount.irreversible')}</p>
+            <p className="pt-1">이 작업은 되돌릴 수 없습니다.</p>
           </div>
           <div className="space-y-1.5">
             <label htmlFor="confirm-input" className="text-xs text-muted-foreground">
-              {locale === 'ko' ? '계속하려면 ' : 'Type '}<span className="font-mono font-bold text-destructive">{confirmKeyword}</span>{locale === 'ko' ? '를 입력하세요' : ' to continue'}
+              계속하려면 <span className="font-mono font-bold text-destructive">탈퇴</span>를 입력하세요
             </label>
             <input
               ref={inputRef}
@@ -69,7 +66,7 @@ export function DeleteAccountDialog({ open, onOpenChange, onConfirm }: DeleteAcc
               type="text"
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              placeholder={confirmKeyword}
+              placeholder="탈퇴"
               className="w-full px-3 py-2 border border-border/50 rounded-xl text-sm bg-transparent placeholder:text-muted-foreground/40 focus:ring-2 focus:ring-destructive/30 focus:border-destructive/50 outline-none"
               autoComplete="off"
               spellCheck={false}
@@ -83,14 +80,14 @@ export function DeleteAccountDialog({ open, onOpenChange, onConfirm }: DeleteAcc
             onClick={() => onOpenChange(false)}
             disabled={isDeleting}
           >
-            {t('deleteAccount.cancel')}
+            취소
           </Button>
           <Button
             className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl"
             onClick={handleConfirm}
             disabled={!canDelete || isDeleting}
           >
-            {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : t('deleteAccount.confirm')}
+            {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : '탈퇴하기'}
           </Button>
         </div>
       </DialogContent>

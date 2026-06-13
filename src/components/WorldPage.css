@@ -171,7 +171,7 @@
   height: 6px;
   -webkit-appearance: none;
   appearance: none;
-  background: var(--surface-muted);
+  background: hsl(var(--muted));
   border-radius: 3px;
   outline: none;
   cursor: pointer;
@@ -182,7 +182,7 @@
   appearance: none;
   width: 18px;
   height: 18px;
-  background: var(--text-primary);
+  background: hsl(var(--foreground));
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.1s ease;
@@ -196,7 +196,7 @@
 .world-page__slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
-  background: var(--text-primary);
+  background: hsl(var(--foreground));
   border: none;
   border-radius: 50%;
   cursor: pointer;

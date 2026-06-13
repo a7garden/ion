@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 import { PLANET_LIST } from '@/constants/planets';
 import type { PlanetKey } from '@/constants/planets';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
-import { useI18n } from '@/i18n';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface PlanetSelectorProps {
   open: boolean;
@@ -12,15 +11,14 @@ interface PlanetSelectorProps {
 }
 
 export function PlanetSelector({ open, onOpenChange, currentPlanet, onSelect }: PlanetSelectorProps) {
-  const { t, locale } = useI18n();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[360px] w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 warm-glow">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
         <DialogHeader className="relative px-5 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 text-center">
-          <DialogTitle className="text-lg sm:text-xl font-semibold text-foreground">{t('planetSelector.title')}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl font-semibold text-foreground">나의 행성 선택</DialogTitle>
           <p className="text-xs sm:text-sm text-muted-foreground/70 mt-1">
-            {t('planetSelector.subtitle')}
+            오직 나만 볼 수 있는 우주 아이덴티티입니다
           </p>
         </DialogHeader>
         <div className="relative px-5 sm:px-6 pb-5 sm:pb-6">
@@ -48,7 +46,7 @@ export function PlanetSelector({ open, onOpenChange, currentPlanet, onSelect }: 
                       : `0 1px 4px ${planet.glowColor}20`,
                   }}
                 />
-                <span className="text-[10px] text-muted-foreground leading-tight">{locale === 'ko' ? planet.nameKo : planet.name}</span>
+                <span className="text-[10px] text-muted-foreground leading-tight">{planet.nameKo}</span>
                 {currentPlanet === planet.key && (
                   <motion.div
                     className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-accent"
