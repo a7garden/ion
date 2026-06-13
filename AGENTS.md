@@ -1,33 +1,34 @@
-# Project Stack
+# Ion — "i'm alone"
 
-## Backend
-- **Supabase** — Auth (Google OAuth), PostgreSQL (RLS), Storage (post-media 버킷)
-- **Firebase Hosting** — 정적 SPA 배포 (`firebase deploy --only hosting`)
+수치 없는 SNS. 상호 좋아요 = 그래프 연결.
 
-## Frontend
-- React 19 + TypeScript + Vite
-- Tailwind CSS (다크/라이트 테마)
-- Framer Motion (카드 피직스, 트랜지션)
-- d3-force (월드 뷰 그래프 시뮬레이션)
+## Stack
+- **Supabase** — Auth (Google OAuth), PostgreSQL (RLS), Storage (`media` 버킷)
+- **Cloudflare Pages** — 정적 SPA 배포 (`npm run deploy`)
 
-## Environment Variables
-- `VITE_SUPABASE_URL` — Supabase 프로젝트 URL
-- `VITE_SUPABASE_ANON_KEY` — Supabase anon/public 키
-- `.env`에 설정, gitignore됨
+## Database
+3 tables: `profiles`, `posts`, `likes`
+- Supabase MCP로 마이그레이션 (`supabase_apply_migration`)
+- RPC: `feed_random()`, `mutual_connections()`
 
 ## Architecture
 - 백엔드 API 서버 없음
-- Supabase JS Client가 직접 DB 쿼리 (RLS로 보안)
-- Auth 상태는 `onAuthStateChange`로 감시
-- 낙관적 업데이트 (좋아요 토글 시 UI 먼저 반영, 실패 시 롤백)
+- Supabase JS Client → 직접 DB 쿼리 (RLS 보안)
+- `onAuthStateChange`로 auth 감시
+- 좋아요: 낙관적 업데이트 → 실패 시 롤백
 
-## Database
-- Supabase MCP (`supabase_apply_migration`) 으로 마이그레이션
-- RPC 함수 `get_random_unviewed_posts` — 무작위 피드 조회 (author + like_count 조인)
-- Storage 버킷 `post-media` — 공개 읽기, 인증 업로드
+## Environment
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (`.env`, gitignore)
+- Cloudflare Pages에서 환경변수 설정 필요
 
-## Key Conventions
-- 게시물 = "피드" 단위, 미디어 1개 (image | video) + 텍스트 (옵션)
-- 좋아요, 댓글, 팔로잉 수치 표시 없음
-- 상호 좋아요 = World 그래프의 간선
-- Supabase 타입: `src/lib/supabase.ts`에 정의, 프론트엔드 타입: `src/types/index.ts`
+## Key Rules
+- 피드 = 텍스트 + 미디어 1개 (image | video)
+- 좋아요 수, 댓글 수, 팔로워 수 표시 금지
+- 상호 좋아요 → World 그래프 간선
+- Types: `src/types/index.ts`, Supabase: `src/lib/supabase.ts`
+
+## Commands
+- `npm run dev` — 개발
+- `npm run build` — 빌드
+- `npm run deploy` — Cloudflare Pages 프로덕션 배포
+- `npm run deploy:preview` — Cloudflare Pages 프리뷰 배포
