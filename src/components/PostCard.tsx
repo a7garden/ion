@@ -11,9 +11,7 @@ interface PostCardProps {
   opacity: number;
   isDragging: boolean;
   isDeleteMode?: boolean;
-  isLiked: boolean;
   onClick: () => void;
-  onToggleLike: () => void;
   onDelete?: () => void;
 }
 
@@ -25,9 +23,7 @@ export function PostCard({
   opacity,
   isDragging,
   isDeleteMode,
-  isLiked,
   onClick,
-  onToggleLike,
   onDelete,
 }: PostCardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -194,7 +190,7 @@ export function PostCard({
     >
       <motion.div
         layoutId={`card-${post.id}`}
-        className={`w-full h-full bg-card rounded-2xl p-4 flex flex-col overflow-hidden transition-all duration-300 select-none ${
+        className={`w-full h-full bg-card rounded-2xl p-2.5 flex flex-col overflow-hidden transition-all duration-300 select-none ${
           isDeleteMode ? 'border-2 border-destructive' : 'border border-border/50'
         }`}
         style={{
@@ -208,7 +204,7 @@ export function PostCard({
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {post.media && (
-          <div className="mb-3 flex-shrink-0 relative">
+          <div className="mb-1.5 flex-shrink-0 relative">
             <div className="relative overflow-hidden rounded-xl">
               {(post.mediaType === 'video') ? (
                 <div className="relative">
@@ -240,42 +236,8 @@ export function PostCard({
           </div>
         )}
 
-        <div className="text-[11px] font-medium text-muted-foreground/80 flex-1 overflow-hidden line-clamp-4 leading-relaxed">
+        <div className="text-[11px] font-medium text-muted-foreground/80 flex-1 line-clamp-6 leading-relaxed">
           {post.content}
-        </div>
-
-        <div className="flex justify-center mt-auto pt-3 relative">
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
-          <motion.button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleLike();
-            }}
-            className="relative p-2 -mt-1 rounded-full hover:bg-accent/10 transition-colors duration-200"
-            whileTap={{ scale: 0.85 }}
-            whileHover={{ scale: 1.1 }}
-          >
-            <motion.svg
-              className={`w-5 h-5 transition-all duration-300 ${
-                isLiked
-                  ? 'fill-destructive stroke-destructive'
-                  : 'fill-none stroke-muted-foreground/60 hover:stroke-accent'
-              }`}
-              viewBox="0 0 24 24"
-              animate={isLiked ? { scale: [1, 1.3, 1] } : { scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </motion.svg>
-            {isLiked && (
-              <motion.div
-                className="absolute inset-0 rounded-full bg-destructive/20 blur-md"
-                initial={{ opacity: 0.6 }}
-                animate={{ opacity: [0.6, 0.2, 0.6] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-            )}
-          </motion.button>
         </div>
 
         {isDeleteMode && (

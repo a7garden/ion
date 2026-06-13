@@ -39,6 +39,7 @@ export function ExpandedCard({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
+            onClick={onClose}
           >
             <motion.div
               className="w-full max-w-md bg-card rounded-2xl sm:rounded-3xl border border-border/50 shadow-ds-xl shadow-glow overflow-hidden"
@@ -51,6 +52,7 @@ export function ExpandedCard({
                 stiffness: 300,
                 damping: 28,
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
 

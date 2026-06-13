@@ -10,16 +10,14 @@ import { useDeviceSize, getDynamicCardSize } from '@/hooks/useDeviceSize';
 
 interface FeedViewProps {
   posts: Post[];
-  likedIds: string[];
   onCardClick: (post: Post) => void;
-  onToggleLike: (postId: string) => void;
   onDelete: (postId: string) => void;
   onCreatePostClick: () => void;
   expandedPostId?: string | null;
   onRefetch: () => void;
 }
 
-function SwipeFeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, onCreatePostClick }: FeedViewProps) {
+function SwipeFeedView({ posts, onCardClick, onDelete, onCreatePostClick }: FeedViewProps) {
   const { zoomLevel } = useClient();
   const { width } = useDeviceSize();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -108,8 +106,6 @@ function SwipeFeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, o
     );
   }
 
-  const isLiked = likedIds.includes(currentPost.id);
-
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-card/10 grain-overlay">
       <div
@@ -133,12 +129,10 @@ function SwipeFeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, o
             opacity={1}
             isDragging={isDragging}
             isDeleteMode={isDeleteMode}
-            isLiked={isLiked}
             onClick={() => {
               if (isDeleteMode) return;
               onCardClick(currentPost);
             }}
-            onToggleLike={() => onToggleLike(currentPost.id)}
             onDelete={handleDelete}
           />
         </div>
@@ -167,7 +161,7 @@ function SwipeFeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, o
   );
 }
 
-export function FeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete, onCreatePostClick, expandedPostId, onRefetch }: FeedViewProps) {
+export function FeedView({ posts, onCardClick, onDelete, onCreatePostClick, expandedPostId, onRefetch }: FeedViewProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -184,9 +178,7 @@ export function FeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete,
     return (
       <SwipeFeedView
         posts={posts}
-        likedIds={likedIds}
         onCardClick={onCardClick}
-        onToggleLike={onToggleLike}
         onDelete={onDelete}
         onCreatePostClick={onCreatePostClick}
         onRefetch={onRefetch}
@@ -199,9 +191,7 @@ export function FeedView({ posts, likedIds, onCardClick, onToggleLike, onDelete,
       <FeedPhysics posts={posts} />
       <FeedCards
         posts={posts}
-        likedIds={likedIds}
         onCardClick={onCardClick}
-        onToggleLike={onToggleLike}
         onDelete={onDelete}
         expandedPostId={expandedPostId}
       />

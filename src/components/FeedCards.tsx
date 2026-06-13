@@ -11,14 +11,12 @@ interface CardPosition {
 
 interface FeedCardsProps {
   posts: Post[];
-  likedIds: string[];
   onCardClick: (post: Post, cardRect: CardPosition) => void;
-  onToggleLike: (postId: string) => void;
   onDelete: (postId: string) => void;
   expandedPostId?: string | null;
 }
 
-export function FeedCards({ posts, likedIds, onCardClick, onToggleLike, onDelete, expandedPostId }: FeedCardsProps) {
+export function FeedCards({ posts, onCardClick, onDelete, expandedPostId }: FeedCardsProps) {
   const positions = useSyncExternalStore(
     positionStore.subscribe,
     positionStore.getSnapshot
@@ -38,8 +36,6 @@ export function FeedCards({ posts, likedIds, onCardClick, onToggleLike, onDelete
 
         if (expandedPostId && pos.id === expandedPostId) return null;
 
-        const isLiked = likedIds.includes(pos.id);
-
         return (
           <PostCard
             key={pos.id}
@@ -50,9 +46,7 @@ export function FeedCards({ posts, likedIds, onCardClick, onToggleLike, onDelete
             opacity={pos.opacity}
             isDragging={pos.isDragging}
             isDeleteMode={deleteModeId === pos.id}
-            isLiked={isLiked}
             onClick={() => onCardClick(post, { x: pos.x, y: pos.y, size: pos.size })}
-            onToggleLike={() => onToggleLike(pos.id)}
             onDelete={() => handleDelete(pos.id)}
           />
         );

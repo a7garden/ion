@@ -91,9 +91,7 @@ export function FeedRoute() {
       <main className="pt-14 sm:pt-[64px] w-full h-screen relative flex">
         <FeedView
           posts={posts}
-          likedIds={likedIds}
           onCardClick={handleCardClick}
-          onToggleLike={handleToggleLike}
           onDelete={handleDismiss}
           onCreatePostClick={handleCreatePostClick}
           expandedPostId={expandedPostId}
