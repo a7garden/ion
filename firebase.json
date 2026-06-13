@@ -7,8 +7,5 @@
       "**/node_modules/**"
     ],
     "rewrites": []
-  },
-  "storage": {
-    "rules": "storage.rules"
   }
 }
