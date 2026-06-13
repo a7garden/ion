@@ -10,9 +10,11 @@ import { LoginModal } from '@/components/LoginModal';
 import { CreatePostModal } from '@/components/CreatePostModal';
 import { ExpandedCard } from '@/components/ExpandedCard';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { useI18n } from '@/i18n';
 import { useImageCropper } from '@/hooks/useImageCropper';
 
 export function FeedRoute() {
+  const { t } = useI18n();
   const { user, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const userId = user?.id ?? '';
@@ -75,9 +77,9 @@ export function FeedRoute() {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground mb-4">피드를 불러오지 못했습니다</p>
+          <p className="text-muted-foreground mb-4">{t('feedRoute.failed')}</p>
           <button onClick={() => refetch()} className="px-4 py-2 bg-accent text-accent-foreground rounded-xl">
-            다시 시도
+            {t('feedRoute.retry')}
           </button>
         </div>
       </div>

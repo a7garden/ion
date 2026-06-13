@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Check, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { useI18n } from '@/i18n';
 
 interface ImageCropModalProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface ImageCropModalProps {
 }
 
 export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }: ImageCropModalProps) {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageEl, setImageEl] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -127,8 +129,8 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[360px] w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 warm-glow">
         <DialogHeader className="relative px-5 sm:px-6 pt-5 sm:pt-6 pb-3 text-center">
-          <DialogTitle className="text-lg font-semibold text-foreground">이미지 크롭</DialogTitle>
-          <p className="text-xs text-muted-foreground/70 mt-1">정방형으로 크롭합니다</p>
+          <DialogTitle className="text-lg font-semibold text-foreground">{t('crop.title')}</DialogTitle>
+          <p className="text-xs text-muted-foreground/70 mt-1">{t('crop.subtitle')}</p>
         </DialogHeader>
         <div className="relative px-5 sm:px-6 flex flex-col items-center gap-3">
           <div className="relative rounded-xl overflow-hidden border border-border/30" style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}>
@@ -154,10 +156,10 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
         </div>
         <div className="relative px-5 sm:px-6 py-4 flex gap-2">
           <Button variant="ghost" className="flex-1 rounded-xl" onClick={() => onOpenChange(false)}>
-            <X className="w-4 h-4 mr-1" />취소
+            <X className="w-4 h-4 mr-1" />{t('crop.cancel')}
           </Button>
           <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl" onClick={handleCrop}>
-            <Check className="w-4 h-4 mr-1" />크롭
+            <Check className="w-4 h-4 mr-1" />{t('crop.crop')}
           </Button>
         </div>
       </DialogContent>

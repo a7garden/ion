@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X } from 'lucide-react';
 import { useUnseenResonancesQuery, useMarkResonanceSeen } from '@/hooks/queries/useResonances';
+import { useI18n } from '@/i18n';
 
 interface ResonanceNotificationProps {
   userId: string;
 }
 
 export function ResonanceNotification({ userId }: ResonanceNotificationProps) {
+  const { t, locale } = useI18n();
   const { data: resonances = [] } = useUnseenResonancesQuery(userId);
   const { mutate: markSeen } = useMarkResonanceSeen(userId);
   const [isOpen, setIsOpen] = useState(false);
@@ -58,7 +60,7 @@ export function ResonanceNotification({ userId }: ResonanceNotificationProps) {
               <div className="relative px-4 py-3 border-b border-border/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-semibold text-foreground">공명</span>
+                  <span className="text-sm font-semibold text-foreground">{t('resonance.title')}</span>
                 </div>
                 <button onClick={() => setIsOpen(false)} className="p-1 rounded-full hover:bg-muted">
                   <X className="w-3.5 h-3.5 text-muted-foreground" />
@@ -67,8 +69,8 @@ export function ResonanceNotification({ userId }: ResonanceNotificationProps) {
               <div className="relative max-h-[60vh] overflow-y-auto">
                 {resonances.length === 0 ? (
                   <div className="px-4 py-8 text-center">
-                    <p className="text-sm text-muted-foreground">아직 공명이 없습니다</p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">마음이 닿으면 여기에 나타납니다</p>
+                    <p className="text-sm text-muted-foreground">{t('resonance.empty')}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">{t('resonance.emptyHint')}</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-border/30">
@@ -78,10 +80,10 @@ export function ResonanceNotification({ userId }: ResonanceNotificationProps) {
                           <Sparkles className="w-4 h-4 text-accent" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground">누군가와 공명했습니다</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">두 우주가 잠시 겹쳤습니다</p>
+                          <p className="text-sm font-medium text-foreground">{t('resonance.someone')}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{t('resonance.twoUniverses')}</p>
                           <p className="text-[10px] text-muted-foreground/50 mt-1">
-                            {new Date(r.created_at).toLocaleDateString('ko-KR')}
+                            {new Date(r.created_at).toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US')}
                           </p>
                         </div>
                         <button

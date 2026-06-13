@@ -5,12 +5,14 @@ import { useUpdateProfile, useUpdatePlanet } from '@/hooks/queries/useProfile';
 import { MyPage as MyPageComponent } from '@/components/MyPage';
 import { useImageCropper } from '@/hooks/useImageCropper';
 import { useToast } from '@/components/ui/use-toast';
+import { useI18n } from '@/i18n';
 import { deleteAccount } from '@/lib/supabase';
 import type { PlanetKey } from '@/constants/planets';
 
 export function MyPageRoute() {
   const { user, logout, setPlanet, setDisplayName } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
   const userId = user?.id ?? '';
   const authorName = user?.displayName ?? '';
   const authorPlanet = user?.planet ?? 'moon';
@@ -48,10 +50,10 @@ export function MyPageRoute() {
     try {
       await deleteAccount(userId);
       await logout();
-      toast({ description: '탈퇴되었습니다', duration: 2000 });
+      toast({ description: t('myPageRoute.accountDeleted'), duration: 2000 });
     } catch (err) {
       console.error('Account deletion failed:', err);
-      toast({ description: '탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해주세요.', duration: 3000 });
+      toast({ description: t('myPageRoute.deleteFailed'), duration: 3000 });
       setDeletingAccount(false);
     }
   };
@@ -76,7 +78,7 @@ export function MyPageRoute() {
       {CropModal}
       {logoutToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 bg-card border border-border/50 rounded-xl text-sm text-foreground shadow-lg z-[999]">
-          Logged out
+          {t('myPageRoute.loggedOut')}
         </div>
       )}
     </>

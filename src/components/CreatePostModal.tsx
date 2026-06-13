@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Image, X, Loader2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
+import { useI18n } from '@/i18n';
 
 interface CreatePostModalProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface CreatePostModalProps {
 export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop }: CreatePostModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
 
   const handleSubmit = async () => {
     if (!content.trim() && !mediaFile) {
-      toast({ description: '내용 또는 사진/동영상을 추가해주세요', duration: 2000 });
+      toast({ description: t('createPost.requireContent'), duration: 2000 });
       return;
     }
 
@@ -82,11 +84,11 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
         mediaFile: mediaFile || undefined,
       });
 
-      toast({ description: '게시물이 생성되었습니다!', duration: 2000 });
+      toast({ description: t('createPost.created'), duration: 2000 });
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to create post:', error);
-      toast({ description: '게시물 생성에 실패했습니다', duration: 2000 });
+      toast({ description: t('createPost.failed'), duration: 2000 });
     } finally {
       setIsSubmitting(false);
     }
@@ -100,7 +102,7 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
         <DialogHeader className="relative border-b border-border/50 px-4 sm:px-6 py-4 sm:py-5">
           <DialogTitle className="text-lg sm:text-xl font-semibold text-foreground flex items-center gap-2">
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
-            새로운 피드
+            {t('createPost.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -117,7 +119,7 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
 
             <textarea
               className="w-full min-h-[100px] sm:min-h-[140px] resize-none border border-border/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 outline-none text-sm bg-transparent placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-all duration-200"
-              placeholder="무슨 생각을 하고 있나요?"
+              placeholder={t('createPost.placeholder')}
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />
@@ -181,8 +183,8 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-2 sm:mb-3">
                     <Image className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground/60" />
                   </div>
-                  <span className="text-xs sm:text-sm text-muted-foreground/70">사진 또는 동영상을 추가해주세요</span>
-                  <span className="text-xs text-muted-foreground/50 mt-1">또는 드래그하여 업로드</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground/70">{t('createPost.addMedia')}</span>
+                  <span className="text-xs text-muted-foreground/50 mt-1">{t('createPost.dragDrop')}</span>
                 </motion.div>
               )}
             </div>
@@ -205,7 +207,7 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
               className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center border-accent/30 hover:bg-accent/10 hover:border-accent/50 transition-all touch-target"
             >
               <Image className="w-4 h-4" />
-              <span>미디어</span>
+              <span>{t('createPost.media')}</span>
             </Button>
           </div>
 
@@ -217,12 +219,12 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                게시 중...
+                {t('createPost.posting')}
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                게시하기
+                {t('createPost.post')}
               </>
             )}
           </Button>

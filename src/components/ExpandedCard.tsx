@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Post } from '@/types';
 import { PlanetAvatar } from '@/components/PlanetAvatar';
+import { useI18n } from '@/i18n';
 
 interface ExpandedCardProps {
   open: boolean;
@@ -17,6 +18,7 @@ export function ExpandedCard({
   isLiked,
   onToggleLike,
 }: ExpandedCardProps) {
+  const { t } = useI18n();
   if (!post) return null;
 
   return (
@@ -77,8 +79,8 @@ export function ExpandedCard({
                 <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-5">
                   <PlanetAvatar planet={post.authorPlanet} size={40} />
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-foreground">{post.authorName || 'Anonymous'}</h2>
-                    <p className="text-xs text-muted-foreground">Posted recently</p>
+                    <h2 className="text-base sm:text-lg font-semibold text-foreground">{post.authorName || t('expanded.anonymous')}</h2>
+                    <p className="text-xs text-muted-foreground">{t('expanded.postedRecently')}</p>
                   </div>
                 </div>
 

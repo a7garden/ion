@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ion Design System — Visual Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Accent (Blue) Palette */
+    --accent-50: oklch(0.6566 0.1043 251.2);
+    --accent-100: oklch(0.6166 0.1043 251.2);
+    --accent-200: oklch(0.5766 0.1043 251.2);
+    --accent-300: oklch(0.5366 0.1043 251.2);
+    --accent-400: oklch(0.4966 0.1043 251.2);
+    --accent-500: oklch(0.4566 0.1043 251.2);
+    --accent-600: oklch(0.4166 0.1043 251.2);
+    --accent-700: oklch(0.3766 0.1043 251.2);
+    --accent-800: oklch(0.3366 0.1043 251.2);
+    --accent-900: oklch(0.2966 0.1043 251.2);
+    --accent-950: oklch(0.2566 0.1043 251.2);
+
+    /* Warm Neutral Palette */
+    --neutral-50: oklch(0.8059 0.0150 67.0);
+    --neutral-100: oklch(0.7659 0.0150 67.0);
+    --neutral-200: oklch(0.7259 0.0150 67.0);
+    --neutral-300: oklch(0.6859 0.0150 67.0);
+    --neutral-400: oklch(0.6459 0.0150 67.0);
+    --neutral-500: oklch(0.6059 0.0150 67.0);
+    --neutral-600: oklch(0.5659 0.0150 67.0);
+    --neutral-700: oklch(0.5259 0.0150 67.0);
+    --neutral-800: oklch(0.4859 0.0150 67.0);
+    --neutral-900: oklch(0.4459 0.0150 67.0);
+    --neutral-950: oklch(0.4059 0.0150 67.0);
+
+    /* Destructive (Red) Palette */
+    --red-50: oklch(0.7786 0.1800 27.2);
+    --red-100: oklch(0.7386 0.1800 27.2);
+    --red-200: oklch(0.6986 0.1800 27.2);
+    --red-300: oklch(0.6586 0.1800 27.2);
+    --red-400: oklch(0.6186 0.1800 27.2);
+    --red-500: oklch(0.5786 0.1800 27.2);
+    --red-600: oklch(0.5386 0.1800 27.2);
+    --red-700: oklch(0.4986 0.1800 27.2);
+    --red-800: oklch(0.4586 0.1800 27.2);
+    --red-900: oklch(0.4186 0.1800 27.2);
+    --red-950: oklch(0.3786 0.1800 27.2);
+
+    /* Semantic Tokens — Light Mode */
+    --bg: oklch(0.9809 0.0040 107.0);
+    --fg: oklch(0.2151 0.0095 48.2);
+    --card: oklch(0.9713 0.0028 84.6);
+    --card-fg: oklch(0.2151 0.0095 48.2);
+    --primary: oklch(0.2774 0.0350 56.2);
+    --primary-fg: oklch(0.9719 0.0038 84.6);
+    --secondary: oklch(0.9399 0.0034 67.4);
+    --secondary-fg: oklch(0.3698 0.0209 48.1);
+    --muted: oklch(0.9091 0.0042 67.5);
+    --muted-fg: oklch(0.5535 0.0180 48.3);
+    --accent: oklch(0.4566 0.1043 251.2);
+    --accent-fg: oklch(0.9713 0.0028 84.6);
+    --destructive: oklch(0.5786 0.2137 27.2);
+    --destructive-fg: oklch(0.9848 0.0001 263.3);
+    --border: oklch(0.8865 0.0066 67.6);
+
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.06);
+    --shadow-md: 0 4px 12px oklch(0 0 0 / 0.08);
+    --shadow-lg: 0 8px 24px oklch(0 0 0 / 0.12);
+    --shadow-glow: 0 0 20px oklch(0.5903 0.1492 252.0 / 0.15), 0 0 40px oklch(0.5903 0.1492 252.0 / 0.08);
+  }
+
+  [data-theme='dark'] {
+    --bg: oklch(0.1576 0.0051 48.3);
+    --fg: oklch(0.9424 0.0058 84.6);
+    --card: oklch(0.2040 0.0069 48.3);
+    --card-fg: oklch(0.9424 0.0058 84.6);
+    --primary: oklch(0.9424 0.0058 84.6);
+    --primary-fg: oklch(0.1576 0.0051 48.3);
+    --secondary: oklch(0.2585 0.0085 48.3);
+    --secondary-fg: oklch(0.8913 0.0111 84.6);
+    --muted: oklch(0.3002 0.0084 48.3);
+    --muted-fg: oklch(0.6462 0.0173 67.5);
+    --accent: oklch(0.5439 0.1184 250.9);
+    --accent-fg: oklch(0.9713 0.0028 84.6);
+    --destructive: oklch(0.5786 0.2137 27.2);
+    --destructive-fg: oklch(0.9848 0.0001 263.3);
+    --border: oklch(0.3205 0.0091 48.3);
+
+    --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.2);
+    --shadow-md: 0 4px 12px oklch(0 0 0 / 0.3);
+    --shadow-lg: 0 8px 24px oklch(0 0 0 / 0.4);
+    --shadow-glow: 0 0 20px oklch(0.6273 0.1257 250.5 / 0.2), 0 0 40px oklch(0.6273 0.1257 250.5 / 0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .preview-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* Header */
+  .preview-header {
+    text-align: center;
+    margin-bottom: 60px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-header h1 {
+    font-family: 'Hahmlet', Georgia, serif;
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .preview-header p {
+    color: var(--muted-fg);
+    font-size: 16px;
+  }
+
+  /* Theme Toggle */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    padding: 4px;
+    box-shadow: var(--shadow-md);
+  }
+  .theme-toggle button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    background: transparent;
+    color: var(--muted-fg);
+    transition: all 0.2s;
+  }
+  .theme-toggle button.active {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 60px;
+  }
+  .section-title {
+    font-family: 'Hahmlet', Georgia, serif;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Color Swatches */
+  .palette-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted-fg);
+  }
+  .swatch-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .swatch {
+    flex: 1;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 4px;
+    font-size: 10px;
+    font-weight: 500;
+    transition: transform 0.2s;
+    cursor: default;
+  }
+  .swatch:hover { transform: scaleY(1.1); }
+  .swatch-step { font-weight: 700; font-size: 11px; }
+  .swatch-value { opacity: 0.7; font-size: 8px; margin-top: 2px; }
+
+  /* Semantic Colors */
+  .semantic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .semantic-swatch {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+  }
+  .semantic-swatch-color {
+    height: 60px;
+  }
+  .semantic-swatch-info {
+    padding: 10px;
+    background: var(--card);
+  }
+  .semantic-swatch-name {
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .semantic-swatch-value {
+    font-size: 10px;
+    color: var(--muted-fg);
+    margin-top: 2px;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+  }
+
+  /* Typography */
+  .type-specimen { margin-bottom: 16px; }
+  .type-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted-fg);
+    margin-bottom: 4px;
+  }
+  .type-display {
+    font-family: 'Hahmlet', Georgia, serif;
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .type-h2 {
+    font-family: 'Hahmlet', Georgia, serif;
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .type-h3 {
+    font-family: 'Hahmlet', Georgia, serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+  .type-body-lg { font-size: 18px; line-height: 1.6; }
+  .type-body { font-size: 16px; line-height: 1.6; }
+  .type-body-sm { font-size: 14px; line-height: 1.5; }
+  .type-label-text { font-size: 13px; font-weight: 500; }
+  .type-caption { font-size: 11px; line-height: 1.4; color: var(--muted-fg); }
+  .type-button { font-size: 14px; font-weight: 500; }
+
+  .weight-specimen {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .weight-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .weight-value { font-size: 11px; color: var(--muted-fg); }
+
+  /* Spacing Scale */
+  .spacing-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .spacing-label {
+    width: 60px;
+    text-align: right;
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    color: var(--muted-fg);
+    flex-shrink: 0;
+  }
+  .spacing-bar {
+    height: 20px;
+    background: var(--accent);
+    border-radius: 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  .spacing-bar:hover { opacity: 1; }
+  .spacing-value {
+    font-size: 11px;
+    color: var(--muted-fg);
+    flex-shrink: 0;
+  }
+
+  /* Components */
+  .component-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  /* Preview Button */
+  .preview-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .preview-btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    box-shadow: var(--shadow-sm);
+  }
+  .preview-btn-primary:hover { opacity: 0.9; box-shadow: var(--shadow-md); }
+  .preview-btn-secondary {
+    background: var(--secondary);
+    color: var(--secondary-fg);
+  }
+  .preview-btn-secondary:hover { opacity: 0.9; }
+  .preview-btn-ghost {
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+  .preview-btn-ghost:hover { background: var(--muted); }
+  .preview-btn-destructive {
+    background: var(--destructive);
+    color: var(--destructive-fg);
+  }
+  .preview-btn-destructive:hover { opacity: 0.9; }
+  .preview-btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .preview-btn-outline:hover { background: var(--accent); color: var(--accent-fg); }
+  .preview-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Preview Card */
+  .preview-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: box-shadow 0.3s;
+  }
+  .preview-card:hover { box-shadow: var(--shadow-glow); }
+  .preview-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Hahmlet', Georgia, serif;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .preview-card-body { padding: 20px; }
+  .preview-card-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  /* Preview Input */
+  .preview-input-group { margin-bottom: 16px; }
+  .preview-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .preview-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .preview-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px oklch(0.4566 0.1043 251.2 / 0.15);
+  }
+  .preview-input::placeholder { color: var(--muted-fg); }
+  .preview-helper {
+    font-size: 12px;
+    color: var(--muted-fg);
+    margin-top: 4px;
+  }
+
+  /* Preview Badge */
+  .preview-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .preview-badge-default { background: var(--muted); color: var(--fg); }
+  .preview-badge-accent { background: oklch(0.4566 0.1043 251.2 / 0.15); color: var(--accent); }
+  .preview-badge-destructive { background: oklch(0.5786 0.2137 27.2 / 0.15); color: var(--destructive); }
+  .preview-badge-success { background: oklch(0.6 0.15 150 / 0.15); color: oklch(0.5 0.15 150); }
+
+  /* Radius preview */
+  .radius-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .radius-box {
+    width: 60px;
+    height: 60px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--accent-fg);
+    font-weight: 600;
+  }
+
+  /* Button row */
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+  <!-- Theme Toggle -->
+  <div class="theme-toggle">
+    <button class="active" onclick="setTheme('light')" id="btn-light">☀ Light</button>
+    <button onclick="setTheme('dark')" id="btn-dark">● Dark</button>
+  </div>
+
+  <div class="preview-container">
+    <!-- Header -->
+    <header class="preview-header">
+      <h1>Ion Design System</h1>
+      <p>Visual preview — partially extracted from codebase, with generated defaults filling gaps</p>
+    </header>
+
+    <!-- Color Palettes -->
+    <section class="section">
+      <h2 class="section-title">Color Palettes</h2>
+
+      <div class="palette-name">Accent (Blue) — Brand Primary</div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:var(--accent-50);color:oklch(0.2 0 0)"><span class="swatch-step">50</span><span class="swatch-value">0.66</span></div>
+        <div class="swatch" style="background:var(--accent-100);color:oklch(0.2 0 0)"><span class="swatch-step">100</span><span class="swatch-value">0.62</span></div>
+        <div class="swatch" style="background:var(--accent-200);color:oklch(0.2 0 0)"><span class="swatch-step">200</span><span class="swatch-value">0.58</span></div>
+        <div class="swatch" style="background:var(--accent-300);color:oklch(0.95 0 0)"><span class="swatch-step">300</span><span class="swatch-value">0.54</span></div>
+        <div class="swatch" style="background:var(--accent-400);color:oklch(0.95 0 0)"><span class="swatch-step">400</span><span class="swatch-value">0.50</span></div>
+        <div class="swatch" style="background:var(--accent-500);color:oklch(0.95 0 0)"><span class="swatch-step">500</span><span class="swatch-value">0.46</span></div>
+        <div class="swatch" style="background:var(--accent-600);color:oklch(0.95 0 0)"><span class="swatch-step">600</span><span class="swatch-value">0.42</span></div>
+        <div class="swatch" style="background:var(--accent-700);color:oklch(0.95 0 0)"><span class="swatch-step">700</span><span class="swatch-value">0.38</span></div>
+        <div class="swatch" style="background:var(--accent-800);color:oklch(0.95 0 0)"><span class="swatch-step">800</span><span class="swatch-value">0.34</span></div>
+        <div class="swatch" style="background:var(--accent-900);color:oklch(0.95 0 0)"><span class="swatch-step">900</span><span class="swatch-value">0.30</span></div>
+        <div class="swatch" style="background:var(--accent-950);color:oklch(0.95 0 0)"><span class="swatch-step">950</span><span class="swatch-value">0.26</span></div>
+      </div>
+
+      <div class="palette-name">Warm Neutral</div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:var(--neutral-50);color:oklch(0.3 0 0)"><span class="swatch-step">50</span></div>
+        <div class="swatch" style="background:var(--neutral-100);color:oklch(0.3 0 0)"><span class="swatch-step">100</span></div>
+        <div class="swatch" style="background:var(--neutral-200);color:oklch(0.3 0 0)"><span class="swatch-step">200</span></div>
+        <div class="swatch" style="background:var(--neutral-300);color:oklch(0.2 0 0)"><span class="swatch-step">300</span></div>
+        <div class="swatch" style="background:var(--neutral-400);color:oklch(0.2 0 0)"><span class="swatch-step">400</span></div>
+        <div class="swatch" style="background:var(--neutral-500);color:oklch(0.95 0 0)"><span class="swatch-step">500</span></div>
+        <div class="swatch" style="background:var(--neutral-600);color:oklch(0.95 0 0)"><span class="swatch-step">600</span></div>
+        <div class="swatch" style="background:var(--neutral-700);color:oklch(0.95 0 0)"><span class="swatch-step">700</span></div>
+        <div class="swatch" style="background:var(--neutral-800);color:oklch(0.95 0 0)"><span class="swatch-step">800</span></div>
+        <div class="swatch" style="background:var(--neutral-900);color:oklch(0.95 0 0)"><span class="swatch-step">900</span></div>
+        <div class="swatch" style="background:var(--neutral-950);color:oklch(0.95 0 0)"><span class="swatch-step">950</span></div>
+      </div>
+
+      <div class="palette-name">Destructive (Red)</div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:var(--red-50);color:oklch(0.2 0 0)"><span class="swatch-step">50</span></div>
+        <div class="swatch" style="background:var(--red-100);color:oklch(0.2 0 0)"><span class="swatch-step">100</span></div>
+        <div class="swatch" style="background:var(--red-200);color:oklch(0.95 0 0)"><span class="swatch-step">200</span></div>
+        <div class="swatch" style="background:var(--red-300);color:oklch(0.95 0 0)"><span class="swatch-step">300</span></div>
+        <div class="swatch" style="background:var(--red-400);color:oklch(0.95 0 0)"><span class="swatch-step">400</span></div>
+        <div class="swatch" style="background:var(--red-500);color:oklch(0.95 0 0)"><span class="swatch-step">500</span></div>
+        <div class="swatch" style="background:var(--red-600);color:oklch(0.95 0 0)"><span class="swatch-step">600</span></div>
+        <div class="swatch" style="background:var(--red-700);color:oklch(0.95 0 0)"><span class="swatch-step">700</span></div>
+        <div class="swatch" style="background:var(--red-800);color:oklch(0.95 0 0)"><span class="swatch-step">800</span></div>
+        <div class="swatch" style="background:var(--red-900);color:oklch(0.95 0 0)"><span class="swatch-step">900</span></div>
+        <div class="swatch" style="background:var(--red-950);color:oklch(0.95 0 0)"><span class="swatch-step">950</span></div>
+      </div>
+
+      <!-- Semantic Colors -->
+      <div class="palette-name" style="margin-top:32px">Semantic Roles</div>
+      <div class="semantic-grid">
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--bg)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Background</div><div class="semantic-swatch-value">oklch(0.98 0.004 107)</div></div></div>
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--fg)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Foreground</div><div class="semantic-swatch-value">oklch(0.22 0.010 48)</div></div></div>
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--card)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Card</div><div class="semantic-swatch-value">oklch(0.97 0.003 85)</div></div></div>
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--primary)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Primary</div><div class="semantic-swatch-value">oklch(0.28 0.035 56)</div></div></div>
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--secondary)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Secondary</div><div class="semantic-swatch-value">oklch(0.94 0.003 67)</div></div></div>
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--muted)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Muted</div><div class="semantic-swatch-value">oklch(0.91 0.004 68)</div></div></div>
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--accent)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Accent</div><div class="semantic-swatch-value">oklch(0.46 0.104 251)</div></div></div>
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--destructive)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Destructive</div><div class="semantic-swatch-value">oklch(0.58 0.214 27)</div></div></div>
+        <div class="semantic-swatch"><div class="semantic-swatch-color" style="background:var(--border)"></div><div class="semantic-swatch-info"><div class="semantic-swatch-name">Border</div><div class="semantic-swatch-value">oklch(0.89 0.007 68)</div></div></div>
+      </div>
+    </section>
+
+    <!-- Typography -->
+    <section class="section">
+      <h2 class="section-title">Typography</h2>
+
+      <div class="type-specimen">
+        <div class="type-label">Display / H1 — Hahmlet 48px / 600</div>
+        <div class="type-display">i'm alone</div>
+      </div>
+
+      <div class="type-specimen">
+        <div class="type-label">Heading / H2 — Hahmlet 36px / 600</div>
+        <div class="type-h2">수치 없는 SNS</div>
+      </div>
+
+      <div class="type-specimen">
+        <div class="type-label">Heading / H3 — Hahmlet 28px / 600</div>
+        <div class="type-h3">World Graph</div>
+      </div>
+
+      <div class="type-specimen">
+        <div class="type-label">Body Large — Pretendard 18px / 400</div>
+        <div class="type-body-lg">상호 좋아요가 만든 연결. 숫자 없이, 그래프로.</div>
+      </div>
+
+      <div class="type-specimen">
+        <div class="type-label">Body — Pretendard 16px / 400</div>
+        <div class="type-body">당신의 이야기를 올리고, 마음에 드는 게시물에 좋아요를 눌러보세요. 서로 좋아요하면 World 그래프에 연결선이 생깁니다.</div>
+      </div>
+
+      <div class="type-specimen">
+        <div class="type-label">Body Small — Pretendard 14px / 400</div>
+        <div class="type-body-sm">This is body text at the small size used in cards and secondary content areas.</div>
+      </div>
+
+      <div class="type-specimen">
+        <div class="type-label">Label — Pretendard 13px / 500</div>
+        <div class="type-label-text">입력 라벨 • 탭 이름 • 카테고리</div>
+      </div>
+
+      <div class="type-specimen">
+        <div class="type-label">Caption — Pretendard 11px / 400</div>
+        <div class="type-caption">This is caption text used for timestamps, hints, and supplementary information.</div>
+      </div>
+
+      <div class="type-specimen">
+        <div class="type-label">Button — Pretendard 14px / 500</div>
+        <div class="type-button">게시하기</div>
+      </div>
+
+      <h3 style="font-family:'Hahmlet',Georgia,serif;font-size:20px;font-weight:600;margin:24px 0 12px">Weight Variations</h3>
+      <div class="weight-specimen">
+        <div class="weight-item"><span style="font-weight:400">Regular 400</span><span class="weight-value">Body text</span></div>
+        <div class="weight-item"><span style="font-weight:500">Medium 500</span><span class="weight-value">Labels, buttons</span></div>
+        <div class="weight-item"><span style="font-weight:600">Semibold 600</span><span class="weight-value">Headings</span></div>
+        <div class="weight-item"><span style="font-weight:700">Bold 700</span><span class="weight-value">Emphasis</span></div>
+      </div>
+    </section>
+
+    <!-- Spacing Scale -->
+    <section class="section">
+      <h2 class="section-title">Spacing Scale</h2>
+      <div class="spacing-row"><span class="spacing-label">space-0.5</span><div class="spacing-bar" style="width:2px"></div><span class="spacing-value">2px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-1</span><div class="spacing-bar" style="width:4px"></div><span class="spacing-value">4px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-1.5</span><div class="spacing-bar" style="width:6px"></div><span class="spacing-value">6px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-2</span><div class="spacing-bar" style="width:8px"></div><span class="spacing-value">8px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-2.5</span><div class="spacing-bar" style="width:10px"></div><span class="spacing-value">10px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-3</span><div class="spacing-bar" style="width:12px"></div><span class="spacing-value">12px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-4</span><div class="spacing-bar" style="width:16px"></div><span class="spacing-value">16px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-5</span><div class="spacing-bar" style="width:20px"></div><span class="spacing-value">20px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-6</span><div class="spacing-bar" style="width:24px"></div><span class="spacing-value">24px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-8</span><div class="spacing-bar" style="width:32px"></div><span class="spacing-value">32px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-10</span><div class="spacing-bar" style="width:40px"></div><span class="spacing-value">40px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-12</span><div class="spacing-bar" style="width:48px"></div><span class="spacing-value">48px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-16</span><div class="spacing-bar" style="width:64px"></div><span class="spacing-value">64px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-20</span><div class="spacing-bar" style="width:80px"></div><span class="spacing-value">80px</span></div>
+      <div class="spacing-row"><span class="spacing-label">space-24</span><div class="spacing-bar" style="width:96px"></div><span class="spacing-value">96px</span></div>
+    </section>
+
+    <!-- Border Radius -->
+    <section class="section">
+      <h2 class="section-title">Border Radius</h2>
+      <div class="radius-row">
+        <div class="radius-box" style="border-radius:var(--radius-sm)">6px</div>
+        <div class="radius-box" style="border-radius:var(--radius-md)">12px</div>
+        <div class="radius-box" style="border-radius:var(--radius-lg)">16px</div>
+        <div class="radius-box" style="border-radius:var(--radius-full);width:60px;height:60px">Full</div>
+      </div>
+    </section>
+
+    <!-- Sample Components -->
+    <section class="section">
+      <h2 class="section-title">Sample Components</h2>
+
+      <!-- Buttons -->
+      <div style="margin-bottom:32px">
+        <div class="type-label" style="margin-bottom:12px">Buttons</div>
+        <div class="btn-row">
+          <button class="preview-btn preview-btn-primary">Primary</button>
+          <button class="preview-btn preview-btn-secondary">Secondary</button>
+          <button class="preview-btn preview-btn-ghost">Ghost</button>
+          <button class="preview-btn preview-btn-outline">Outline</button>
+          <button class="preview-btn preview-btn-destructive">Destructive</button>
+          <button class="preview-btn preview-btn-primary" disabled>Disabled</button>
+        </div>
+        <div class="btn-row">
+          <button class="preview-btn preview-btn-primary" style="border-radius:var(--radius-full);padding:10px 24px">Pill Primary</button>
+          <button class="preview-btn preview-btn-ghost" style="border-radius:var(--radius-full)">Pill Ghost</button>
+          <button class="preview-btn preview-btn-primary" style="width:40px;height:40px;padding:0;border-radius:var(--radius-full)">+</button>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div style="margin-bottom:32px">
+        <div class="type-label" style="margin-bottom:12px">Cards</div>
+        <div class="component-grid">
+          <div class="preview-card">
+            <div class="preview-card-header">Card Title</div>
+            <div class="preview-card-body">
+              <p style="font-size:14px;line-height:1.6">This is a sample card with header, body, and footer sections. The warm glow shadow appears on hover.</p>
+            </div>
+            <div class="preview-card-footer">
+              <button class="preview-btn preview-btn-ghost" style="padding:6px 14px;font-size:13px">Cancel</button>
+              <button class="preview-btn preview-btn-primary" style="padding:6px 14px;font-size:13px">Confirm</button>
+            </div>
+          </div>
+
+          <div class="preview-card">
+            <div class="preview-card-body">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <div style="width:40px;height:40px;border-radius:var(--radius-full);background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--accent-fg);font-weight:600;font-size:14px">W</div>
+                <div>
+                  <div style="font-weight:500;font-size:14px">username</div>
+                  <div style="font-size:12px;color:var(--muted-fg)">2분 전</div>
+                </div>
+              </div>
+              <p style="font-size:14px;line-height:1.6;margin-bottom:12px">오늘 하늘이 너무 예뻤다 🌤</p>
+              <div style="height:160px;background:var(--muted);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--muted-fg);font-size:13px">Photo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Fields -->
+      <div style="margin-bottom:32px">
+        <div class="type-label" style="margin-bottom:12px">Input Fields</div>
+        <div style="max-width:400px">
+          <div class="preview-input-group">
+            <label class="preview-label">Display Name</label>
+            <input class="preview-input" type="text" placeholder="Enter your name..." />
+            <div class="preview-helper">2–20 characters</div>
+          </div>
+          <div class="preview-input-group">
+            <label class="preview-label">Email</label>
+            <input class="preview-input" type="email" value="user@example.com" />
+          </div>
+          <div class="preview-input-group">
+            <label class="preview-label">Bio</label>
+            <textarea class="preview-input" rows="3" placeholder="Tell us about yourself..." style="resize:vertical"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div>
+        <div class="type-label" style="margin-bottom:12px">Badges</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="preview-badge preview-badge-default">Default</span>
+          <span class="preview-badge preview-badge-accent">Connected</span>
+          <span class="preview-badge preview-badge-destructive">Unliked</span>
+          <span class="preview-badge preview-badge-success">Mutual</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function setTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+      document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+    }
+    // Default to light
+    setTheme('light');
+  </script>
+</body>
+</html>

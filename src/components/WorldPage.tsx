@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useI18n } from '@/i18n';
 import { useClient } from '@/hooks/ClientProvider';
 import {
   forceSimulation,
@@ -131,6 +132,7 @@ function drawPlanet(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
 }
 
 export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, isLoading, isError, onRetry }: WorldPageProps) {
+  const { t } = useI18n();
   const { setZoomLevel } = useClient();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<GraphNode[]>([]);
@@ -607,9 +609,9 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
         <div className="world-page__backdrop" />
         <div className="fixed inset-0 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-muted-foreground mb-4">그래프를 불러오지 못했습니다</p>
+            <p className="text-muted-foreground mb-4">{t('world.failed')}</p>
             <button onClick={onRetry} className="px-4 py-2 bg-accent text-accent-foreground rounded-xl">
-              다시 시도
+              {t('world.retry')}
             </button>
           </div>
         </div>
@@ -624,12 +626,12 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
         <button
           className="world-page__btn"
           onClick={handleGoToMyNode}
-          title="내 위치로 이동"
+          title={t('world.goToMyLocation')}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
           </svg>
-          내 위치로 이동</button>
+          {t('world.goToMyLocation')}</button>
         <button
           className={`world-page__btn ${viewMode === 'full' ? 'world-page__btn--active' : ''}`}
           onClick={() => setViewMode(prev => prev === 'centered' ? 'full' : 'centered')}
@@ -641,7 +643,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
               <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 11 0 14 7 7 0 0 1 0-14z" />
             )}
           </svg>
-          {viewMode === 'full' ? '전체 보기' : '특정 보기'}
+          {viewMode === 'full' ? t('world.fullView') : t('world.centeredView')}
         </button>
       </div>
 
@@ -666,7 +668,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
               <circle cx="12" cy="12" r="3" />
               <path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83" />
             </svg>
-            연결 설정
+            {t('world.connectionSettings')}
           </div>
           <div className={`world-page__panel-toggle ${!panelOpen ? 'world-page__panel-toggle--collapsed' : ''}`}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -677,7 +679,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
         <div className={`world-page__panel-content ${!panelOpen ? 'world-page__panel-content--collapsed' : ''}`}>
           <div className="world-page__slider-group">
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">연결 강도</span>
+              <span className="world-page__slider-label">{t('world.linkStrength')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -690,7 +692,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
               <span className="world-page__slider-value">{cohesion.linkStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">충전 강도</span>
+              <span className="world-page__slider-label">{t('world.chargeStrength')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -703,7 +705,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
               <span className="world-page__slider-value">{cohesion.chargeStrength}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">충돌 강도</span>
+              <span className="world-page__slider-label">{t('world.collideStrength')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -716,7 +718,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
               <span className="world-page__slider-value">{cohesion.collideStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">중심</span>
+              <span className="world-page__slider-label">{t('world.center')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -729,7 +731,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
               <span className="world-page__slider-value">{cohesion.centerStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">링크 거리</span>
+              <span className="world-page__slider-label">{t('world.linkDistance')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -746,7 +748,7 @@ export function WorldPage({ posts, likedIds, currentUserId, currentUserPlanet, i
       </div>
 
       <div className="world-page__zoom-hint">
-        스크롤 / 핀치 줌으로 탐색
+        {t('world.exploreHint')}
       </div>
     </div>
   );

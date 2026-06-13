@@ -2,12 +2,14 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/hooks/AuthProvider';
 import { useClient } from '@/hooks/ClientProvider';
 import { Button } from '@/components/ui/button';
-import { Home, Globe, User, Sun, Moon } from 'lucide-react';
+import { Home, Globe, User, Sun, Moon, Languages } from 'lucide-react';
+import { useI18n } from '@/i18n';
 import { ResonanceNotification } from '@/components/ResonanceNotification';
 
 export function Header() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useClient();
+  const { t, locale, toggleLocale } = useI18n();
   const isLoggedIn = !!user;
 
   return (
@@ -31,7 +33,7 @@ export function Header() {
                 }`}
               >
                 <Home className="w-4 h-4" />
-                <span className="hidden sm:inline">Feed</span>
+                <span className="hidden sm:inline">{t('nav.feed')}</span>
                 {isActive && (
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-slow" />
                 )}
@@ -48,7 +50,7 @@ export function Header() {
                 }`}
               >
                 <Globe className="w-4 h-4" />
-                <span className="hidden sm:inline">World</span>
+                <span className="hidden sm:inline">{t('nav.world')}</span>
                 {isActive && (
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-slow" />
                 )}
@@ -65,7 +67,7 @@ export function Header() {
                 }`}
               >
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">{isLoggedIn ? 'My' : 'Login'}</span>
+                <span className="hidden sm:inline">{isLoggedIn ? t('nav.my') : t('nav.login')}</span>
                 {isActive && (
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-slow" />
                 )}
@@ -78,9 +80,19 @@ export function Header() {
         <Button
           variant="ghost"
           size="icon"
+          onClick={toggleLocale}
+          title={locale === 'ko' ? 'English' : '한국어'}
+          className="ml-1 sm:ml-2 hover:bg-accent/10 hover:text-accent transition-all duration-300 touch-target"
+        >
+          <Languages className="w-4 h-4" />
+          <span className="text-[10px] font-bold ml-0.5">{locale === 'ko' ? 'EN' : 'KO'}</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={toggleTheme}
-          title="Toggle Theme"
-          className="ml-2 sm:ml-4 hover:bg-accent/10 hover:text-accent transition-all duration-300 touch-target"
+          title={t('header.toggleTheme')}
+          className="ml-1 sm:ml-2 hover:bg-accent/10 hover:text-accent transition-all duration-300 touch-target"
         >
           {theme === 'white' ? (
             <Moon className="w-4 h-4" />

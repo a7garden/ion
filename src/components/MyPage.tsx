@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { PlanetAvatar } from '@/components/PlanetAvatar';
 import { PlanetSelector } from '@/components/PlanetSelector';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { useI18n } from '@/i18n';
 import type { PlanetKey } from '@/constants/planets';
 import type { Post } from '@/types';
 
@@ -44,6 +45,7 @@ export function MyPage({
   requestImageCrop,
 }: MyPageProps) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState(userName || '');
@@ -60,7 +62,7 @@ export function MyPage({
   const handleDelete = async (postId: string) => {
     setDeletingPostId(postId);
     onDeletePost(postId);
-    toast({ description: '삭제되었습니다', duration: 2000 });
+    toast({ description: t('myPage.deleted'), duration: 2000 });
     setDeletingPostId(null);
   };
 
@@ -78,9 +80,9 @@ export function MyPage({
     return (
       <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-y-auto pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)] grain-overlay">
         <div className="max-w-[600px] mx-auto px-4 sm:px-5 py-20 text-center">
-          <p className="text-muted-foreground mb-4">게시물을 불러오지 못했습니다</p>
+          <p className="text-muted-foreground mb-4">{t('myPage.failed')}</p>
           <button onClick={onRetry} className="px-4 py-2 bg-accent text-accent-foreground rounded-xl">
-            다시 시도
+            {t('myPage.retry')}
           </button>
         </div>
       </div>
@@ -117,22 +119,22 @@ export function MyPage({
                   <Button size="sm" variant="ghost" onClick={() => setIsEditingName(true)}><Settings className="w-4 h-4" /></Button>
                 </div>
               )}
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Alone, but not lonely</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('myPage.tagline')}</p>
             </div>
           </motion.div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-base sm:text-lg font-semibold text-foreground">My Posts</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">{t('myPage.myPosts')}</h2>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setCreatePostOpen(true)}
               className="gap-1.5 border-accent/30 hover:bg-accent/10">
-              <Plus className="w-4 h-4" /><span>New</span>
+              <Plus className="w-4 h-4" /><span>{t('myPage.new')}</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={onLogout}
               className="gap-1.5 hover:bg-destructive/10 hover:text-destructive">
-              <LogOut className="w-4 h-4" /><span>Logout</span>
+              <LogOut className="w-4 h-4" /><span>{t('myPage.logout')}</span>
             </Button>
           </div>
         </div>
@@ -143,9 +145,9 @@ export function MyPage({
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
               <Image className="w-8 h-8 text-muted-foreground/50" />
             </div>
-            <p className="text-muted-foreground mb-4">No posts yet</p>
+            <p className="text-muted-foreground mb-4">{t('myPage.noPosts')}</p>
             <Button onClick={() => setCreatePostOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Plus className="w-4 h-4 mr-2" />Create your first post
+              <Plus className="w-4 h-4 mr-2" />{t('myPage.createFirstPost')}
             </Button>
           </motion.div>
         ) : (
@@ -201,7 +203,7 @@ export function MyPage({
           onClick={() => setDeleteDialogOpen(true)}
           className="text-xs text-muted-foreground/60 hover:text-destructive transition-colors duration-200 underline-offset-4 hover:underline"
         >
-          회원 탈퇴
+          {t('myPage.deleteAccount')}
         </button>
       </div>
     </div>

@@ -1,0 +1,48 @@
+/* Dark theme — data-theme="dark" */
+/* Lightness inverted from light theme, hue/chroma preserved */
+
+[data-theme="dark"] {
+  --surface-default:  oklch(0.1576 0.0051 48.3);
+  --surface-subtle:   oklch(0.2040 0.0069 48.3);
+  --surface-muted:    oklch(0.3002 0.0084 48.3);
+  --surface-inverse:  oklch(0.9424 0.0058 84.6);
+
+  --text-primary:    oklch(0.9424 0.0058 84.6);
+  --text-secondary:  oklch(0.6462 0.0173 67.5);
+  --text-tertiary:   oklch(0.5659 0.0150 67.0);
+  --text-inverse:    oklch(0.1576 0.0051 48.3);
+  --text-disabled:   oklch(0.3741 0.0150 67.0);
+  --text-brand:      oklch(0.5439 0.1184 250.9);
+
+  --interactive-primary:        oklch(0.5439 0.1184 250.9);
+  --interactive-primary-hover:  oklch(0.5766 0.1184 250.9);
+  --interactive-primary-active: oklch(0.6166 0.1184 250.9);
+  --interactive-bg:             oklch(0.2585 0.0085 48.3);
+  --interactive-text:           oklch(0.8913 0.0111 84.6);
+
+  --border-subtle:  oklch(0.2585 0.0085 48.3);
+  --border-default: oklch(0.3205 0.0091 48.3);
+  --border-strong:  oklch(0.5659 0.0150 67.0);
+  --border-focus:   oklch(0.5439 0.1184 250.9);
+
+  --state-success:      oklch(0.65 0.17 150);
+  --state-success-bg:   oklch(0.65 0.17 150 / 0.20);
+  --state-warning:      oklch(0.72 0.18 75);
+  --state-warning-text: oklch(0.82 0.14 75);
+  --state-warning-bg:   oklch(0.72 0.18 75 / 0.20);
+  --state-error:        oklch(0.65 0.22 25);
+  --state-error-hover:  oklch(0.72 0.20 25);
+  --state-error-bg:     oklch(0.65 0.22 25 / 0.20);
+  --state-info:         oklch(0.5439 0.1184 250.9);
+  --state-info-bg:      oklch(0.5439 0.1184 250.9 / 0.20);
+
+  --shadow-sm:  0 1px 3px oklch(0 0 0 / 0.20);
+  --shadow-md:  0 4px 12px oklch(0 0 0 / 0.25);
+  --shadow-lg:  0 8px 24px oklch(0 0 0 / 0.30);
+  --shadow-xl:  0 16px 40px oklch(0 0 0 / 0.35);
+
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-full: 9999px;
+}
