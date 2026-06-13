@@ -4,7 +4,7 @@ import { ko } from './locales/ko';
 
 export type Locale = 'en' | 'ko';
 
-type TranslationKeys = keyof typeof en;
+export type TranslationKeys = keyof typeof en;
 type TranslationRecord = Record<TranslationKeys, string>;
 
 const LOCALE_STORAGE_KEY = 'ion_locale';

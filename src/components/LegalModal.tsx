@@ -4,7 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useI18n } from '@/i18n';
+import { useI18n, type TranslationKeys } from '@/i18n';
 
 interface LegalModalProps {
   open: boolean;
@@ -37,10 +37,10 @@ export function LegalModal({ open, onOpenChange, type }: LegalModalProps) {
           {keys.map((key) => (
             <section key={key}>
               <h3 className="text-sm font-semibold text-foreground mb-1.5">
-                {t(`${type}.${key}.title`)}
+                {t(`${type}.${key}.title` as TranslationKeys)}
               </h3>
               <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line">
-                {t(`${type}.${key}.content`)}
+                {t(`${type}.${key}.content` as TranslationKeys)}
               </p>
             </section>
           ))}
