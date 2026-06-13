@@ -1,18 +1,15 @@
 /* Light theme — data-theme="light" */
-/* Generated from semantic color tokens */
+/* Generated from semantic color tokens — only active tokens */
 
 [data-theme="light"] {
   --surface-default:  oklch(0.9809 0.0040 107.0);
   --surface-subtle:   oklch(0.9713 0.0028 84.6);
   --surface-muted:    oklch(0.9091 0.0042 67.5);
-  --surface-inverse:  oklch(0.2151 0.0095 48.2);
 
   --text-primary:    oklch(0.2151 0.0095 48.2);
-  --text-secondary:  oklch(0.5535 0.0180 48.3);
+  --text-secondary:  oklch(0.48 0.018 48.3);
   --text-tertiary:   oklch(0.6459 0.0150 67.0);
   --text-inverse:    oklch(0.9713 0.0028 84.6);
-  --text-disabled:   oklch(0.7259 0.0150 67.0);
-  --text-brand:      oklch(0.4566 0.1043 251.2);
 
   --interactive-primary:        oklch(0.4566 0.1043 251.2);
   --interactive-primary-hover:  oklch(0.4166 0.1043 251.2);
@@ -20,29 +17,18 @@
   --interactive-bg:             oklch(0.9399 0.0034 67.4);
   --interactive-text:           oklch(0.3698 0.0209 48.1);
 
-  --border-subtle:  oklch(0.9091 0.0042 67.5);
   --border-default: oklch(0.8865 0.0066 67.6);
   --border-strong:  oklch(0.6459 0.0150 67.0);
   --border-focus:   oklch(0.4566 0.1043 251.2);
 
-  --state-success:      oklch(0.55 0.17 150);
-  --state-success-bg:   oklch(0.55 0.17 150 / 0.15);
-  --state-warning:      oklch(0.55 0.18 75);
-  --state-warning-text: oklch(0.65 0.18 75);
-  --state-warning-bg:   oklch(0.55 0.18 75 / 0.15);
-  --state-error:        oklch(0.5786 0.2137 27.2);
-  --state-error-hover:  oklch(0.5386 0.2137 27.2);
-  --state-error-bg:     oklch(0.5786 0.2137 27.2 / 0.15);
-  --state-info:         oklch(0.4566 0.1043 251.2);
-  --state-info-bg:      oklch(0.4566 0.1043 251.2 / 0.15);
+  --state-error:       oklch(0.5786 0.2137 27.2);
+  --state-error-hover: oklch(0.5386 0.2137 27.2);
 
-  --shadow-sm:  0 1px 3px oklch(0 0 0 / 0.06);
-  --shadow-md:  0 4px 12px oklch(0 0 0 / 0.08);
-  --shadow-lg:  0 8px 24px oklch(0 0 0 / 0.12);
-  --shadow-xl:  0 16px 40px oklch(0 0 0 / 0.16);
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.06);
+  --shadow-xl: 0 16px 40px oklch(0 0 0 / 0.16);
 
-  --radius-sm:   6px;
-  --radius-md:   12px;
-  --radius-lg:   16px;
-  --radius-full: 9999px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --dialog-backdrop: oklch(0 0 0 / 0.4);
 }

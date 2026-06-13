@@ -43,6 +43,7 @@
     --cool-shadow: 210 50% 40%;
   }
 
+  :root[data-theme='dark'],
   .dark {
     --background: 20 15% 5%;
     --foreground: 40 15% 92%;
@@ -81,7 +82,7 @@
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Cormorant Garamond', 'Pretendard', Georgia, serif;
+    font-family: 'Hahmlet', 'Pretendard', Georgia, serif;
     font-weight: 600;
     letter-spacing: -0.02em;
   }

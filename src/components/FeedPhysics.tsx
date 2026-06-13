@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { positionStore } from '@/stores/positionStore';
 import { useClient } from '@/hooks/ClientProvider';
+import { useTheme } from '@/design-system';
 import { useDeviceSize, getCardCountForBreakpoint, getDynamicCardSize } from '@/hooks/useDeviceSize';
 import type { Post } from '@/types';
 
@@ -26,14 +27,15 @@ interface FeedPhysicsProps {
 }
 
 export function FeedPhysics({ posts }: FeedPhysicsProps) {
-  const { theme, zoomLevel } = useClient();
+  const { zoomLevel } = useClient();
+  const { theme } = useTheme();
   const { breakpoint, width } = useDeviceSize();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<FloatingNode[]>([]);
   const animationRef = useRef<number | undefined>(undefined);
   const initializedRef = useRef(false);
 
-  const isDarkMode = theme === 'black';
+  const isDarkMode = theme === 'dark';
   const isDarkModeRef = useRef(isDarkMode);
   const postsRef = useRef(posts);
 

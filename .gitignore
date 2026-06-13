@@ -23,6 +23,14 @@ dist-ssr
 *.sln
 *.sw?
 
+# Build artifacts
+*.tsbuildinfo
+coverage
+
+# AI agent working files
+*-result.md
+.design-farmer/
+
 # Environment variables
 .env
 .env.local

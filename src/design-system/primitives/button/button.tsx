@@ -6,7 +6,7 @@ const variants = {
   secondary: 'bg-[var(--interactive-bg)] text-[var(--interactive-text)] hover:bg-[var(--surface-muted)]',
   ghost:     'bg-transparent text-[var(--text-primary)] hover:bg-[var(--surface-muted)]',
   outline:   'bg-transparent text-[var(--text-primary)] shadow-[inset_0_0_0_1px_var(--border-default)] hover:shadow-[inset_0_0_0_1px_var(--border-strong)]',
-  destructive: 'bg-[var(--state-error)] text-white hover:bg-[var(--state-error-hover)]',
+  destructive: 'bg-[var(--state-error)] text-[var(--text-inverse)] hover:bg-[var(--state-error-hover)]',
 } as const;
 
 const sizes = {

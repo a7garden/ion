@@ -1,4 +1,4 @@
-import { forwardRef, type ComponentProps, type ReactNode } from 'react';
+import { forwardRef, type ComponentProps, type ComponentPropsWithoutRef } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { cn } from '../../utils/cn';
 
@@ -17,7 +17,7 @@ export const DialogOverlay = forwardRef<
     <DialogPrimitive.Overlay
       ref={ref}
       className={cn(
-        'fixed inset-0 z-[500] bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+        'fixed inset-0 z-[500] bg-[var(--dialog-backdrop)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         className,
       )}
       {...props}
@@ -60,8 +60,16 @@ export const DialogContent = forwardRef<
   );
 });
 
-export const DialogHeader = ({ className, ...props }: { className?: string; children?: ReactNode }) => (
-  <div className={cn('flex flex-col gap-1.5 mb-4', className)} {...props} />
+export const DialogHeader = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<'div'>>(
+  function DialogHeader({ className, ...props }, ref) {
+    return (
+      <div
+        ref={ref}
+        className={cn('flex flex-col gap-1.5 mb-4', className)}
+        {...props}
+      />
+    );
+  },
 );
 
 export const DialogTitle = forwardRef<

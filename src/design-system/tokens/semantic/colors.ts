@@ -61,12 +61,12 @@ export const dark = {
     tertiary:   'oklch(0.5659 0.0150 67.0)',  // neutral-600
     inverse:    'oklch(0.1576 0.0051 48.3)',  // bg dark
     disabled:   'oklch(0.3741 0.0150 67.0)',  // neutral-200 dark
-    brand:      'oklch(0.5439 0.1184 250.9)', // accent-500 dark
+    brand:      'oklch(0.65 0.12 250.9)', // brand accent (lightened for WCAG 4.5:1 against dark surface)
   },
   interactive: {
-    primary:        'oklch(0.5439 0.1184 250.9)', // accent-500 dark
-    primaryHover:   'oklch(0.5766 0.1184 250.9)', // accent-400 dark
-    primaryActive:  'oklch(0.6166 0.1184 250.9)', // accent-100 dark
+    primary:        'oklch(0.65 0.12 250.9)', // lightened for WCAG 4.5:1
+    primaryHover:   'oklch(0.68 0.11 250.9)',
+    primaryActive:  'oklch(0.72 0.10 250.9)',
     bg:             'oklch(0.2585 0.0085 48.3)',  // secondary dark
     text:           'oklch(0.8913 0.0111 84.6)',  // secondary-fg dark
   },

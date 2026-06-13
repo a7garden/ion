@@ -1,14 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/hooks/AuthProvider';
-import { useClient } from '@/hooks/ClientProvider';
-import { Button } from '@/components/ui/button';
+import { useTheme, Button } from '@/design-system';
 import { Home, Globe, User, Sun, Moon, Languages } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { ResonanceNotification } from '@/components/ResonanceNotification';
 
 export function Header() {
   const { user } = useAuth();
-  const { theme, toggleTheme } = useClient();
+  const { theme, toggleTheme } = useTheme();
   const { t, locale, toggleLocale } = useI18n();
   const isLoggedIn = !!user;
 
@@ -27,7 +26,7 @@ export function Header() {
             {({ isActive }) => (
               <Button
                 variant={isActive ? 'secondary' : 'ghost'}
-                size="sm"
+                size="small"
                 className={`gap-1.5 sm:gap-2 transition-all duration-200 touch-target ${
                   isActive ? 'shadow-sm bg-card border border-accent/20' : ''
                 }`}
@@ -44,7 +43,7 @@ export function Header() {
             {({ isActive }) => (
               <Button
                 variant={isActive ? 'secondary' : 'ghost'}
-                size="sm"
+                size="small"
                 className={`gap-1.5 sm:gap-2 transition-all duration-200 touch-target ${
                   isActive ? 'shadow-sm bg-card border border-accent/20' : ''
                 }`}
@@ -61,7 +60,7 @@ export function Header() {
             {({ isActive }) => (
               <Button
                 variant={isActive ? 'secondary' : 'ghost'}
-                size="sm"
+                size="small"
                 className={`gap-1.5 sm:gap-2 transition-all duration-200 touch-target ${
                   isActive ? 'shadow-sm bg-card border border-accent/20' : ''
                 }`}
@@ -79,22 +78,20 @@ export function Header() {
         {user && <ResonanceNotification userId={user.id} />}
         <Button
           variant="ghost"
-          size="icon"
+          className="ml-1 sm:ml-2 hover:bg-accent/10 hover:text-accent transition-all duration-300 touch-target w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)]"
           onClick={toggleLocale}
           title={locale === 'ko' ? 'English' : '한국어'}
-          className="ml-1 sm:ml-2 hover:bg-accent/10 hover:text-accent transition-all duration-300 touch-target"
         >
           <Languages className="w-4 h-4" />
           <span className="text-[10px] font-bold ml-0.5">{locale === 'ko' ? 'EN' : 'KO'}</span>
         </Button>
         <Button
           variant="ghost"
-          size="icon"
+          className="ml-1 sm:ml-2 hover:bg-accent/10 hover:text-accent transition-all duration-300 touch-target w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)]"
           onClick={toggleTheme}
           title={t('header.toggleTheme')}
-          className="ml-1 sm:ml-2 hover:bg-accent/10 hover:text-accent transition-all duration-300 touch-target"
         >
-          {theme === 'white' ? (
+          {theme === 'light' ? (
             <Moon className="w-4 h-4" />
           ) : (
             <Sun className="w-4 h-4" />

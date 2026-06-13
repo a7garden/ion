@@ -46,7 +46,7 @@ export const input = {
 export const card = {
   radius:         'var(--radius-lg)',
   shadow:         'var(--shadow-sm)',
-  padding:        'var(--space-4)',
+  padding:        '16px',
 } as const;
 
 export const dialog = {
