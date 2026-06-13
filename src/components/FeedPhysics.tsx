@@ -30,7 +30,7 @@ interface FeedPhysicsProps {
 }
 
 export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
-  const { state, deletePost } = useApp();
+  const { state } = useApp();
   const { breakpoint, width } = useDeviceSize();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<FloatingNode[]>([]);
@@ -41,6 +41,23 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
   const initializedRef = useRef(false);
 
   const isDarkMode = state.theme === 'black';
+
+  // Refs: 값 변경 시 애니메이션 재시작 방지
+  const selectedNodeRef = useRef<FloatingNode | null>(null);
+  const isDarkModeRef = useRef(isDarkMode);
+  const postsRef = useRef(state.posts);
+
+  useEffect(() => { selectedNodeRef.current = selectedNode; }, [selectedNode]);
+  useEffect(() => { isDarkModeRef.current = isDarkMode; }, [isDarkMode]);
+  useEffect(() => { postsRef.current = state.posts; }, [state.posts]);
+
+  // 게시물이 비어있으면(로그아웃 등) 초기화
+  useEffect(() => {
+    if (state.posts.length === 0) {
+      initializedRef.current = false;
+      nodesRef.current = [];
+    }
+  }, [state.posts]);
 
   const getCardCount = useCallback((zoomLevel: number): number => {
     return getCardCountForBreakpoint(breakpoint, zoomLevel);
@@ -104,10 +121,10 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
       if (!ctx) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = isDarkMode ? 'hsl(20, 15%, 5%)' : 'hsl(60, 20%, 97%)';
+      ctx.fillStyle = isDarkModeRef.current ? 'hsl(20, 15%, 5%)' : 'hsl(60, 20%, 97%)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const colors = isDarkMode ? {
+      const colors = isDarkModeRef.current ? {
         fill: 'hsl(20, 12%, 9%)',
         stroke: 'hsl(20, 8%, 20%)',
         selectedFill: 'hsl(38, 75%, 60% / 0.25)',
@@ -172,7 +189,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, Math.min(1, node.opacity));
 
-        const isSelected = selectedNode?.id === node.id;
+        const isSelected = selectedNodeRef.current?.id === node.id;
         const radius = node.size / 2;
 
         ctx.shadowColor = colors.shadow;
@@ -221,7 +238,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [state.userLikes, state.currentUser, selectedNode, isDarkMode, initNodes]);
+  }, [initNodes]);
 
   useEffect(() => {
     if (!canvasRef.current || state.posts.length === 0) return;
@@ -349,7 +366,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
       });
 
       if (clickedNode && draggingNodeIdRef.current !== clickedNode.id) {
-        const post = state.posts.find((p) => p.id === clickedNode.id);
+        const post = postsRef.current.find((p) => p.id === clickedNode.id);
         if (post) {
           onCardClick(post, { x: clickedNode.x, y: clickedNode.y, size: clickedNode.size });
         }
@@ -367,7 +384,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
       canvas.removeEventListener('pointerup', handlePointerUp);
       canvas.removeEventListener('dblclick', handleDoubleClick);
     };
-  }, [selectedNode, deletePost, onCardClick, onDelete]);
+  }, [onCardClick, onDelete]);
 
   return (
     <div className="fixed inset-0">

@@ -15,7 +15,7 @@ import type { Post } from '@/types';
 type View = 'feed' | 'world' | 'my';
 
 function AppContent() {
-  const { state, logout, toggleLike, loadRandomPosts, loadUserLikes, dismissPost } = useApp();
+  const { state, logout, toggleLike, loadRandomPosts, loadUserLikes, loadMyPosts, dismissPost } = useApp();
   const [currentView, setCurrentView] = useState<View>('feed');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
@@ -30,15 +30,23 @@ function AppContent() {
     }
   }, [state.currentUser, loadRandomPosts, loadUserLikes]);
 
+  // MyPage 진입 시 내 게시물 로드
+  useEffect(() => {
+    if (currentView === 'my' && state.currentUser) {
+      loadMyPosts(state.currentUser);
+    }
+  }, [currentView, state.currentUser, loadMyPosts]);
+
   const showToast = (message: string) => {
     toast({ description: message, duration: 2500 });
   };
 
   const handleToggleLike = async (postId: string, authorId: string) => {
+    const currentUser = state.currentUser || '';
+    const wasLiked = state.userLikes[currentUser]?.includes(postId) || false;
     await toggleLike(postId, authorId);
-    const currentUser = state.currentUser || 'guest';
-    const isLiked = state.userLikes[currentUser]?.includes(postId) || false;
-    if (isLiked) {
+    // 좋아요를 누른 경우(이전에 좋아요가 없었음)에만 토스트 표시
+    if (!wasLiked) {
       setTimeout(() => showToast(`Someone liked ${authorId}'s post`), 500);
     }
   };

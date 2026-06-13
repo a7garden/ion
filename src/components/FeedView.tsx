@@ -35,7 +35,7 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
 
   const posts = state.posts;
   const currentPost = posts[currentIndex];
-  const currentUser = state.currentUser || 'guest';
+    const currentUser = state.currentUser || '';
 
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current) {
@@ -73,9 +73,10 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
     }
 
     const threshold = window.innerWidth * 0.2;
-    if (translateX > threshold && currentIndex < posts.length - 1) {
+    // 왼쪽 스와이프 → 다음, 오른쪽 스와이프 → 이전 (캐러셀 표준)
+    if (translateX < -threshold && currentIndex < posts.length - 1) {
       setCurrentIndex(currentIndex + 1);
-    } else if (translateX < -threshold && currentIndex > 0) {
+    } else if (translateX > threshold && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
     setTranslateX(0);
@@ -141,7 +142,6 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
             isDragging={isDragging}
             isDeleteMode={isDeleteMode}
             isLiked={isLiked}
-            onPointerDown={handlePointerDown}
             onClick={() => {
               if (isDeleteMode) return;
               const rect = { x: width / 2, y: height / 2, size: getDynamicCardSize(width, state.zoomLevel) };

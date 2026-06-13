@@ -22,6 +22,8 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const handleGoogleLogin = async () => {
     try {
       await login();
+      // Supabase OAuth는 리다이렉트를 발생시키므로 아래 코드는 실행되지 않음.
+      // 리다이렉트 후 돌아오면 컴포넌트가 새로 마운트되어 모달은 기본적으로 닫힘.
       onOpenChange(false);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : '로그인에 실패했습니다';

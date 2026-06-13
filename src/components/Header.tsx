@@ -13,7 +13,7 @@ interface HeaderProps {
 export function Header({ currentView, onViewChange, onLoginClick }: HeaderProps) {
   const { state, toggleTheme } = useApp();
 
-  const isLoggedIn = state.currentUser && state.currentUser !== 'guest';
+  const isLoggedIn = !!state.currentUser;
 
   return (
     <header className="fixed top-0 left-0 right-0 h-14 sm:h-[64px] bg-background/80 backdrop-blur-xl border-b border-border/50 z-[500] flex items-center justify-center px-4 sm:px-6 pt-[var(--safe-area-top)]">

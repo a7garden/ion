@@ -99,7 +99,7 @@ export function ExpandedCard({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                   >
-                    {post.media.includes('video') || post.media.startsWith('data:video') ? (
+                    {post.mediaType === 'video' ? (
                       <video
                         src={post.media}
                         className="w-full max-h-[50vw] sm:max-h-72 object-cover"

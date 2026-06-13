@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useApp } from '@/hooks/AppProvider';
 import {
   forceSimulation,
@@ -144,7 +144,7 @@ export function WorldPage() {
   }, [cohesion]);
 
   const buildGraph = useCallback(() => {
-    const currentUser = state.currentUser || 'guest';
+    const currentUser = state.currentUser || '';
 
     const authorSet = new Set<string>();
     state.posts.forEach(post => authorSet.add(post.authorId));
@@ -359,6 +359,8 @@ export function WorldPage() {
     loop();
 
     return () => {
+      simulation.on('tick', null as any);
+      simulation.on('end', null as any);
       simulation.stop();
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -529,12 +531,12 @@ const handleWheel = useCallback((e: WheelEvent) => {
         <button
           className="world-page__btn"
           onClick={handleGoToMyNode}
-          title="???占쎈뱶占??占쎈룞"
+          title="내 위치로 이동"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 12h4m4 0h4m40h4M7 8l33-3 3m8-6l3 3-3 3" />
+            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
           </svg>
-          ???占쎈뱶占?        </button>
+          내 위치로 이동</button>
         <button
           className={`world-page__btn ${viewMode === 'full' ? 'world-page__btn--active' : ''}`}
           onClick={() => setViewMode(prev => prev === 'centered' ? 'full' : 'centered')}
@@ -571,7 +573,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <circle cx="12" cy="12" r="3" />
               <path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83" />
             </svg>
-            ?占쎌쭛???占쎌젙
+            연결 설정
           </div>
           <div className={`world-page__panel-toggle ${!panelOpen ? 'world-page__panel-toggle--collapsed' : ''}`}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -582,7 +584,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
         <div className={`world-page__panel-content ${!panelOpen ? 'world-page__panel-content--collapsed' : ''}`}>
           <div className="world-page__slider-group">
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">?占쎄껐 媛뺣룄</span>
+              <span className="world-page__slider-label">연결 강도</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -608,7 +610,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <span className="world-page__slider-value">{cohesion.chargeStrength}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">異⑸룎 諛⑼옙?</span>
+              <span className="world-page__slider-label">충돌 강도</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -621,7 +623,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <span className="world-page__slider-value">{cohesion.collideStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">以묐젰</span>
+              <span className="world-page__slider-label">중심</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -634,7 +636,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <span className="world-page__slider-value">{cohesion.centerStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">?占쎈뱶 嫄곕━</span>
+              <span className="world-page__slider-label">링크 거리</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -651,7 +653,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
       </div>
 
       <div className="world-page__zoom-hint">
-        ?占쏀겕占? ?占쏙옙?/異뺤냼 쨌 ?占쎈옒占? ?占쎈룞
+        스크롤 / 핀치 줌으로 탐색
       </div>
     </div>
   );

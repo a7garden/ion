@@ -17,7 +17,7 @@ interface FeedCardsProps {
 }
 
 export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProps) {
-  const { state, toggleLike } = useApp();
+  const { state } = useApp();
   const positions = useSyncExternalStore(
     positionStore.subscribe,
     positionStore.getSnapshot
@@ -27,7 +27,7 @@ export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProp
     positionStore.getDeleteModeId
   );
 
-  const currentUser = state.currentUser || 'guest';
+  const currentUser = state.currentUser || '';
 
   const handleDelete = useCallback((posId: string) => {
     onDelete(posId);
@@ -54,10 +54,7 @@ export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProp
             isDeleteMode={deleteModeId === pos.id}
             isLiked={isLiked}
             onClick={() => onCardClick(post, { x: pos.x, y: pos.y, size: pos.size })}
-            onToggleLike={() => {
-              toggleLike(pos.id, post.authorId);
-              onToggleLike(pos.id, post.authorId);
-            }}
+            onToggleLike={() => onToggleLike(pos.id, post.authorId)}
             onDelete={() => handleDelete(pos.id)}
           />
         );

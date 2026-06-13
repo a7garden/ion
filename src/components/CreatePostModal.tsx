@@ -28,14 +28,15 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const bgmInputRef = useRef<HTMLInputElement>(null);
 
+  // 모달이 닫힐 때 폼 상태 초기화
   useEffect(() => {
-    return () => {
+    if (!open) {
       setContent('');
       setMediaFile(null);
       setMediaPreview(null);
       setBgmFile(null);
-    };
-  }, []);
+    }
+  }, [open]);
 
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

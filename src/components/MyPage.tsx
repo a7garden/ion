@@ -23,9 +23,7 @@ export function MyPage({ onLogout }: MyPageProps) {
   const userPosts = state.posts.filter((post) => post.authorId === state.currentUser);
   const totalLikes = state.posts
     .filter(post => post.authorId === state.currentUser)
-    .reduce((count, post) => {
-      return count + Object.values(state.userLikes).filter(likes => likes.includes(post.id)).length;
-    }, 0);
+    .reduce((count, post) => count + (post.likeCount || 0), 0);
 
   const handleSaveDisplayName = async () => {
     if (!newDisplayName.trim()) return;
@@ -183,7 +181,7 @@ export function MyPage({ onLogout }: MyPageProps) {
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Heart className="w-3.5 h-3.5" />
                           <span>
-                            {Object.values(state.userLikes).filter(likes => likes.includes(post.id)).length} likes
+                            {post.likeCount || 0} likes
                           </span>
                         </div>
                         {post.bgm && (

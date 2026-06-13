@@ -28,7 +28,7 @@ function loadLocalData(): Partial<AppState> {
         likedPosts: parsed.likedPosts || [],
         zoomLevel: parsed.zoomLevel || 50,
         worldPageOpen: parsed.worldPageOpen || false,
-        userLikes: parsed.userLikes || {},
+        // userLikes는 DB에서 로드하므로 localStorage에 저장하지 않음
       };
     }
   } catch {
@@ -88,7 +88,7 @@ export function useAppState() {
       likedPosts: state.likedPosts,
       zoomLevel: state.zoomLevel,
       worldPageOpen: state.worldPageOpen,
-      userLikes: state.userLikes,
+      // userLikes는 DB에서 로드하므로 제외 (성능 + 동기화)
     });
   }, [state.theme, state.likedPosts, state.zoomLevel, state.worldPageOpen, state.userLikes]);
 
@@ -102,8 +102,6 @@ export function useAppState() {
           userName: user.display_name,
           userAvatar: user.avatar_url,
         }));
-        // 좋아요 목록 로드
-        loadUserLikes(user.id);
       } else {
         setState(prev => ({
           ...prev,
@@ -152,18 +150,31 @@ export function useAppState() {
     }));
   }, []);
 
+  const loadUserLikes = useCallback(async (userUid: string) => {
+    try {
+      const likedPostIds = await getUserLikedPostIds(userUid);
+      setState(prev => ({
+        ...prev,
+        userLikes: { ...prev.userLikes, [userUid]: likedPostIds },
+      }));
+    } catch (error) {
+      console.error('Failed to load user likes:', error);
+    }
+  }, []);
+
   const toggleLike = useCallback(async (postId: string, _authorId: string) => {
     const currentUser = state.currentUser;
     if (!currentUser) return;
 
-    const isCurrentlyLiked = state.userLikes[currentUser]?.includes(postId) || false;
+    // 낙관적 업데이트 - setState 내에서 최신 상태를 읽어 stale closure 방지
+    let isCurrentlyLiked = false;
 
-    // 낙관적 업데이트
     setState(prev => {
       const userLikes = { ...prev.userLikes };
       if (!userLikes[currentUser]) userLikes[currentUser] = [];
       const likes = [...userLikes[currentUser]];
       const index = likes.indexOf(postId);
+      isCurrentlyLiked = index !== -1;
 
       if (index === -1) {
         likes.push(postId);
@@ -189,7 +200,7 @@ export function useAppState() {
       // 롤백
       loadUserLikes(currentUser);
     }
-  }, [state.currentUser, state.userLikes]);
+  }, [state.currentUser, loadUserLikes]);
 
   const setZoomLevel = useCallback((level: number) => {
     setState(prev => ({
@@ -297,7 +308,7 @@ export function useAppState() {
     if (!currentUser) return false;
 
     try {
-      await deletePostFromDb(postId);
+      await deletePostFromDb(postId, currentUser);
       setState(prev => ({
         ...prev,
         posts: prev.posts.filter(p => p.id !== postId)
@@ -308,18 +319,6 @@ export function useAppState() {
       return false;
     }
   }, [state.currentUser]);
-
-  const loadUserLikes = useCallback(async (userUid: string) => {
-    try {
-      const likedPostIds = await getUserLikedPostIds(userUid);
-      setState(prev => ({
-        ...prev,
-        userLikes: { ...prev.userLikes, [userUid]: likedPostIds },
-      }));
-    } catch (error) {
-      console.error('Failed to load user likes:', error);
-    }
-  }, []);
 
   const handleUpdateDisplayName = useCallback(async (name: string) => {
     const currentUser = state.currentUser;

@@ -213,7 +213,9 @@ export async function getAllPosts(limit: number = 100): Promise<Post[]> {
     .from('posts')
     .select(`
       *,
-      profiles:author_id (display_name, username, avatar_url)
+      author_name:profiles!posts_author_id_fkey(display_name),
+      author_username:profiles!posts_author_id_fkey(username),
+      author_avatar:profiles!posts_author_id_fkey(avatar_url)
     `)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -222,9 +224,9 @@ export async function getAllPosts(limit: number = 100): Promise<Post[]> {
 
   return (data || []).map((p: any) => ({
     ...p,
-    author_name: p.profiles?.display_name,
-    author_username: p.profiles?.username,
-    author_avatar: p.profiles?.avatar_url,
+    author_name: p.author_name?.display_name ?? p.profiles?.display_name,
+    author_username: p.author_username?.username ?? p.profiles?.username,
+    author_avatar: p.author_avatar?.avatar_url ?? p.profiles?.avatar_url,
   }));
 }
 
@@ -233,7 +235,9 @@ export async function getUserPosts(userId: string, limit: number = 50): Promise<
     .from('posts')
     .select(`
       *,
-      profiles:author_id (display_name, username, avatar_url)
+      author_name:profiles!posts_author_id_fkey(display_name),
+      author_username:profiles!posts_author_id_fkey(username),
+      author_avatar:profiles!posts_author_id_fkey(avatar_url)
     `)
     .eq('author_id', userId)
     .order('created_at', { ascending: false })
@@ -243,17 +247,18 @@ export async function getUserPosts(userId: string, limit: number = 50): Promise<
 
   return (data || []).map((p: any) => ({
     ...p,
-    author_name: p.profiles?.display_name,
-    author_username: p.profiles?.username,
-    author_avatar: p.profiles?.avatar_url,
+    author_name: p.author_name?.display_name ?? p.profiles?.display_name,
+    author_username: p.author_username?.username ?? p.profiles?.username,
+    author_avatar: p.author_avatar?.avatar_url ?? p.profiles?.avatar_url,
   }));
 }
 
-export async function deletePost(postId: string): Promise<boolean> {
+export async function deletePost(postId: string, userId: string): Promise<boolean> {
   const { error } = await supabase
     .from('posts')
     .delete()
-    .eq('id', postId);
+    .eq('id', postId)
+    .eq('author_id', userId);
 
   if (error) throw error;
   return true;

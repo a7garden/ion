@@ -13,7 +13,6 @@ interface PostCardProps {
   onClick: () => void;
   onToggleLike: () => void;
   onDelete?: () => void;
-  onPointerDown?: (e: React.PointerEvent) => void;
 }
 
 export function PostCard({
@@ -63,12 +62,11 @@ export function PostCard({
         {post.media && (
           <div className="mb-3 flex-shrink-0 relative">
             <div className="relative overflow-hidden rounded-xl">
-              {post.media.includes('video') || post.media.startsWith('data:video') ? (
+              {(post.mediaType === 'video') ? (
                 <div className="relative">
                   <video
                     src={post.media}
                     className="w-full h-20 object-cover transition-transform duration-300 hover:scale-105"
-                    poster={post.mediaType === 'video' ? undefined : undefined}
                     preload="metadata"
                     playsInline
                     muted
