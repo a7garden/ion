@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
+import { Button } from '@/design-system';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
 import { LogIn, User } from 'lucide-react';

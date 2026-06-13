@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { PLANET_LIST } from '@/constants/planets';
 import type { PlanetKey } from '@/constants/planets';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
 import { useI18n } from '@/i18n';
 
 interface PlanetSelectorProps {

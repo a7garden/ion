@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
+import { Button } from '@/design-system';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useI18n } from '@/i18n';
 

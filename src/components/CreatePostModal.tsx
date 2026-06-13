@@ -1,12 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/AuthProvider';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
+import { Button } from '@/design-system';
 import { Image, X, Loader2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
@@ -202,7 +197,7 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
             />
             <Button
               variant="outline"
-              size="sm"
+              size="small"
               onClick={() => mediaInputRef.current?.click()}
               className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center border-accent/30 hover:bg-accent/10 hover:border-accent/50 transition-all touch-target"
             >

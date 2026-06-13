@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
+import { Button } from '@/design-system';
 import { Check, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useI18n } from '@/i18n';
 
@@ -143,13 +143,13 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
             />
           </div>
           <div className="flex items-center gap-2 w-full">
-            <Button variant="outline" size="icon" onClick={() => setZoom(z => Math.max(0.5, z - 0.1))} className="shrink-0">
+            <Button variant="outline" onClick={() => setZoom(z => Math.max(0.5, z - 0.1))} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)]">
               <ZoomOut className="w-4 h-4" />
             </Button>
             <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
               <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${(zoom - 0.5) / 2 * 100}%` }} />
             </div>
-            <Button variant="outline" size="icon" onClick={() => setZoom(z => Math.min(2.5, z + 0.1))} className="shrink-0">
+            <Button variant="outline" onClick={() => setZoom(z => Math.min(2.5, z + 0.1))} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)]">
               <ZoomIn className="w-4 h-4" />
             </Button>
           </div>

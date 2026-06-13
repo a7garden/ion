@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/design-system';
 import { CreatePostModal } from '@/components/CreatePostModal';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/design-system';
 import { Plus, LogOut, Image, Settings, Check, X, Trash2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/design-system';
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
 import { PlanetAvatar } from '@/components/PlanetAvatar';
@@ -110,13 +110,13 @@ export function MyPage({
                 <div className="flex items-center gap-2">
                   <Input value={newDisplayName} onChange={e => setNewDisplayName(e.target.value)}
                     className="w-32 sm:w-40 text-center rounded-xl" maxLength={20} autoFocus />
-                  <Button size="sm" variant="ghost" onClick={handleSaveName}><Check className="w-4 h-4" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setNewDisplayName(userName || ''); setIsEditingName(false); }}><X className="w-4 h-4" /></Button>
+                  <Button size="small" variant="ghost" onClick={handleSaveName}><Check className="w-4 h-4" /></Button>
+                  <Button size="small" variant="ghost" onClick={() => { setNewDisplayName(userName || ''); setIsEditingName(false); }}><X className="w-4 h-4" /></Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground">{userName}</h1>
-                  <Button size="sm" variant="ghost" onClick={() => setIsEditingName(true)}><Settings className="w-4 h-4" /></Button>
+                  <Button size="small" variant="ghost" onClick={() => setIsEditingName(true)}><Settings className="w-4 h-4" /></Button>
                 </div>
               )}
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('myPage.tagline')}</p>
@@ -128,11 +128,11 @@ export function MyPage({
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-base sm:text-lg font-semibold text-foreground">{t('myPage.myPosts')}</h2>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setCreatePostOpen(true)}
+            <Button variant="outline" size="small" onClick={() => setCreatePostOpen(true)}
               className="gap-1.5 border-accent/30 hover:bg-accent/10">
               <Plus className="w-4 h-4" /><span>{t('myPage.new')}</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={onLogout}
+            <Button variant="ghost" size="small" onClick={onLogout}
               className="gap-1.5 hover:bg-destructive/10 hover:text-destructive">
               <LogOut className="w-4 h-4" /><span>{t('myPage.logout')}</span>
             </Button>
@@ -169,7 +169,7 @@ export function MyPage({
                       <p className="text-sm text-foreground leading-relaxed mb-3 whitespace-pre-wrap">{post.content}</p>
                     )}
                     <div className="flex items-center justify-end pt-2 border-t border-border/30">
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(post.id)}
+                      <Button size="small" variant="ghost" onClick={() => handleDelete(post.id)}
                         disabled={deletingPostId === post.id}
                         className="hover:bg-destructive/10 hover:text-destructive">
                         <Trash2 className="w-4 h-4" />

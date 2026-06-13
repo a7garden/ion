@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { FeedPhysics } from './FeedPhysics';
 import { FeedCards } from './FeedCards';
 import { PostCard } from './PostCard';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/design-system';
 import type { Post } from '@/types';
 import { useClient } from '@/hooks/ClientProvider';
 import { useDeviceSize, getDynamicCardSize } from '@/hooks/useDeviceSize';
