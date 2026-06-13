@@ -154,7 +154,9 @@ export async function getUserPosts(userId: string): Promise<FeedRow[]> {
 }
 
 export async function deletePost(postId: string) {
-  const { error } = await supabase.from('posts').delete().eq('id', postId);
+  const { error } = await supabase.from('posts').delete()
+    .eq('id', postId)
+    .eq('author_id', (await supabase.auth.getUser()).data.user?.id ?? '');
   if (error) throw error;
 }
 

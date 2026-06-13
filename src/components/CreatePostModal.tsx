@@ -60,18 +60,10 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
     setIsSubmitting(true);
 
     try {
-      const newPost = {
-        authorId: state.currentUser,
-        authorName: state.userName || state.currentUser,
+      await addPost({
         content: content,
-        angle: Math.random() * 360,
-        radius: 0,
-        floatOffset: Math.random() * 2 - 1,
-        floatDelay: Math.random() * 3,
         mediaFile: mediaFile || undefined,
-      };
-
-      await addPost(newPost);
+      });
 
       toast({ description: '게시물이 생성되었습니다!', duration: 2000 });
       onOpenChange(false);

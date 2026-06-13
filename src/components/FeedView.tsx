@@ -17,7 +17,7 @@ interface CardPosition {
 
 interface FeedViewProps {
   onCardClick: (post: Post, cardRect: CardPosition) => void;
-  onToggleLike: (postId: string, authorId: string) => void;
+  onToggleLike: (postId: string) => void;
   onDelete: (postId: string) => void;
   onCreatePostClick: () => void;
 }

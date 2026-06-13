@@ -12,7 +12,7 @@ interface CardPosition {
 
 interface FeedCardsProps {
   onCardClick: (post: Post, cardRect: CardPosition) => void;
-  onToggleLike: (postId: string, authorId: string) => void;
+  onToggleLike: (postId: string) => void;
   onDelete: (postId: string) => void;
 }
 
@@ -51,7 +51,7 @@ export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProp
             isDeleteMode={deleteModeId === pos.id}
             isLiked={isLiked}
             onClick={() => onCardClick(post, { x: pos.x, y: pos.y, size: pos.size })}
-            onToggleLike={() => onToggleLike(pos.id, post.authorId)}
+            onToggleLike={() => onToggleLike(pos.id)}
             onDelete={() => handleDelete(pos.id)}
           />
         );

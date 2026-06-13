@@ -74,10 +74,14 @@ export function ExpandedCard({
                 </motion.button>
 
                 <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-5">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-sm">
-                    <span className="text-sm font-semibold text-primary-foreground">
-                      {post.authorId[0]?.toUpperCase()}
-                    </span>
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-sm overflow-hidden">
+                    {post.authorAvatar ? (
+                      <img src={post.authorAvatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-semibold text-primary-foreground">
+                        {post.authorName?.[0]?.toUpperCase() || '?'}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <h2 className="text-base sm:text-lg font-semibold text-foreground">{post.authorName || 'Anonymous'}</h2>
