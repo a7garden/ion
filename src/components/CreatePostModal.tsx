@@ -94,7 +94,7 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[150px] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 warm-glow">
+      <DialogContent className="sm:max-w-[150px] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 shadow-glow">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
 
         <DialogHeader className="relative border-b border-border/50 px-4 sm:px-6 py-4 sm:py-5">

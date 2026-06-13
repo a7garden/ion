@@ -142,7 +142,7 @@ export function MyPage({
           <div className="space-y-3 sm:space-y-4">
             {posts.map((post, idx) => (
               <motion.div key={post.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-                <Card className="overflow-hidden border-border/50 hover:border-accent/30 transition-all duration-300 warm-glow-hover">
+                <Card className="overflow-hidden border-border/50 hover:border-accent/30 transition-all duration-300 hover:shadow-glow transition-shadow">
                   <CardContent className="p-3 sm:p-4">
                     {post.media && (
                       <div className="mb-3 sm:mb-4 rounded-xl overflow-hidden">

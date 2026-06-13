@@ -202,7 +202,7 @@ export function PostCard({
             ? '0 0 30px hsl(var(--destructive) / 0.4)'
             : isDragging
             ? '0 20px 60px hsl(var(--warm-shadow) / 0.3), 0 0 25px hsl(var(--gold-glow) / 0.2)'
-            : '0 4px 20px hsl(var(--warm-shadow) / 0.08), 0 1px 3px hsl(var(--foreground) / 0.05)',
+            : 'var(--shadow-md)',
         }}
       >
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />

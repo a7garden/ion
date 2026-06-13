@@ -125,7 +125,7 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[360px] w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 warm-glow">
+      <DialogContent className="sm:max-w-[360px] w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 shadow-glow">
         <DialogHeader className="relative px-5 sm:px-6 pt-5 sm:pt-6 pb-3 text-center">
           <DialogTitle className="text-lg font-semibold text-foreground">이미지 크롭</DialogTitle>
           <p className="text-xs text-muted-foreground/70 mt-1">정방형으로 크롭합니다</p>

@@ -41,7 +41,7 @@ export function ExpandedCard({
             transition={{ duration: 0.15 }}
           >
             <motion.div
-              className="w-full max-w-md bg-card rounded-2xl sm:rounded-3xl border border-border/50 shadow-2xl overflow-hidden warm-glow"
+              className="w-full max-w-md bg-card rounded-2xl sm:rounded-3xl border border-border/50 shadow-ds-xl shadow-glow overflow-hidden"
               layoutId={`card-${post.id}`}
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}

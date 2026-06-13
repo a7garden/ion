@@ -54,9 +54,15 @@ export default {
         sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       boxShadow: {
-        'cool': '0 4px 20px hsl(var(--cool-shadow) / 0.08)',
-        'cool-lg': '0 8px 32px hsl(var(--cool-shadow) / 0.12)',
-        'blue-glow': '0 0 20px hsl(var(--blue-glow) / 0.15), 0 0 40px hsl(var(--blue-glow) / 0.08)',
+        'ds-sm': 'var(--shadow-sm)',
+        'ds-md': 'var(--shadow-md)',
+        'ds-lg': 'var(--shadow-lg)',
+        'ds-xl': 'var(--shadow-xl)',
+        'glow': 'var(--shadow-glow)',
+        // Legacy
+        'cool': 'var(--shadow-md)',
+        'cool-lg': 'var(--shadow-lg)',
+        'blue-glow': 'var(--shadow-glow)',
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',

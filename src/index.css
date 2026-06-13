@@ -74,6 +74,13 @@
     --state-success-bg: 150 50% 40%;
     --state-info: 225 32% 42%;
     --state-info-bg: 225 32% 42%;
+
+    /* === Shadow scale (DESIGN.md) === */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.16);
+    --shadow-glow: 0 0 20px hsl(var(--blue-glow) / 0.15), 0 0 40px hsl(var(--blue-glow) / 0.08);
   }
 
   .dark {
@@ -128,6 +135,13 @@
     --state-success-bg: 150 50% 40%;
     --state-info: 225 35% 48%;
     --state-info-bg: 225 35% 48%;
+
+    /* === Shadow scale (DESIGN.md) === */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.20);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.30);
+    --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.35);
+    --shadow-glow: 0 0 20px hsl(var(--blue-glow) / 0.15), 0 0 40px hsl(var(--blue-glow) / 0.08);
   }
 }
 
