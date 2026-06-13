@@ -8,27 +8,20 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
 import { LogIn, User } from 'lucide-react';
-import { signInWithGoogle } from '@/lib/firebase';
+import { useApp } from '@/hooks/AppProvider';
 
 interface LoginModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLoginSuccess?: (user: { uid: string; displayName: string | null; photoURL: string | null }) => void;
 }
 
-export function LoginModal({ open, onOpenChange, onLoginSuccess }: LoginModalProps) {
+export function LoginModal({ open, onOpenChange }: LoginModalProps) {
+  const { login } = useApp();
   const { toast } = useToast();
 
   const handleGoogleLogin = async () => {
     try {
-      const result = await signInWithGoogle();
-      const user = result.user;
-      onLoginSuccess?.({
-        uid: user.uid,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-      });
-      toast({ description: `${user.displayName}님 환영합니다!`, duration: 2000 });
+      await login();
       onOpenChange(false);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : '로그인에 실패했습니다';

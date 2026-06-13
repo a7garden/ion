@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Image, Music, X, Loader2, Sparkles } from 'lucide-react';
-import { uploadPostMedia } from '@/lib/firebase';
 import { motion } from 'framer-motion';
 
 interface CreatePostModalProps {
@@ -71,17 +70,6 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
     setIsSubmitting(true);
 
     try {
-      let mediaUrl: string | undefined;
-
-      if (mediaFile) {
-        mediaUrl = await uploadPostMedia(mediaFile, state.currentUser);
-      }
-
-      let bgmUrl: string | undefined;
-      if (bgmFile) {
-        bgmUrl = await uploadPostMedia(bgmFile, state.currentUser);
-      }
-
       const newPost = {
         authorId: state.currentUser,
         authorName: state.userName || state.currentUser,
@@ -90,8 +78,8 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
         radius: 0,
         floatOffset: Math.random() * 2 - 1,
         floatDelay: Math.random() * 3,
-        media: mediaUrl,
-        bgm: bgmUrl,
+        mediaFile: mediaFile || undefined,
+        bgmFile: bgmFile || undefined,
       };
 
       await addPost(newPost);

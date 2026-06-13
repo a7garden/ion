@@ -11,72 +11,35 @@ import { MyPage } from '@/components/MyPage';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/components/ui/use-toast';
 import type { Post } from '@/types';
-import { onAuthChange, getUserProfile } from '@/lib/firebase';
-import { upsertUser, getUserByUid } from '@/lib/neon';
 
 type View = 'feed' | 'world' | 'my';
 
 function AppContent() {
-  const { state, logout, toggleLike, login, setUserName, dismissPost, loadRandomPosts, loadUserLikes } = useApp();
+  const { state, logout, toggleLike, loadRandomPosts, loadUserLikes, dismissPost } = useApp();
   const [currentView, setCurrentView] = useState<View>('feed');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
   const [expandedPost, setExpandedPost] = useState<{ post: Post; cardRect: { x: number; y: number; size: number } } | null>(null);
   const { toast } = useToast();
 
+  // 로그인 후 데이터 로드
   useEffect(() => {
-    const unsubscribe = onAuthChange(async (user) => {
-      if (user) {
-        const profile = getUserProfile(user);
-        login(user.uid, 'firebase', profile.displayName);
-
-        try {
-          await upsertUser({
-            uid: profile.uid,
-            display_name: profile.displayName,
-            email: profile.email,
-            photo_url: profile.photoURL,
-          });
-
-          const existingUser = await getUserByUid(profile.uid);
-          if (existingUser?.display_name) {
-            setUserName(existingUser.display_name);
-          }
-        } catch (error) {
-          console.error('Failed to sync user to Neon:', error);
-        }
-      }
-    });
-    return () => unsubscribe();
-  }, [login, setUserName]);
-
-  useEffect(() => {
-    if (state.currentUser && state.currentUser !== 'guest') {
+    if (state.currentUser) {
       loadRandomPosts(state.currentUser, 10);
       loadUserLikes(state.currentUser);
     }
   }, [state.currentUser, loadRandomPosts, loadUserLikes]);
 
   const showToast = (message: string) => {
-    toast({
-      description: message,
-      duration: 2500,
-    });
-  };
-
-  const notifyAuthor = (postAuthor: string) => {
-    setTimeout(() => {
-      showToast(`Someone liked ${postAuthor}'s post`);
-    }, 500);
+    toast({ description: message, duration: 2500 });
   };
 
   const handleToggleLike = async (postId: string, authorId: string) => {
     await toggleLike(postId, authorId);
     const currentUser = state.currentUser || 'guest';
     const isLiked = state.userLikes[currentUser]?.includes(postId) || false;
-
     if (isLiked) {
-      notifyAuthor(authorId);
+      setTimeout(() => showToast(`Someone liked ${authorId}'s post`), 500);
     }
   };
 
@@ -88,8 +51,8 @@ function AppContent() {
     setExpandedPost(null);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     showToast('Logged out');
   };
 
@@ -100,7 +63,7 @@ function AppContent() {
     }
   };
 
-  const isLoggedIn = state.currentUser && state.currentUser !== 'guest';
+  const isLoggedIn = !!state.currentUser;
 
   const handleCreatePostClick = () => {
     if (!isLoggedIn) {
@@ -159,7 +122,7 @@ function AppContent() {
         post={expandedPost?.post ?? null}
         isLiked={
           expandedPost
-            ? (state.userLikes[state.currentUser || 'guest']?.includes(expandedPost.post.id) ?? false)
+            ? (state.userLikes[state.currentUser || '']?.includes(expandedPost.post.id) ?? false)
             : false
         }
         onToggleLike={() => {

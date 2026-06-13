@@ -1,7 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AppState, Post } from '@/types';
 import { DEFAULT_STATE, STORAGE_KEY } from '@/constants';
-import { getRandomPosts, createPost as createPostInDb, deletePost as deletePostFromDb, markPostAsViewed, addLike, removeLike, getUserLikedPostIds, type NeonPost } from '@/lib/neon';
+import {
+  signInWithGoogle as supabaseSignInWithGoogle,
+  signOut as supabaseSignOut,
+  onAuthChange,
+  getRandomUnviewedPosts,
+  getUserPosts,
+  createPost as createPostInDb,
+  deletePost as deletePostFromDb,
+  markPostAsViewed,
+  addLike,
+  removeLike,
+  getUserLikedPostIds,
+  updateDisplayName as updateDisplayNameInDb,
+  uploadPostMedia,
+  type Post as SupabasePost,
+} from '@/lib/supabase';
 
 function loadLocalData(): Partial<AppState> {
   try {
@@ -16,7 +31,7 @@ function loadLocalData(): Partial<AppState> {
         userLikes: parsed.userLikes || {},
       };
     }
-  } catch (e) {
+  } catch {
     console.log('LocalStorage unavailable');
   }
   return {};
@@ -27,23 +42,28 @@ function saveLocalData(data: Partial<AppState>) {
     const existing = localStorage.getItem(STORAGE_KEY);
     const parsed = existing ? JSON.parse(existing) : {};
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...parsed, ...data }));
-  } catch (e) {
+  } catch {
     console.log('LocalStorage unavailable');
   }
 }
 
-function neonPostToPost(neonPost: NeonPost): Post {
+function supabasePostToPost(sp: SupabasePost): Post {
   return {
-    id: neonPost.id,
-    authorId: neonPost.author_uid,
-    authorName: neonPost.author_name,
-    content: neonPost.content,
-    angle: neonPost.angle,
-    radius: neonPost.radius,
-    floatOffset: neonPost.float_offset,
-    floatDelay: neonPost.float_delay,
-    media: neonPost.media_url || undefined,
-    bgm: neonPost.bgm_name || undefined,
+    id: sp.id,
+    authorId: sp.author_id,
+    authorName: (sp as any).author_name || (sp as any).profiles?.display_name || 'Anonymous',
+    authorAvatar: (sp as any).author_avatar || (sp as any).profiles?.avatar_url,
+    content: sp.content || '',
+    angle: sp.angle,
+    radius: sp.radius,
+    floatOffset: sp.float_offset,
+    floatDelay: sp.float_delay,
+    media: sp.media_url || undefined,
+    mediaType: sp.media_type || undefined,
+    bgm: sp.bgm_url || undefined,
+    bgmName: sp.bgm_name || undefined,
+    likeCount: (sp as any).like_count,
+    createdAt: sp.created_at,
   };
 }
 
@@ -56,10 +76,12 @@ export function useAppState() {
     posts: [],
     currentUser: null,
     userName: null,
+    userAvatar: null,
   }));
 
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
+  // 로컬 상태 저장
   useEffect(() => {
     saveLocalData({
       theme: state.theme,
@@ -70,14 +92,54 @@ export function useAppState() {
     });
   }, [state.theme, state.likedPosts, state.zoomLevel, state.worldPageOpen, state.userLikes]);
 
+  // 인증 상태 감시
+  useEffect(() => {
+    const { data: { subscription } } = onAuthChange((user) => {
+      if (user) {
+        setState(prev => ({
+          ...prev,
+          currentUser: user.id,
+          userName: user.display_name,
+          userAvatar: user.avatar_url,
+        }));
+        // 좋아요 목록 로드
+        loadUserLikes(user.id);
+      } else {
+        setState(prev => ({
+          ...prev,
+          currentUser: null,
+          userName: null,
+          userAvatar: null,
+          posts: [],
+          isAdmin: false,
+        }));
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const loadRandomPosts = useCallback(async (userUid: string, limit: number = 10) => {
     setIsLoadingPosts(true);
     try {
-      const neonPosts = await getRandomPosts(userUid, limit);
-      const posts = neonPosts.map(neonPostToPost);
+      const supabasePosts = await getRandomUnviewedPosts(userUid, limit);
+      const posts = supabasePosts.map(supabasePostToPost);
       setState(prev => ({ ...prev, posts }));
     } catch (error) {
       console.error('Failed to load posts:', error);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }, []);
+
+  const loadMyPosts = useCallback(async (userUid: string) => {
+    setIsLoadingPosts(true);
+    try {
+      const supabasePosts = await getUserPosts(userUid);
+      const posts = supabasePosts.map(supabasePostToPost);
+      setState(prev => ({ ...prev, posts }));
+    } catch (error) {
+      console.error('Failed to load my posts:', error);
     } finally {
       setIsLoadingPosts(false);
     }
@@ -96,27 +158,23 @@ export function useAppState() {
 
     const isCurrentlyLiked = state.userLikes[currentUser]?.includes(postId) || false;
 
+    // 낙관적 업데이트
     setState(prev => {
       const userLikes = { ...prev.userLikes };
-      if (!userLikes[currentUser]) {
-        userLikes[currentUser] = [];
-      }
+      if (!userLikes[currentUser]) userLikes[currentUser] = [];
       const likes = [...userLikes[currentUser]];
       const index = likes.indexOf(postId);
 
       if (index === -1) {
         likes.push(postId);
-        if (!prev.likedPosts.includes(postId)) {
-          return {
-            ...prev,
-            userLikes,
-            likedPosts: [...prev.likedPosts, postId]
-          };
-        }
-        return { ...prev, userLikes };
+        return {
+          ...prev,
+          userLikes: { ...userLikes, [currentUser]: likes },
+          likedPosts: prev.likedPosts.includes(postId) ? prev.likedPosts : [...prev.likedPosts, postId]
+        };
       } else {
         likes.splice(index, 1);
-        return { ...prev, userLikes };
+        return { ...prev, userLikes: { ...userLikes, [currentUser]: likes } };
       }
     });
 
@@ -127,7 +185,9 @@ export function useAppState() {
         await addLike(currentUser, postId);
       }
     } catch (error) {
-      console.error('Failed to update like in DB:', error);
+      console.error('Failed to update like:', error);
+      // 롤백
+      loadUserLikes(currentUser);
     }
   }, [state.currentUser, state.userLikes]);
 
@@ -138,82 +198,84 @@ export function useAppState() {
     }));
   }, []);
 
-  const login = useCallback((id: string, pw: string, displayName?: string | null) => {
-    if (id === 'admin' && pw === '1234') {
-      setState(prev => ({
-        ...prev,
-        currentUser: 'admin',
-        userName: 'Admin',
-        isAdmin: true
-      }));
-      return { success: true, message: 'Welcome, admin' };
-    } else if (id && pw) {
-      setState(prev => ({
-        ...prev,
-        currentUser: id,
-        userName: displayName || null,
-        isAdmin: false
-      }));
-      return { success: true, message: `Welcome, ${displayName || id}` };
+  const login = useCallback(async () => {
+    try {
+      await supabaseSignInWithGoogle();
+    } catch (error) {
+      console.error('Google login failed:', error);
     }
-    return { success: false, message: 'Please enter ID and Password' };
   }, []);
 
   const setUserName = useCallback((name: string) => {
-    setState(prev => ({
-      ...prev,
-      userName: name
-    }));
+    setState(prev => ({ ...prev, userName: name }));
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await supabaseSignOut();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
     setState(prev => ({
       ...prev,
       currentUser: null,
       userName: null,
+      userAvatar: null,
       posts: [],
-      isAdmin: false
+      isAdmin: false,
     }));
   }, []);
 
   const setWorldPageOpen = useCallback((open: boolean) => {
-    setState(prev => ({
-      ...prev,
-      worldPageOpen: open
-    }));
+    setState(prev => ({ ...prev, worldPageOpen: open }));
   }, []);
 
   const goToMain = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      worldPageOpen: false
-    }));
+    setState(prev => ({ ...prev, worldPageOpen: false }));
   }, []);
 
-  const addPost = useCallback(async (post: Omit<Post, 'id'>) => {
+  const addPost = useCallback(async (post: Omit<Post, 'id'> & { mediaFile?: File; bgmFile?: File }) => {
+    const currentUser = state.currentUser;
+    if (!currentUser) throw new Error('Not logged in');
+
     try {
-      const neonPost = await createPostInDb({
-        author_uid: post.authorId,
-        author_name: post.authorName || 'Anonymous',
+      let mediaUrl: string | undefined;
+      let mediaType: 'image' | 'video' | 'audio' | undefined;
+
+      if (post.mediaFile) {
+        const result = await uploadPostMedia(post.mediaFile, currentUser);
+        mediaUrl = result.url;
+        mediaType = result.type;
+      }
+
+      let bgmUrl: string | undefined;
+      if (post.bgmFile) {
+        const result = await uploadPostMedia(post.bgmFile, currentUser);
+        bgmUrl = result.url;
+      }
+
+      const supabasePost = await createPostInDb({
+        author_id: currentUser,
         content: post.content,
-        media_url: post.media,
-        bgm_name: post.bgm,
+        media_url: mediaUrl,
+        media_type: mediaType,
+        bgm_url: bgmUrl,
+        bgm_name: post.bgmName,
         angle: post.angle,
         radius: post.radius,
         float_offset: post.floatOffset,
         float_delay: post.floatDelay,
       });
 
-      const newPost = neonPostToPost(neonPost);
-      setState(prev => ({
-        ...prev,
-        posts: [newPost, ...prev.posts]
-      }));
+      const newPost = supabasePostToPost(supabasePost);
+      newPost.authorName = state.userName || 'Anonymous';
+
+      setState(prev => ({ ...prev, posts: [newPost, ...prev.posts] }));
     } catch (error) {
       console.error('Failed to create post:', error);
       throw error;
     }
-  }, []);
+  }, [state.currentUser, state.userName]);
 
   const dismissPost = useCallback(async (postId: string) => {
     const currentUser = state.currentUser;
@@ -235,14 +297,12 @@ export function useAppState() {
     if (!currentUser) return false;
 
     try {
-      const success = await deletePostFromDb(postId, currentUser);
-      if (success) {
-        setState(prev => ({
-          ...prev,
-          posts: prev.posts.filter(p => p.id !== postId)
-        }));
-      }
-      return success;
+      await deletePostFromDb(postId);
+      setState(prev => ({
+        ...prev,
+        posts: prev.posts.filter(p => p.id !== postId)
+      }));
+      return true;
     } catch (error) {
       console.error('Failed to delete post:', error);
       return false;
@@ -254,15 +314,24 @@ export function useAppState() {
       const likedPostIds = await getUserLikedPostIds(userUid);
       setState(prev => ({
         ...prev,
-        userLikes: {
-          ...prev.userLikes,
-          [userUid]: likedPostIds,
-        },
+        userLikes: { ...prev.userLikes, [userUid]: likedPostIds },
       }));
     } catch (error) {
       console.error('Failed to load user likes:', error);
     }
   }, []);
+
+  const handleUpdateDisplayName = useCallback(async (name: string) => {
+    const currentUser = state.currentUser;
+    if (!currentUser || !name.trim()) return;
+
+    try {
+      await updateDisplayNameInDb(currentUser, name.trim());
+      setUserName(name.trim());
+    } catch (error) {
+      console.error('Failed to update display name:', error);
+    }
+  }, [state.currentUser]);
 
   return {
     state,
@@ -279,6 +348,8 @@ export function useAppState() {
     dismissPost,
     deletePost,
     loadRandomPosts,
+    loadMyPosts,
     loadUserLikes,
+    updateDisplayName: handleUpdateDisplayName,
   };
 }

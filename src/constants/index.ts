@@ -31,6 +31,7 @@ export const DEFAULT_STATE = {
   worldPageOpen: false,
   currentUser: null,
   userName: null,
+  userAvatar: null,
   userLikes: {},
   isAdmin: false
 };

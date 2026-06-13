@@ -5,7 +5,6 @@ import { CreatePostModal } from '@/components/CreatePostModal';
 import { Button } from '@/components/ui/button';
 import { Plus, LogOut, Heart, Image, Settings, Check, X, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { updateUserDisplayName } from '@/lib/neon';
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -14,7 +13,7 @@ interface MyPageProps {
 }
 
 export function MyPage({ onLogout }: MyPageProps) {
-  const { state, setUserName, deletePost } = useApp();
+  const { state, deletePost, updateDisplayName } = useApp();
   const { toast } = useToast();
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -30,14 +29,8 @@ export function MyPage({ onLogout }: MyPageProps) {
 
   const handleSaveDisplayName = async () => {
     if (!newDisplayName.trim()) return;
-
-    try {
-      await updateUserDisplayName(state.currentUser!, newDisplayName.trim());
-      setUserName(newDisplayName.trim());
-      setIsEditingName(false);
-    } catch (error) {
-      console.error('Failed to update display name:', error);
-    }
+    await updateDisplayName(newDisplayName.trim());
+    setIsEditingName(false);
   };
 
   const handleCancelEdit = () => {
