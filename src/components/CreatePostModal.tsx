@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-syste
 import { Button } from '@/design-system';
 import { Image, X, Loader2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 
 interface CreatePostModalProps {
@@ -16,7 +16,6 @@ interface CreatePostModalProps {
 
 export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop }: CreatePostModalProps) {
   const { user } = useAuth();
-  const { toast } = useToast();
   const { t } = useI18n();
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -67,7 +66,7 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
 
   const handleSubmit = async () => {
     if (!content.trim() && !mediaFile) {
-      toast({ description: t('createPost.requireContent'), duration: 2000 });
+      toast(t('createPost.requireContent'), { duration: 2000 });
       return;
     }
 
@@ -79,11 +78,11 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
         mediaFile: mediaFile || undefined,
       });
 
-      toast({ description: t('createPost.created'), duration: 2000 });
+      toast(t('createPost.created'), { duration: 2000 });
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to create post:', error);
-      toast({ description: t('createPost.failed'), duration: 2000 });
+      toast(t('createPost.failed'), { duration: 2000 });
     } finally {
       setIsSubmitting(false);
     }

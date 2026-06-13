@@ -36,16 +36,25 @@ export const ko = {
   'myPage.tagline': 'Alone, but not lonely',
   'myPage.myPosts': '내 게시물',
   'myPage.new': '새 글',
-  'myPage.logout': '로그아웃',
   'myPage.noPosts': '아직 게시물이 없습니다',
   'myPage.createFirstPost': '첫 게시물 작성하기',
   'myPage.deleted': '삭제되었습니다',
-  'myPage.deleteAccount': '회원 탈퇴',
+  'myPage.settings': '설정',
 
   // MyPageRoute
   'myPageRoute.loggedOut': '로그아웃되었습니다',
   'myPageRoute.accountDeleted': '탈퇴되었습니다',
   'myPageRoute.deleteFailed': '탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해주세요.',
+
+  // SettingsModal
+  'settings.title': '설정',
+  'settings.displayName': '표시 이름',
+  'settings.planet': '행성',
+  'settings.language': '언어',
+  'settings.logout': '로그아웃',
+  'settings.privacyPolicy': '개인정보 처리방침',
+  'settings.termsOfService': '이용약관',
+  'settings.deleteAccount': '회원 탈퇴',
 
   // DeleteAccountDialog
   'deleteAccount.title': '회원 탈퇴',
@@ -68,12 +77,13 @@ export const ko = {
   'expanded.anonymous': '익명',
   'expanded.postedRecently': '방금 전',
 
-  // ResonanceNotification
-  'resonance.title': '공명',
-  'resonance.empty': '아직 공명이 없습니다',
-  'resonance.emptyHint': '마음이 닿으면 여기에 나타납니다',
-  'resonance.someone': '누군가와 공명했습니다',
-  'resonance.twoUniverses': '두 우주가 잠시 겹쳤습니다',
+  // NotificationCenter
+  'notification.title': '알림',
+  'notification.empty': '아직 알림이 없습니다',
+  'notification.emptyHint': '새로운 소식이 도착하면 여기에 표시됩니다',
+  'notification.markAllRead': '모두 읽음',
+  'notification.resonance': '누군가와 공명했습니다',
+  'notification.resonanceDescription': '두 우주가 잠시 겹쳤습니다',
 
   // PlanetSelector
   'planetSelector.title': '나의 행성 선택',
@@ -107,6 +117,43 @@ export const ko = {
   'report.submit': '신고하기',
   'report.reported': '신고되었습니다',
   'report.failed': '신고에 실패했습니다',
+
+  // Legal Pages (shared)
+  'legal.back': '뒤로',
+  'legal.lastUpdated': '최종 업데이트',
+  'legal.tagline': '혼자지만, 외롭지 않은',
+
+  // Privacy Policy
+  'privacy.title': '개인정보 처리방침',
+  'privacy.updated': '2026년 6월 13일',
+  'privacy.collection.title': '수집하는 정보',
+  'privacy.collection.content': 'ION은 Google 로그인을 통해 이메일 주소와 프로필 정보를 수집합니다. 또한 사용자가 작성한 게시물, 미디어 파일, 좋아요, 공명(호감) 정보를 저장합니다. Google 로그인 외에 추가적인 개인정보를 요구하지 않습니다.',
+  'privacy.use.title': '정보의 사용',
+  'privacy.use.content': '수집된 정보는 서비스 제공, 피드 표시, 월드 그래프 생성, 공명(호감) 감지 기능에 사용됩니다. 사용자의 개인정보는 제3자와 공유되지 않습니다.',
+  'privacy.sharing.title': '정보의 공유',
+  'privacy.sharing.content': 'ION은 사용자의 개인정보를 판매하거나 제3자와 공유하지 않습니다. 게시물과 상호작용 데이터는 서비스 내에서만 표시됩니다.',
+  'privacy.security.title': '보안',
+  'privacy.security.content': '모든 데이터는 Supabase를 통해 암호화되어 저장됩니다. 인증은 Google OAuth를 통해 처리되며, 데이터 접근은 RLS(Row Level Security) 정책으로 제한됩니다.',
+  'privacy.retention.title': '데이터 보관',
+  'privacy.retention.content': '사용자가 직접 계정을 삭제하기 전까지 데이터는 유지됩니다. 계정 삭제 시 모든 게시물, 미디어, 좋아요, 공명, 차단 목록이 영구적으로 삭제됩니다.',
+  'privacy.contact.title': '문의',
+  'privacy.contact.content': '개인정보 관련 문의는 서비스 내 설정 페이지를 통해 연락해 주세요.',
+
+  // Terms of Service
+  'terms.title': '이용약관',
+  'terms.updated': '2026년 6월 13일',
+  'terms.acceptance.title': '약관 동의',
+  'terms.acceptance.content': 'ION을 사용함으로써 본 이용약관에 동의하는 것으로 간주됩니다. 약관에 동의하지 않는 경우 서비스를 사용하지 마십시오.',
+  'terms.accounts.title': '계정',
+  'terms.accounts.content': 'Google 로그인을 통해 인증되며, 사용자는 자신의 계정에 대한 책임이 있습니다. 익명성 기반의 서비스로, 사용자는 표시 이름과 행성을 자유롭게 선택할 수 있습니다.',
+  'terms.content.title': '콘텐츠',
+  'terms.content.content': '사용자가 게시하는 모든 콘텐츠에 대한 책임은 사용자 본인에게 있습니다. ION은 불법, 유해, 또는 부적절한 콘텐츠를 신고할 수 있는 기능을 제공하며, 필요시 해당 콘텐츠를 삭제할 권리가 있습니다.',
+  'terms.prohibited.title': '금지 행위',
+  'terms.prohibited.content': '다음 행위는 금지됩니다: (1) 타인을 괴롭히거나 위협하는 행위, (2) 불법 콘텐츠 게시, (3) 서비스 중단 시도, (4) 다중 계정 생성, (5) 기타 서비스의 정상적인 운영을 방해하는 행위.',
+  'terms.termination.title': '서비스 종료',
+  'terms.termination.content': '사용자는 언제든지 계정을 삭제할 수 있습니다. ION은 약관 위반 시 사전 통보 없이 계정을 정지하거나 삭제할 권리가 있습니다.',
+  'terms.contact.title': '문의',
+  'terms.contact.content': '이용약관 관련 문의는 서비스 내 설정 페이지를 통해 연락해 주세요.',
 
   // General/Common
   'common.loading': '로딩 중...',

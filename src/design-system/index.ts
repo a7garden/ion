@@ -19,3 +19,4 @@ export {
   Dialog, DialogTrigger, DialogPortal, DialogClose,
   DialogOverlay, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from './primitives/dialog';
+export { Toaster } from './primitives/toaster';

@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/design-system';
 import { CreatePostModal } from '@/components/CreatePostModal';
 import { Button } from '@/design-system';
-import { Plus, LogOut, Image, Settings, Check, X, Trash2 } from 'lucide-react';
-import { Input } from '@/design-system';
+import { Plus, Image, Trash2, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { PlanetAvatar } from '@/components/PlanetAvatar';
 import { PlanetSelector } from '@/components/PlanetSelector';
-import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { SettingsModal } from '@/components/SettingsModal';
 import { useI18n } from '@/i18n';
 import type { PlanetKey } from '@/constants/planets';
 import type { Post } from '@/types';
@@ -44,25 +43,16 @@ export function MyPage({
   onChangePlanet,
   requestImageCrop,
 }: MyPageProps) {
-  const { toast } = useToast();
   const { t } = useI18n();
   const [createPostOpen, setCreatePostOpen] = useState(false);
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [newDisplayName, setNewDisplayName] = useState(userName || '');
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [planetSelectorOpen, setPlanetSelectorOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const handleSaveName = async () => {
-    if (!newDisplayName.trim()) return;
-    await onChangeName(newDisplayName.trim());
-    setIsEditingName(false);
-  };
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const handleDelete = async (postId: string) => {
     setDeletingPostId(postId);
     onDeletePost(postId);
-    toast({ description: t('myPage.deleted'), duration: 2000 });
+    toast(t('myPage.deleted'), { duration: 2000 });
     setDeletingPostId(null);
   };
 
@@ -92,51 +82,42 @@ export function MyPage({
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-y-auto pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)] grain-overlay">
       <div className="max-w-[600px] mx-auto px-4 sm:px-5 pb-10">
-        {/* Profile */}
-        <div className="relative py-6 sm:py-8 text-center">
+        {/* Profile Header */}
+        <div className="relative py-6 sm:py-8">
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-32 h-32 bg-accent/10 rounded-full blur-3xl" />
           </div>
           <motion.div
-            className="relative inline-flex flex-col items-center gap-3 sm:gap-4"
+            className="relative flex items-center gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <button onClick={() => setPlanetSelectorOpen(true)} className="group">
-              <PlanetAvatar planet={userPlanet} size={80} showGlow className="transition-transform group-hover:scale-105" />
+            <button onClick={() => setPlanetSelectorOpen(true)} className="group shrink-0">
+              <PlanetAvatar planet={userPlanet} size={64} showGlow className="transition-transform group-hover:scale-105" />
             </button>
-            <div>
-              {isEditingName ? (
-                <div className="flex items-center gap-2">
-                  <Input value={newDisplayName} onChange={e => setNewDisplayName(e.target.value)}
-                    className="w-32 sm:w-40 text-center rounded-xl" maxLength={20} autoFocus />
-                  <Button size="small" variant="ghost" onClick={handleSaveName}><Check className="w-4 h-4" /></Button>
-                  <Button size="small" variant="ghost" onClick={() => { setNewDisplayName(userName || ''); setIsEditingName(false); }}><X className="w-4 h-4" /></Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">{userName}</h1>
-                  <Button size="small" variant="ghost" onClick={() => setIsEditingName(true)}><Settings className="w-4 h-4" /></Button>
-                </div>
-              )}
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('myPage.tagline')}</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">{userName}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{t('myPage.tagline')}</p>
             </div>
+            <Button
+              variant="ghost"
+              size="small"
+              onClick={() => setSettingsOpen(true)}
+              className="shrink-0 hover:bg-accent/10 hover:text-accent"
+              aria-label={t('myPage.settings')}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
           </motion.div>
         </div>
 
-        {/* Actions */}
+        {/* Actions Bar */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-base sm:text-lg font-semibold text-foreground">{t('myPage.myPosts')}</h2>
-          <div className="flex gap-2">
-            <Button variant="outline" size="small" onClick={() => setCreatePostOpen(true)}
-              className="gap-1.5 border-accent/30 hover:bg-accent/10">
-              <Plus className="w-4 h-4" /><span>{t('myPage.new')}</span>
-            </Button>
-            <Button variant="ghost" size="small" onClick={onLogout}
-              className="gap-1.5 hover:bg-destructive/10 hover:text-destructive">
-              <LogOut className="w-4 h-4" /><span>{t('myPage.logout')}</span>
-            </Button>
-          </div>
+          <Button variant="outline" size="small" onClick={() => setCreatePostOpen(true)}
+            className="gap-1.5 border-accent/30 hover:bg-accent/10">
+            <Plus className="w-4 h-4" /><span>{t('myPage.new')}</span>
+          </Button>
         </div>
 
         {/* Posts */}
@@ -182,30 +163,32 @@ export function MyPage({
           </div>
         )}
       </div>
+
       <CreatePostModal
         open={createPostOpen}
         onOpenChange={setCreatePostOpen}
         onSubmit={onCreatePost}
         requestImageCrop={requestImageCrop}
       />
-      <PlanetSelector open={planetSelectorOpen} onOpenChange={setPlanetSelectorOpen} currentPlanet={userPlanet} onSelect={onChangePlanet} />
-      <DeleteAccountDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={async () => {
-          await onDeleteAccount();
-          setDeleteDialogOpen(false);
+      <PlanetSelector
+        open={planetSelectorOpen}
+        onOpenChange={setPlanetSelectorOpen}
+        currentPlanet={userPlanet}
+        onSelect={onChangePlanet}
+      />
+      <SettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        userName={userName}
+        userPlanet={userPlanet}
+        onChangeName={onChangeName}
+        onChangePlanet={onChangePlanet}
+        onLogout={onLogout}
+        onDeleteAccount={() => {
+          setSettingsOpen(false);
+          setTimeout(() => onDeleteAccount(), 200);
         }}
       />
-
-      <div className="max-w-[600px] mx-auto px-4 sm:px-5 pb-8 pt-4 flex justify-center">
-        <button
-          onClick={() => setDeleteDialogOpen(true)}
-          className="text-xs text-muted-foreground/60 hover:text-destructive transition-colors duration-200 underline-offset-4 hover:underline"
-        >
-          {t('myPage.deleteAccount')}
-        </button>
-      </div>
     </div>
   );
 }

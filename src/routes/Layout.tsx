@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { Header } from '@/components/Header';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@/design-system/primitives/toaster';
 
 export function Layout() {
   return (

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
 import { Button } from '@/design-system';
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 
 interface ReportModalProps {
@@ -23,7 +23,6 @@ export function ReportModal({ open, onOpenChange, postId, userId }: ReportModalP
   const [reason, setReason] = useState<string>('');
   const [detail, setDetail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async () => {
     if (!reason || !postId) return;
@@ -31,12 +30,12 @@ export function ReportModal({ open, onOpenChange, postId, userId }: ReportModalP
     try {
       const { reportPost } = await import('@/lib/supabase');
       await reportPost(userId, postId, reason, detail || undefined);
-      toast({ description: t('report.reported'), duration: 2000 });
+      toast(t('report.reported'), { duration: 2000 });
       onOpenChange(false);
       setReason('');
       setDetail('');
     } catch {
-      toast({ description: t('report.failed'), duration: 2000 });
+      toast(t('report.failed'), { duration: 2000 });
     } finally {
       setIsSubmitting(false);
     }

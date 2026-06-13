@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/design-system';
 import { Button } from '@/design-system';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { LogIn, User } from 'lucide-react';
 import { useAuth } from '@/hooks/AuthProvider';
@@ -13,7 +13,6 @@ interface LoginModalProps {
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const { login } = useAuth();
-  const { toast } = useToast();
   const { t } = useI18n();
 
   const handleGoogleLogin = async () => {
@@ -21,7 +20,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
       await login();
       onOpenChange(false);
     } catch (error: unknown) {
-      toast({ description: error instanceof Error ? error.message : t('login.failed'), duration: 2000 });
+      const errMsg = error instanceof Error ? error.message : t('login.failed'); toast(errMsg, { duration: 2000 });
     }
   };
 
