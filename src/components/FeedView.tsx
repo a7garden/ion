@@ -20,6 +20,7 @@ interface FeedViewProps {
   onToggleLike: (postId: string) => void;
   onDelete: (postId: string) => void;
   onCreatePostClick: () => void;
+  expandedPostId?: string | null;
 }
 
 function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewProps) {
@@ -174,7 +175,7 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
   );
 }
 
-export function FeedView({ onCardClick, onToggleLike, onDelete, onCreatePostClick }: FeedViewProps) {
+export function FeedView({ onCardClick, onToggleLike, onDelete, onCreatePostClick, expandedPostId }: FeedViewProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -198,8 +199,8 @@ export function FeedView({ onCardClick, onToggleLike, onDelete, onCreatePostClic
 
   return (
     <>
-      <FeedPhysics onCardClick={onCardClick} onDelete={onDelete} />
-      <FeedCards onCardClick={onCardClick} onToggleLike={onToggleLike} onDelete={onDelete} />
+      <FeedPhysics />
+      <FeedCards onCardClick={onCardClick} onToggleLike={onToggleLike} onDelete={onDelete} expandedPostId={expandedPostId} />
       <FloatingActionButton onClick={onCreatePostClick} />
     </>
   );

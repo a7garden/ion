@@ -14,9 +14,10 @@ interface FeedCardsProps {
   onCardClick: (post: Post, cardRect: CardPosition) => void;
   onToggleLike: (postId: string) => void;
   onDelete: (postId: string) => void;
+  expandedPostId?: string | null;
 }
 
-export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProps) {
+export function FeedCards({ onCardClick, onToggleLike, onDelete, expandedPostId }: FeedCardsProps) {
   const { state } = useApp();
   const positions = useSyncExternalStore(
     positionStore.subscribe,
@@ -36,6 +37,9 @@ export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProp
       {positions.map((pos) => {
         const post = state.posts.find((p) => p.id === pos.id);
         if (!post) return null;
+
+        // 확장된 카드는 렌더링하지 않음 (layoutId 충돌 방지)
+        if (expandedPostId && pos.id === expandedPostId) return null;
 
         const isLiked = state.likedPostIds.includes(pos.id);
 

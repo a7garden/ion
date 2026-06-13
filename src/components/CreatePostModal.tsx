@@ -27,12 +27,15 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
   const mediaInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    return () => {
+    if (!open) {
       setContent('');
       setMediaFile(null);
       setMediaPreview(null);
-    };
-  }, []);
+      setIsSubmitting(false);
+      setIsDragOver(false);
+      if (mediaInputRef.current) mediaInputRef.current.value = '';
+    }
+  }, [open]);
 
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -129,6 +132,7 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
                     onClick={() => {
                       setMediaFile(null);
                       setMediaPreview(null);
+                      if (mediaInputRef.current) mediaInputRef.current.value = '';
                     }}
                     className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-foreground/80 hover:bg-foreground text-background rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
                     whileHover={{ backgroundColor: 'hsl(var(--accent))' }}

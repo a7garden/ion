@@ -1,8 +1,14 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useApp } from '@/hooks/AppProvider';
 import { positionStore } from '@/stores/positionStore';
 import { useDeviceSize, getCardCountForBreakpoint, getDynamicCardSize } from '@/hooks/useDeviceSize';
-import type { Post } from '@/types';
+
+// 헤더 높이: h-14(56px) / sm:h-[64px](64px) + safe-area-top + 여유
+const TOP_OFFSET = 72;
+const MAX_VELOCITY = 3; // 관성 최대 속도 (px/frame)
+const FRICTION = 0.992; // 관성 마찰 계수
+const DRIFT_SPEED = 0.35; // 둥둥 떠다니는 기본 속도
+const DRIFT_THRESHOLD = 0.01; // 이 이하로 느려지면 방향 전환
 
 interface FloatingNode {
   id: string;
@@ -12,46 +18,24 @@ interface FloatingNode {
   vy: number;
   size: number;
   opacity: number;
-  authorId: string;
-  content: string;
-  media?: string;
   targetOpacity: number;
 }
 
-interface CardPosition {
-  x: number;
-  y: number;
-  size: number;
-}
-
-interface FeedPhysicsProps {
-  onCardClick: (post: Post, cardRect: CardPosition) => void;
-  onDelete: (postId: string) => void;
-}
-
-export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
+export function FeedPhysics() {
   const { state } = useApp();
   const { breakpoint, width } = useDeviceSize();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<FloatingNode[]>([]);
-  const draggingNodeIdRef = useRef<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<FloatingNode | null>(null);
-  const dragOffset = useRef({ x: 0, y: 0 });
   const animationRef = useRef<number | undefined>(undefined);
   const initializedRef = useRef(false);
 
   const isDarkMode = state.theme === 'black';
-
-  // Refs: 값 변경 시 애니메이션 재시작 방지
-  const selectedNodeRef = useRef<FloatingNode | null>(null);
   const isDarkModeRef = useRef(isDarkMode);
   const postsRef = useRef(state.posts);
 
-  useEffect(() => { selectedNodeRef.current = selectedNode; }, [selectedNode]);
   useEffect(() => { isDarkModeRef.current = isDarkMode; }, [isDarkMode]);
   useEffect(() => { postsRef.current = state.posts; }, [state.posts]);
 
-  // 게시물이 비어있으면(로그아웃 등) 초기화
   useEffect(() => {
     if (state.posts.length === 0) {
       initializedRef.current = false;
@@ -67,6 +51,20 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
     return getDynamicCardSize(width, zoomLevel);
   }, [width]);
 
+  // 카드가 머물 수 있는 경계 (헤더 아래 ~ 화면 끝)
+  const getBounds = useCallback((canvas: HTMLCanvasElement, nodeSize: number) => ({
+    minX: nodeSize / 2,
+    maxX: canvas.width - nodeSize / 2,
+    minY: TOP_OFFSET + nodeSize / 2,
+    maxY: canvas.height - nodeSize / 2,
+  }), []);
+
+  const clampPosition = (node: FloatingNode, canvas: HTMLCanvasElement) => {
+    const b = getBounds(canvas, node.size);
+    node.x = Math.max(b.minX, Math.min(b.maxX, node.x));
+    node.y = Math.max(b.minY, Math.min(b.maxY, node.y));
+  };
+
   const initNodes = useCallback((canvas: HTMLCanvasElement) => {
     if (initializedRef.current) return;
     initializedRef.current = true;
@@ -77,22 +75,19 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
 
     nodesRef.current = posts.map((post) => {
       const size = baseSize + Math.random() * 20;
-      const padding = size;
+      const b = getBounds(canvas, size);
       return {
         id: post.id,
-        x: padding + Math.random() * (canvas.width - padding * 2),
-        y: padding + Math.random() * (canvas.height - padding * 2),
+        x: b.minX + Math.random() * (b.maxX - b.minX),
+        y: b.minY + Math.random() * (b.maxY - b.minY),
         vx: (Math.random() - 0.5) * 0.2,
         vy: (Math.random() - 0.5) * 0.2,
         size,
         opacity: 0,
         targetOpacity: 1,
-        authorId: post.authorId,
-        content: post.content,
-        media: post.media,
       };
     });
-  }, [state.posts, state.zoomLevel, getCardCount, getCardSize]);
+  }, [state.posts, state.zoomLevel, getCardCount, getCardSize, getBounds]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -106,11 +101,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
 
     const handleResize = () => {
       resizeCanvas();
-
-      nodesRef.current.forEach(node => {
-        node.x = Math.max(node.size / 2, Math.min(canvas.width - node.size / 2, node.x));
-        node.y = Math.max(node.size / 2, Math.min(canvas.height - node.size / 2, node.y));
-      });
+      nodesRef.current.forEach(node => clampPosition(node, canvas));
     };
     window.addEventListener('resize', handleResize);
 
@@ -120,102 +111,62 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
+      // 배경만 그림 — 카드 시각은 HTML PostCard가 담당
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = isDarkModeRef.current ? 'hsl(20, 15%, 5%)' : 'hsl(60, 20%, 97%)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const colors = isDarkModeRef.current ? {
-        fill: 'hsl(20, 12%, 9%)',
-        stroke: 'hsl(20, 8%, 20%)',
-        selectedFill: 'hsl(38, 75%, 60% / 0.25)',
-        selectedStroke: 'hsl(38, 75%, 60% / 0.8)',
-        shadow: 'rgba(0, 0, 0, 0.4)',
-      } : {
-        fill: 'hsl(40, 15%, 96%)',
-        stroke: 'hsl(30, 10%, 85%)',
-        selectedFill: 'hsl(38, 70%, 55% / 0.18)',
-        selectedStroke: 'hsl(38, 70%, 55%)',
-        shadow: 'rgba(0, 0, 0, 0.08)',
-      };
-
-      const isDraggingAny = draggingNodeIdRef.current !== null || positionStore.getDraggingId() !== null;
-
       nodesRef.current.forEach((node) => {
-        const isDragged = node.id === draggingNodeIdRef.current || node.id === positionStore.getDraggingId();
+        const isDragged = node.id === positionStore.getDraggingId();
 
-        if (isDraggingAny) {
-          if (isDragged) {
-            node.vx = 0;
-            node.vy = 0;
-          } else {
-            node.x += node.vx;
-            node.y += node.vy;
-
-            if (node.x < node.size / 2 || node.x > canvas.width - node.size / 2) {
-              node.vx *= -1;
-              node.x = Math.max(node.size / 2, Math.min(canvas.width - node.size / 2, node.x));
-            }
-            if (node.y < node.size / 2 || node.y > canvas.height - node.size / 2) {
-              node.vy *= -1;
-              node.y = Math.max(node.size / 2, Math.min(canvas.height - node.size / 2, node.y));
-            }
-
-            if (Math.abs(node.vx) < 0.08 && Math.abs(node.vy) < 0.08) {
-              node.vx = (Math.random() - 0.5) * 0.2;
-              node.vy = (Math.random() - 0.5) * 0.2;
-            }
+        if (isDragged) {
+          // 드래그 중: PostCard가 위치를 직접 제어 → 동기화만
+          const pos = positionStore.getSnapshot().find(p => p.id === node.id);
+          if (pos) {
+            node.x = pos.x;
+            node.y = pos.y;
           }
+          node.vx = 0;
+          node.vy = 0;
         } else {
+          // 드래그 놓은 직후 관성 속도 적용
+          const releasedVelocity = positionStore.consumeDragVelocity(node.id);
+          if (releasedVelocity) {
+            // 속도 캡
+            node.vx = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, releasedVelocity.vx));
+            node.vy = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, releasedVelocity.vy));
+          }
+
           node.x += node.vx;
           node.y += node.vy;
 
-          if (node.x < node.size / 2 || node.x > canvas.width - node.size / 2) {
-            node.vx *= -1;
-            node.x = Math.max(node.size / 2, Math.min(canvas.width - node.size / 2, node.x));
+          // 경계 바운스 (헤더 아래 ~ 화면 끝)
+          const b = getBounds(canvas, node.size);
+          if (node.x < b.minX || node.x > b.maxX) {
+            node.vx *= -0.5;
+            node.x = Math.max(b.minX, Math.min(b.maxX, node.x));
           }
-          if (node.y < node.size / 2 || node.y > canvas.height - node.size / 2) {
-            node.vy *= -1;
-            node.y = Math.max(node.size / 2, Math.min(canvas.height - node.size / 2, node.y));
+          if (node.y < b.minY || node.y > b.maxY) {
+            node.vy *= -0.5;
+            node.y = Math.max(b.minY, Math.min(b.maxY, node.y));
           }
 
-          if (Math.abs(node.vx) < 0.08 && Math.abs(node.vy) < 0.08) {
-            node.vx = (Math.random() - 0.5) * 0.2;
-            node.vy = (Math.random() - 0.5) * 0.2;
+          // 관성 마찰
+          node.vx *= FRICTION;
+          node.vy *= FRICTION;
+
+          // 거의 멈추면 둥둥 떠다니기
+          if (Math.abs(node.vx) < DRIFT_THRESHOLD && Math.abs(node.vy) < DRIFT_THRESHOLD) {
+            node.vx = (Math.random() - 0.5) * DRIFT_SPEED;
+            node.vy = (Math.random() - 0.5) * DRIFT_SPEED;
           }
         }
 
+        // opacity 페이드인/아웃
         node.opacity += (node.targetOpacity - node.opacity) * 0.05;
-
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, Math.min(1, node.opacity));
-
-        const isSelected = selectedNodeRef.current?.id === node.id;
-        const radius = node.size / 2;
-
-        ctx.shadowColor = colors.shadow;
-        ctx.shadowBlur = isSelected ? 18 : 10;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 3;
-
-        ctx.fillStyle = isSelected ? colors.selectedFill : colors.fill;
-        ctx.strokeStyle = isSelected ? colors.selectedStroke : colors.stroke;
-        ctx.lineWidth = isSelected ? 2 : 1;
-
-        ctx.beginPath();
-        ctx.roundRect(node.x - radius, node.y - radius, node.size, node.size, 12);
-        ctx.fill();
-
-        if (isSelected) {
-          ctx.strokeStyle = colors.selectedStroke;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        } else {
-          ctx.stroke();
-        }
-
-        ctx.restore();
       });
 
+      // positionStore 업데이트 → FeedCards(PostCard)가 위치 동기화
       positionStore.updatePositions(
         nodesRef.current.map((node) => ({
           id: node.id,
@@ -223,7 +174,7 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
           y: node.y,
           size: node.size,
           opacity: node.opacity,
-          isDragging: node.id === draggingNodeIdRef.current,
+          isDragging: node.id === positionStore.getDraggingId(),
         }))
       );
 
@@ -234,12 +185,11 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [initNodes]);
+  }, [initNodes, getBounds]);
 
+  // 줌/포스트 변경 시 노드 추가/제거
   useEffect(() => {
     if (!canvasRef.current || state.posts.length === 0) return;
 
@@ -253,138 +203,25 @@ export function FeedPhysics({ onCardClick, onDelete }: FeedPhysicsProps) {
     postsToAdd.forEach((post) => {
       const baseSize = getCardSize(state.zoomLevel);
       const size = baseSize + Math.random() * 20;
-      const padding = size;
+      const b = getBounds(canvas, size);
       nodesRef.current.push({
         id: post.id,
-        x: padding + Math.random() * (canvas.width - padding * 2),
-        y: padding + Math.random() * (canvas.height - padding * 2),
+        x: b.minX + Math.random() * (b.maxX - b.minX),
+        y: b.minY + Math.random() * (b.maxY - b.minY),
         vx: (Math.random() - 0.5) * 0.2,
         vy: (Math.random() - 0.5) * 0.2,
         size,
         opacity: 0,
         targetOpacity: 1,
-        authorId: post.authorId,
-        content: post.content,
-        media: post.media,
       });
     });
 
     nodesRef.current.forEach((node) => {
-      const shouldExist = posts.some(p => p.id === node.id);
-      if (shouldExist) {
-        node.targetOpacity = 1;
-      } else {
-        node.targetOpacity = 0;
-      }
+      node.targetOpacity = posts.some(p => p.id === node.id) ? 1 : 0;
     });
 
     nodesRef.current = nodesRef.current.filter(node => node.opacity > 0.01 || node.targetOpacity > 0);
-  }, [state.zoomLevel, state.posts, getCardCount, getCardSize]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handlePointerDown = (e: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const clickedNode = nodesRef.current.find((node) => {
-        const dx = x - node.x;
-        const dy = y - node.y;
-        return Math.sqrt(dx * dx + dy * dy) < node.size / 2;
-      });
-
-      if (clickedNode) {
-        draggingNodeIdRef.current = clickedNode.id;
-        setSelectedNode(clickedNode);
-        dragOffset.current = { x: x - clickedNode.x, y: y - clickedNode.y };
-        positionStore.setDragging(clickedNode.id);
-        canvas.setPointerCapture(e.pointerId);
-
-        setTimeout(() => {
-          if (draggingNodeIdRef.current === clickedNode.id) {
-            positionStore.setDeleteMode(clickedNode.id);
-          }
-        }, 500);
-      }
-    };
-
-    const handlePointerMove = (e: PointerEvent) => {
-      if (!draggingNodeIdRef.current) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const node = nodesRef.current.find((n) => n.id === draggingNodeIdRef.current);
-      if (node) {
-        node.x = x - dragOffset.current.x;
-        node.y = y - dragOffset.current.y;
-        node.vx = 0;
-        node.vy = 0;
-        positionStore.updateSinglePosition(node.id, node.x, node.y);
-      }
-    };
-
-    const handlePointerUp = (e: PointerEvent) => {
-      if (!draggingNodeIdRef.current) return;
-
-      const node = nodesRef.current.find((n) => n.id === draggingNodeIdRef.current);
-      const deleteModeId = positionStore.getDeleteModeId();
-
-      if (node && deleteModeId === node.id) {
-        draggingNodeIdRef.current = null;
-        positionStore.setDragging(null);
-        canvas.releasePointerCapture(e.pointerId);
-        return;
-      }
-
-      if (node) {
-        node.vx = (Math.random() - 0.5) * 0.4;
-        node.vy = (Math.random() - 0.5) * 0.4;
-      }
-
-      draggingNodeIdRef.current = null;
-      positionStore.setDragging(null);
-      canvas.releasePointerCapture(e.pointerId);
-    };
-
-    const handleDoubleClick = (e: MouseEvent) => {
-      const deleteModeId = positionStore.getDeleteModeId();
-      if (deleteModeId) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const clickedNode = nodesRef.current.find((node) => {
-        const dx = x - node.x;
-        const dy = y - node.y;
-        return Math.sqrt(dx * dx + dy * dy) < node.size / 2;
-      });
-
-      if (clickedNode && draggingNodeIdRef.current !== clickedNode.id) {
-        const post = postsRef.current.find((p) => p.id === clickedNode.id);
-        if (post) {
-          onCardClick(post, { x: clickedNode.x, y: clickedNode.y, size: clickedNode.size });
-        }
-      }
-    };
-
-    canvas.addEventListener('pointerdown', handlePointerDown);
-    canvas.addEventListener('pointermove', handlePointerMove);
-    canvas.addEventListener('pointerup', handlePointerUp);
-    canvas.addEventListener('dblclick', handleDoubleClick);
-
-    return () => {
-      canvas.removeEventListener('pointerdown', handlePointerDown);
-      canvas.removeEventListener('pointermove', handlePointerMove);
-      canvas.removeEventListener('pointerup', handlePointerUp);
-      canvas.removeEventListener('dblclick', handleDoubleClick);
-    };
-  }, [onCardClick, onDelete]);
+  }, [state.zoomLevel, state.posts, getCardCount, getCardSize, getBounds]);
 
   return (
     <div className="fixed inset-0">

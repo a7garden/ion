@@ -74,6 +74,7 @@ function AppContent() {
               onToggleLike={handleToggleLike}
               onDelete={handleDismiss}
               onCreatePostClick={handleCreatePostClick}
+              expandedPostId={expandedPost?.id}
             />
           </main>
           <ZoomSlider />
