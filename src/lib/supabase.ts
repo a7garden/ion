@@ -143,10 +143,15 @@ export async function createPost(opts: {
   return data;
 }
 
-export async function getFeed(viewerId: string, batchSize = 10): Promise<FeedRow[]> {
+export async function getFeed(
+  viewerId: string,
+  batchSize = 10,
+  excludeIds: string[] = []
+): Promise<FeedRow[]> {
   const { data, error } = await supabase.rpc('feed_random', {
     viewer_id: viewerId,
     batch_size: batchSize,
+    exclude_ids: excludeIds,
   });
   if (error) throw error;
   return data ?? [];

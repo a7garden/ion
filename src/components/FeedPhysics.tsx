@@ -19,6 +19,8 @@ interface FloatingNode {
   size: number;
   opacity: number;
   targetOpacity: number;
+  dismissing: boolean;
+  entering: boolean; // 반대편 벽 바깥에서 화면 안으로 진입 중인 새 카드 (벽 튕김/클램핑 건너뜀)
 }
 
 interface FeedPhysicsProps {
@@ -36,9 +38,14 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
   const isDarkMode = theme === 'black';
   const isDarkModeRef = useRef(isDarkMode);
   const postsRef = useRef(posts);
+  const zoomLevelRef = useRef(zoomLevel);
+  const widthRef = useRef(width);
+  const lastDismissRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => { isDarkModeRef.current = isDarkMode; }, [isDarkMode]);
   useEffect(() => { postsRef.current = posts; }, [posts]);
+  useEffect(() => { zoomLevelRef.current = zoomLevel; }, [zoomLevel]);
+  useEffect(() => { widthRef.current = width; }, [width]);
 
   useEffect(() => {
     if (posts.length === 0) {
@@ -84,6 +91,8 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
         size,
         opacity: 0,
         targetOpacity: 1,
+        dismissing: false,
+        entering: false,
       };
     });
   }, [posts, zoomLevel, getCardSize, getBounds]);
@@ -114,6 +123,21 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
       ctx.fillStyle = isDarkModeRef.current ? 'hsl(20, 15%, 5%)' : 'hsl(60, 20%, 97%)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // dismiss 처리: 노드를 dismissing 상태로 만들고 onDelete 예약
+      const did = positionStore.getDismissedId();
+      if (did) {
+        const dn = nodesRef.current.find(n => n.id === did);
+        if (dn && !dn.dismissing) {
+          dn.dismissing = true;
+          dn.targetOpacity = 0;
+          const dir = positionStore.getDismissDirection();
+          if (dir) { dn.vx = dir.vx * 0.3; dn.vy = dir.vy * 0.3; }
+          // dismiss 정보 저장 (두 번째 useEffect에서 반대편 스폰에 사용)
+          lastDismissRef.current = { x: dn.x, y: dn.y };
+          positionStore.consumeDismissedAndNotify(did);
+        }
+      }
+
       nodesRef.current.forEach((node) => {
         const isDragged = node.id === positionStore.getDraggingId();
 
@@ -135,27 +159,44 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
           node.x += node.vx;
           node.y += node.vy;
 
-          const b = getBounds(canvas, node.size);
-          if (node.x < b.minX || node.x > b.maxX) {
-            node.vx *= -0.5;
-            node.x = Math.max(b.minX, Math.min(b.maxX, node.x));
-          }
-          if (node.y < b.minY || node.y > b.maxY) {
-            node.vy *= -0.5;
-            node.y = Math.max(b.minY, Math.min(b.maxY, node.y));
+          // entering(화면 밖에서 진입 중) 해제: 화면 안에 완전히 들어오면 일반 물리로 전환
+          if (node.entering) {
+            const b = getBounds(canvas, node.size);
+            if (node.x >= b.minX && node.x <= b.maxX && node.y >= b.minY && node.y <= b.maxY) {
+              node.entering = false;
+            }
           }
 
-          node.vx *= FRICTION;
-          node.vy *= FRICTION;
-
-          if (Math.abs(node.vx) < DRIFT_THRESHOLD && Math.abs(node.vy) < DRIFT_THRESHOLD) {
-            node.vx = (Math.random() - 0.5) * DRIFT_SPEED;
-            node.vy = (Math.random() - 0.5) * DRIFT_SPEED;
+          if (!node.dismissing && !node.entering) {
+            const b = getBounds(canvas, node.size);
+            if (node.x < b.minX || node.x > b.maxX) {
+              node.vx *= -0.5;
+              node.x = Math.max(b.minX, Math.min(b.maxX, node.x));
+            }
+            if (node.y < b.minY || node.y > b.maxY) {
+              node.vy *= -0.5;
+              node.y = Math.max(b.minY, Math.min(b.maxY, node.y));
+            }
+            node.vx *= FRICTION;
+            node.vy *= FRICTION;
+            if (Math.abs(node.vx) < DRIFT_THRESHOLD && Math.abs(node.vy) < DRIFT_THRESHOLD) {
+              node.vx = (Math.random() - 0.5) * DRIFT_SPEED;
+              node.vy = (Math.random() - 0.5) * DRIFT_SPEED;
+            }
+          } else if (node.entering) {
+            // 진입 중: 벽 튕김은 없고 감속만 (자연스럽게 안으로 미끄러져 들어옴)
+            node.vx *= FRICTION;
+            node.vy *= FRICTION;
+          } else {
+            node.vx *= 0.995;
+            node.vy *= 0.995;
           }
         }
 
-        node.opacity += (node.targetOpacity - node.opacity) * 0.05;
+        node.opacity += (node.targetOpacity - node.opacity) * 0.08;
       });
+
+      nodesRef.current = nodesRef.current.filter(n => !n.dismissing || n.opacity > 0.02);
 
       positionStore.updatePositions(
         nodesRef.current.map((node) => ({
@@ -187,39 +228,85 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
     const maxCards = getCardCountForViewport(canvas.width, canvas.height, baseSize);
     const slicedPosts = posts.slice(0, maxCards);
 
-    nodesRef.current.forEach((node) => {
-      const newSize = baseSize + (node.size % 20);
-      node.size = newSize;
-    });
-
     const existingIds = new Set(nodesRef.current.map(n => n.id));
     const postsToAdd = slicedPosts.filter(p => !existingIds.has(p.id));
 
+    // dismiss 발생 시: 새 카드를 반대편 가장자리 바깥에서 튀어나오게 스폰.
+    // 중요 — posts는 dismiss마다 두 번 바뀐다(① 제거 → ② 보충 도착). ① 시점엔
+    // postsToAdd가 비어있으므로 dismiss 정보를 소진하지 않고 보존해야, ②에서
+    // 실제 새 카드가 벽 스폰으로 투입된다. 그렇지 않으면 랜덤 스폰으로 깜빡임.
+    let usedDismiss = false;
+
     postsToAdd.forEach((post) => {
       const size = baseSize + Math.random() * 20;
-      const b = getBounds(canvas, size);
+      let sx: number, sy: number, svx: number, svy: number;
+      let startOpacity = 0.3;
+      let entering = false;
+
+      if (lastDismissRef.current && !usedDismiss) {
+        // 친 카드 위치의 정반대편 벽 바깥에서 투입
+        usedDismiss = true;
+        const info = lastDismissRef.current;
+        const cw = canvas.width;
+        const ch = canvas.height;
+        const cx = cw / 2;
+        const cy = (ch - TOP_OFFSET) / 2 + TOP_OFFSET;
+        const dx = info.x - cx;
+        const dy = info.y - cy;
+        const speed = 5; // 벽에서 튀어나오는 속도
+        if (Math.abs(dx) >= Math.abs(dy)) {
+          sx = dx > 0 ? -size : cw + size;
+          sy = TOP_OFFSET + size / 2 + Math.random() * (ch - TOP_OFFSET - size);
+          svx = dx > 0 ? speed : -speed;
+          svy = (Math.random() - 0.5) * 1;
+        } else {
+          sx = size / 2 + Math.random() * (cw - size);
+          sy = dy > 0 ? TOP_OFFSET - size : ch + size;
+          svx = (Math.random() - 0.5) * 1;
+          svy = dy > 0 ? speed : -speed;
+        }
+        // 화면 밖에서 투입되므로 0에서 시작 → 들어오며 fade-in
+        startOpacity = 0;
+        entering = true;
+      } else {
+        // 일반 랜덤 스폰
+        const b = getBounds(canvas, size);
+        sx = b.minX + Math.random() * (b.maxX - b.minX);
+        sy = b.minY + Math.random() * (b.maxY - b.minY);
+        svx = (Math.random() - 0.5) * 0.2;
+        svy = (Math.random() - 0.5) * 0.2;
+      }
+
       nodesRef.current.push({
-        id: post.id,
-        x: b.minX + Math.random() * (b.maxX - b.minX),
-        y: b.minY + Math.random() * (b.maxY - b.minY),
-        vx: (Math.random() - 0.5) * 0.2,
-        vy: (Math.random() - 0.5) * 0.2,
-        size,
-        opacity: 0,
-        targetOpacity: 1,
+        id: post.id, x: sx, y: sy, vx: svx, vy: svy, size,
+        opacity: startOpacity, targetOpacity: 1, dismissing: false, entering,
       });
     });
 
+    // 실제로 entering 카드를 만들었을 때만 dismiss 정보 소비 (posts 제거 시점엔 보존)
+    if (usedDismiss) lastDismissRef.current = null;
+
     nodesRef.current.forEach((node) => {
       node.targetOpacity = slicedPosts.some(p => p.id === node.id) ? 1 : 0;
-      clampPosition(node, canvas);
+      // entering(화면 밖 진입)·dismissing(퇴장 중)은 위치를 보존 — 클램핑하면
+      // 벽에 끌려붙거나 퇴장이 튀어서 깜빡인다.
+      if (!node.entering && !node.dismissing) clampPosition(node, canvas);
     });
 
     nodesRef.current = nodesRef.current.filter(node => node.opacity > 0.01 || node.targetOpacity > 0);
   }, [zoomLevel, posts, getCardSize, getBounds]);
 
+  // zoom 변경 시에만 기존 노드 카드 크기 재조정 (posts 변경마다 실행 X)
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const baseSize = getCardSize(zoomLevel);
+    nodesRef.current.forEach((node) => {
+      node.size = baseSize + (node.size % 20);
+    });
+  }, [zoomLevel, getCardSize]);
+
   return (
-    <div className="fixed inset-0">
+    <div className="fixed inset-0 select-none">
       <canvas ref={canvasRef} className="w-full h-full" />
     </div>
   );

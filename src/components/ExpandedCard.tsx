@@ -117,7 +117,7 @@ export function ExpandedCard({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.15 }}
                 >
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap select-text">
                     {post.content}
                   </p>
                 </motion.div>

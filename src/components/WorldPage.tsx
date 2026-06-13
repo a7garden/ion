@@ -67,7 +67,6 @@ const MAX_SCALE = 3.0;
 
 interface WorldPageProps {
   posts: Post[];
-  likedIds: string[];
   connections: string[];
   currentUserId: string;
   currentUserPlanet: string;
@@ -117,7 +116,7 @@ function drawPlanet(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
   }
 }
 
-export function WorldPage({ posts, likedIds, connections, currentUserId, currentUserPlanet, isLoading, isError, onRetry }: WorldPageProps) {
+export function WorldPage({ posts, connections, currentUserId, currentUserPlanet, isLoading, isError, onRetry }: WorldPageProps) {
   const { t } = useI18n();
   const { theme, setZoomLevel } = useClient();
   const isDarkMode = theme === 'black';
@@ -293,7 +292,6 @@ export function WorldPage({ posts, likedIds, connections, currentUserId, current
       if (!ctx) return;
 
       const currentTransform = transformRef.current;
-      const currentViewMode = viewModeRef.current;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 

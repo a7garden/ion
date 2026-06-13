@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/lib/supabase';
 import { getPlanet } from '@/constants/planets';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';

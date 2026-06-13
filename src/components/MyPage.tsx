@@ -65,7 +65,7 @@ export function MyPage({
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-y-auto pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)] grain-overlay">
+      <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-y-auto pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)] select-none">
         <div className="max-w-[600px] mx-auto px-4 sm:px-5 py-20 text-center">
           <div className="w-8 h-8 mx-auto border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
         </div>
@@ -75,7 +75,7 @@ export function MyPage({
 
   if (isError) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-y-auto pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)] grain-overlay">
+      <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-y-auto pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)] select-none">
         <div className="max-w-[600px] mx-auto px-4 sm:px-5 py-20 text-center">
           <p className="text-muted-foreground mb-4">{t('myPage.failed')}</p>
           <button onClick={onRetry} className="px-4 py-2 bg-accent text-accent-foreground rounded-xl">
@@ -87,7 +87,7 @@ export function MyPage({
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-y-auto pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)] grain-overlay">
+    <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-y-auto pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)] select-none">
       <div className="max-w-[600px] mx-auto px-4 sm:px-5 pb-10">
         {/* Profile Header */}
         <div className="relative py-6 sm:py-8">
@@ -153,7 +153,7 @@ export function MyPage({
                       </div>
                     )}
                     {post.content && (
-                      <p className="text-sm text-foreground leading-relaxed mb-3 whitespace-pre-wrap">{post.content}</p>
+                      <p className="text-sm text-foreground leading-relaxed mb-3 whitespace-pre-wrap select-text">{post.content}</p>
                     )}
                     <div className="flex items-center justify-end pt-2 border-t border-border/30">
                       <Button size="sm" variant="ghost" onClick={() => handleDelete(post.id)}

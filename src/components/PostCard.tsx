@@ -36,6 +36,7 @@ export function PostCard({
   const targetRotationRef = useRef(0);
   const rotationFrameRef = useRef<number | undefined>(undefined);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const nearEdgeRef = useRef<'left' | 'right' | 'top' | 'bottom' | null>(null);
 
   // 회전 스프링 애니메이션 — CSS custom property만 업데이트
   // 위치(x,y)는 React style prop이 관리하므로 stale closure 문제 없음
@@ -80,6 +81,7 @@ export function PostCard({
     clearLongPress();
     isDraggingRef.current = true;
     hasMovedRef.current = false;
+    nearEdgeRef.current = null;
 
     // 마우스와 카드 중심 사이의 오프셋 저장 (카드가 마우스로 튀는 것 방지)
     dragOffsetRef.current = { x: e.clientX - x, y: e.clientY - y };
@@ -115,14 +117,27 @@ export function PostCard({
       }
     }
 
-    // 오프셋을 고려한 카드 중심 위치
-    let centerX = newX - dragOffsetRef.current.x;
-    let centerY = newY - dragOffsetRef.current.y;
+    // 오프셋을 고려한 카드 중심 위치 (클램핑 전 원시값 보존)
+    const rawCenterX = newX - dragOffsetRef.current.x;
+    const rawCenterY = newY - dragOffsetRef.current.y;
+    let centerX = rawCenterX;
+    let centerY = rawCenterY;
 
     // 헤더 영역 아래로 제한
     const TOP_OFFSET = 72;
-    centerX = Math.max(size / 2, Math.min(window.innerWidth - size / 2, centerX));
-    centerY = Math.max(TOP_OFFSET + size / 2, Math.min(window.innerHeight - size / 2, centerY));
+    const minX = size / 2;
+    const maxX = window.innerWidth - size / 2;
+    const minY = TOP_OFFSET + size / 2;
+    const maxY = window.innerHeight - size / 2;
+    centerX = Math.max(minX, Math.min(maxX, centerX));
+    centerY = Math.max(minY, Math.min(maxY, centerY));
+
+    // 가장자리 감지 (인디케이터용): 원시 위치가 경계를 넘었으면 해당 edge 기록
+    if (rawCenterX < minX) nearEdgeRef.current = 'left';
+    else if (rawCenterX > maxX) nearEdgeRef.current = 'right';
+    else if (rawCenterY < minY) nearEdgeRef.current = 'top';
+    else if (rawCenterY > maxY) nearEdgeRef.current = 'bottom';
+    else nearEdgeRef.current = null;
 
     // 속도 계산
     if (prevDragRef.current) {
@@ -148,6 +163,25 @@ export function PostCard({
     clearLongPress();
     isDraggingRef.current = false;
 
+    // --- 가장자리 dismiss: 붉은 라이트(nearEdge)가 켜진 상태로 놓으면 즉시 dismiss ---
+    const edge = nearEdgeRef.current;
+    if (hasMovedRef.current && edge) {
+      const edgeDir: Record<'left' | 'right' | 'top' | 'bottom', { vx: number; vy: number }> = {
+        left: { vx: -1, vy: 0 },
+        right: { vx: 1, vy: 0 },
+        top: { vx: 0, vy: -1 },
+        bottom: { vx: 0, vy: 1 },
+      };
+      const dir = edgeDir[edge];
+      const vel = positionStore.getDragVelocity(post.id) ?? { vx: 0, vy: 0 };
+      // 벽 바깥쪽으로 속도를 줘 자연스럽게 퇴장
+      positionStore.markForDismissal(post.id, dir.vx * 4 + vel.vx * 0.3, dir.vy * 4 + vel.vy * 0.3);
+      positionStore.setDragging(null);
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      return;
+    }
+    // ---
+
     const deleteModeId = positionStore.getDeleteModeId();
     if (deleteModeId === post.id) {
       positionStore.setDragging(null);
@@ -162,6 +196,8 @@ export function PostCard({
       onClick();
     }
 
+    nearEdgeRef.current = null;
+
     // 놓을 때 회전 복귀 (스프링)
     startRotationAnim(0);
   }, [post.id, onClick, clearLongPress, startRotationAnim]);
@@ -169,7 +205,7 @@ export function PostCard({
   return (
     <div
       ref={containerRef}
-      className={`absolute pointer-events-auto ${isDragging ? 'cursor-grabbing z-10' : 'cursor-grab'}`}
+      className={`absolute pointer-events-auto select-none ${isDragging ? 'cursor-grabbing z-10' : 'cursor-grab'}`}
       style={{
         width: size,
         height: size,
@@ -178,9 +214,10 @@ export function PostCard({
         '--drag-rotation': `${currentRotationRef.current}deg`,
         transform: `translate3d(${x - size / 2}px, ${y - size / 2}px, 0) scale(${isDragging ? 1.08 : 1}) rotate(var(--drag-rotation, 0deg))`,
         opacity,
-        transition: isDragging
-          ? 'box-shadow 0.3s ease'
-          : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease',
+        // 위치(x,y)는 FeedPhysics가 매 프레임 갱신 → transform transition을 빼야
+        // 매 프레임 이동(드리프트/entering/dismiss 퇴장)이 버벅이지 않고 부드러움.
+        // scale/rotate도 상태 전환 시 즉시 적용(box-shadow만 트랜지션).
+        transition: 'box-shadow 0.3s ease',
         touchAction: 'none',
         willChange: 'transform',
       } as React.CSSProperties}
@@ -260,6 +297,28 @@ export function PostCard({
 
       {isDragging && (
         <div className="absolute -inset-1 rounded-2xl border-2 border-accent/30 blur-sm pointer-events-none animate-pulse-slow" />
+      )}
+
+      {/* 가장자리 dismiss 인디케이터 */}
+      {isDragging && nearEdgeRef.current && (
+        <>
+          {nearEdgeRef.current === 'left' && (
+            <div className="fixed inset-y-0 left-0 w-20 pointer-events-none z-20"
+              style={{ background: 'linear-gradient(to right, hsl(var(--destructive)/0.35), hsl(var(--destructive)/0.1) 40%, transparent 70%)' }} />
+          )}
+          {nearEdgeRef.current === 'right' && (
+            <div className="fixed inset-y-0 right-0 w-20 pointer-events-none z-20"
+              style={{ background: 'linear-gradient(to left, hsl(var(--destructive)/0.35), hsl(var(--destructive)/0.1) 40%, transparent 70%)' }} />
+          )}
+          {nearEdgeRef.current === 'top' && (
+            <div className="fixed inset-x-0 top-0 h-20 pointer-events-none z-20"
+              style={{ background: 'linear-gradient(to bottom, hsl(var(--destructive)/0.35), hsl(var(--destructive)/0.1) 40%, transparent 70%)' }} />
+          )}
+          {nearEdgeRef.current === 'bottom' && (
+            <div className="fixed inset-x-0 bottom-0 h-20 pointer-events-none z-20"
+              style={{ background: 'linear-gradient(to top, hsl(var(--destructive)/0.35), hsl(var(--destructive)/0.1) 40%, transparent 70%)' }} />
+          )}
+        </>
       )}
     </div>
   );

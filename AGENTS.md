@@ -21,6 +21,15 @@
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (`.env`, gitignore)
 - Cloudflare Pages에서 환경변수 설정 필요
 
+## Dev Login (개발자 모드)
+- **트리거**: 헤더 우측 테마 토글 버튼(🌙/☀️)을 1.2초간 길게 누름
+- **인증 방식**: Supabase Email/Password (`signInWithPassword`)
+- **테스트 계정**: `testuser1@ion.test` ~ `testuser50@ion.test`
+- **비밀번호**: `test1234!` (전 계정 동일)
+- **UI**: `src/components/DevLoginModal.tsx` — 계정 목록을 2열 그리드로 표시, 검색 가능
+- **AuthProvider**: `devLogin(email, password)` 메서드 제공
+- **DB 마이그레이션**: `supabase/migrations/20250613003_dev_test_users.sql`
+
 ## Key Rules
 - 피드 = 텍스트 + 미디어 1개 (image | video)
 - 좋아요 수, 댓글 수, 팔로워 수 표시 금지

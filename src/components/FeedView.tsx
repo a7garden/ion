@@ -22,10 +22,15 @@ function SwipeFeedView({ posts, onCardClick, onDelete, onCreatePostClick }: Feed
   const { width } = useDeviceSize();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
   const startXRef = useRef(0);
+  const startYRef = useRef(0);
   const currentTranslateXRef = useRef(0);
+  const currentTranslateYRef = useRef(0);
+  const dragAxisRef = useRef<'h' | 'v' | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentPost = posts[currentIndex];
@@ -38,7 +43,9 @@ function SwipeFeedView({ posts, onCardClick, onDelete, onCreatePostClick }: Feed
 
   const handlePointerDown = (e: React.PointerEvent) => {
     setIsDragging(true);
+    dragAxisRef.current = null;
     startXRef.current = e.clientX - currentTranslateXRef.current;
+    startYRef.current = e.clientY - currentTranslateYRef.current;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     longPressTimerRef.current = setTimeout(() => {
       setIsDeleteMode(true);
@@ -48,9 +55,18 @@ function SwipeFeedView({ posts, onCardClick, onDelete, onCreatePostClick }: Feed
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
     clearLongPressTimer();
-    const newTranslateX = e.clientX - startXRef.current;
-    currentTranslateXRef.current = newTranslateX;
-    setTranslateX(newTranslateX);
+    const dx = e.clientX - startXRef.current;
+    const dy = e.clientY - startYRef.current;
+    if (dragAxisRef.current === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+      dragAxisRef.current = Math.abs(dy) > Math.abs(dx) ? 'v' : 'h';
+    }
+    if (dragAxisRef.current === 'v') {
+      currentTranslateYRef.current = dy;
+      setTranslateY(dy);
+    } else {
+      currentTranslateXRef.current = dx;
+      setTranslateX(dx);
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -64,14 +80,37 @@ function SwipeFeedView({ posts, onCardClick, onDelete, onCreatePostClick }: Feed
       return;
     }
 
-    const threshold = window.innerWidth * 0.2;
-    if (translateX < -threshold && currentIndex < posts.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else if (translateX > threshold && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+    // 세로 스와이프 dismiss
+    if (dragAxisRef.current === 'v') {
+      if (Math.abs(translateY) > window.innerHeight * 0.25) {
+        setDismissing(true);
+        if (currentPost) {
+          setTimeout(() => {
+            onDelete(currentPost.id);
+            setCurrentIndex(prev => prev >= posts.length - 1 && prev > 0 ? prev - 1 : prev);
+            setDismissing(false);
+            setTranslateY(0);
+            currentTranslateYRef.current = 0;
+          }, 250);
+        }
+        return;
+      }
     }
+
+    // 가로 스와이프 내비게이션
+    if (dragAxisRef.current === 'h') {
+      const threshold = window.innerWidth * 0.2;
+      if (translateX < -threshold && currentIndex < posts.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      } else if (translateX > threshold && currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      }
+    }
+
     setTranslateX(0);
+    setTranslateY(0);
     currentTranslateXRef.current = 0;
+    currentTranslateYRef.current = 0;
   };
 
   const handleDelete = () => {
@@ -107,7 +146,7 @@ function SwipeFeedView({ posts, onCardClick, onDelete, onCreatePostClick }: Feed
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-card/10 grain-overlay">
+    <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-card/10 grain-overlay select-none">
       <div
         className="w-full h-full flex items-center justify-center"
         onPointerDown={handlePointerDown}
@@ -117,8 +156,9 @@ function SwipeFeedView({ posts, onCardClick, onDelete, onCreatePostClick }: Feed
         <div
           className="w-full max-w-[380px] sm:max-w-[400px] mx-4"
           style={{
-            transform: `translateX(${translateX}px) scale(${isDragging ? 0.96 : 1})`,
+            transform: `translateX(${translateX}px) translateY(${translateY}px) scale(${isDragging ? 0.96 : 1})`,
             transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            opacity: dismissing ? 0 : 1,
           }}
         >
           <PostCard
@@ -187,7 +227,7 @@ export function FeedView({ posts, onCardClick, onDelete, onCreatePostClick, expa
   }
 
   return (
-    <>
+    <div className="fixed inset-0 select-none">
       <FeedPhysics posts={posts} />
       <FeedCards
         posts={posts}
@@ -195,6 +235,6 @@ export function FeedView({ posts, onCardClick, onDelete, onCreatePostClick, expa
         onDelete={onDelete}
         expandedPostId={expandedPostId}
       />
-    </>
+    </div>
   );
 }

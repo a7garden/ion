@@ -16,7 +16,7 @@ export function Layout() {
   }, [theme]);
 
   return (
-    <div className={`min-h-screen bg-background text-foreground transition-colors duration-500 grain-overlay ${theme === 'black' ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-background text-foreground transition-colors duration-500 ${theme === 'black' ? 'dark' : ''}`}>
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-accent/5 opacity-30" />
       </div>

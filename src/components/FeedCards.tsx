@@ -1,4 +1,4 @@
-import { useSyncExternalStore, useCallback } from 'react';
+import { useSyncExternalStore, useCallback, useEffect } from 'react';
 import type { Post } from '@/types';
 import { positionStore } from '@/stores/positionStore';
 import { PostCard } from './PostCard';
@@ -28,8 +28,14 @@ export function FeedCards({ posts, onCardClick, onDelete, expandedPostId }: Feed
     positionStore.setDeleteMode(null);
   }, [onDelete]);
 
+  // edge-drag dismiss 감시 (FeedPhysics가 처리 완료 후 notify → 여기서 onDelete)
+  useEffect(() => {
+    const id = positionStore.consumePendingDataDelete();
+    if (id) onDelete(id);
+  });
+
   return (
-    <div className="fixed inset-0">
+    <div className="fixed inset-0 select-none">
       {positions.map((pos) => {
         const post = posts.find((p) => p.id === pos.id);
         if (!post) return null;

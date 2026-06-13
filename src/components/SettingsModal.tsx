@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { LegalModal } from '@/components/LegalModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -45,6 +46,7 @@ export function SettingsModal({
   const { t, locale, setLocale } = useI18n();
 
   const [editName, setEditName] = useState(false);
+  const [legalModal, setLegalModal] = useState<'privacy' | 'terms' | null>(null);
   const [nameInput, setNameInput] = useState(userName || '');
   const [saving, setSaving] = useState(false);
 
@@ -162,22 +164,20 @@ export function SettingsModal({
 
           {/* Legal Links */}
           <div className="flex flex-col gap-2">
-            <a
-              href="/privacy"
-              className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-muted/40 transition-colors text-sm text-muted-foreground group"
-              onClick={e => { e.preventDefault(); onOpenChange(false); window.open('/privacy', '_self'); }}
+            <button
+              onClick={() => setLegalModal('privacy')}
+              className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-muted/40 transition-colors text-sm text-muted-foreground group w-full text-left"
             >
               <span>{t('settings.privacyPolicy')}</span>
               <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
-            <a
-              href="/terms"
-              className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-muted/40 transition-colors text-sm text-muted-foreground group"
-              onClick={e => { e.preventDefault(); onOpenChange(false); window.open('/terms', '_self'); }}
+            </button>
+            <button
+              onClick={() => setLegalModal('terms')}
+              className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-muted/40 transition-colors text-sm text-muted-foreground group w-full text-left"
             >
               <span>{t('settings.termsOfService')}</span>
               <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
+            </button>
           </div>
 
           <div className="h-px bg-border/50" />
@@ -192,6 +192,14 @@ export function SettingsModal({
           </button>
         </div>
       </DialogContent>
+
+      {legalModal && (
+        <LegalModal
+          open={!!legalModal}
+          onOpenChange={(open) => { if (!open) setLegalModal(null); }}
+          type={legalModal}
+        />
+      )}
     </Dialog>
   );
 }
