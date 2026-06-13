@@ -164,13 +164,11 @@ export function WorldPage() {
     }));
 
     const isMutualLike = (userA: string, userB: string): boolean => {
-      const aLikes = state.userLikes[userA] || [];
-      const bLikes = state.userLikes[userB] || [];
-
-      const aLikedBPosts = state.posts.some(p => p.authorId === userB && aLikes.includes(p.id));
-      const bLikedAPosts = state.posts.some(p => p.authorId === userA && bLikes.includes(p.id));
-
-      return aLikedBPosts && bLikedAPosts;
+      const aLiked = state.likedPostIds.some(pid =>
+        state.posts.some(p => p.id === pid && p.authorId === userB));
+      const bLiked = state.likedPostIds.some(pid =>
+        state.posts.some(p => p.id === pid && p.authorId === userA));
+      return aLiked && bLiked;
     };
 
     const edges: Edge[] = [];
@@ -183,7 +181,7 @@ export function WorldPage() {
     }
 
     return { nodes, edges };
-  }, [state.posts, state.userLikes, state.currentUser, dimensions]);
+  }, [state.posts, state.likedPostIds, state.currentUser, dimensions]);
 
   const renderLoopRef = useRef<(() => void) | null>(null);
 

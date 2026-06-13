@@ -2,96 +2,83 @@ import { useState, useEffect, useCallback } from 'react';
 import type { AppState, Post } from '@/types';
 import { DEFAULT_STATE, STORAGE_KEY } from '@/constants';
 import {
-  signInWithGoogle as supabaseSignInWithGoogle,
-  signOut as supabaseSignOut,
-  onAuthChange,
-  getRandomUnviewedPosts,
+  signInWithGoogle,
+  signOut,
+  onAuthStateChange,
+  getFeed,
   getUserPosts,
-  createPost as createPostInDb,
-  deletePost as deletePostFromDb,
-  markPostAsViewed,
-  addLike,
-  removeLike,
-  getUserLikedPostIds,
-  updateDisplayName as updateDisplayNameInDb,
-  uploadPostMedia,
-  type Post as SupabasePost,
+  createPost,
+  deletePost as deletePostDb,
+  likePost,
+  unlikePost,
+  getMyLikedPostIds,
+  updateDisplayName,
+  uploadMedia,
+  type FeedRow,
 } from '@/lib/supabase';
 
-function loadLocalData(): Partial<AppState> {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return {
-        theme: parsed.theme || 'white',
-        likedPosts: parsed.likedPosts || [],
-        zoomLevel: parsed.zoomLevel || 50,
-        worldPageOpen: parsed.worldPageOpen || false,
-        // userLikes는 DB에서 로드하므로 localStorage에 저장하지 않음
-      };
-    }
-  } catch {
-    console.log('LocalStorage unavailable');
-  }
-  return {};
-}
+// ============================================
+// LocalStorage helpers (theme, zoom only)
+// ============================================
 
-function saveLocalData(data: Partial<AppState>) {
+function loadLocal(): Partial<AppState> {
   try {
-    const existing = localStorage.getItem(STORAGE_KEY);
-    const parsed = existing ? JSON.parse(existing) : {};
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...parsed, ...data }));
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return {
+      theme: parsed.theme || 'white',
+      zoomLevel: parsed.zoomLevel ?? 50,
+    };
   } catch {
-    console.log('LocalStorage unavailable');
+    return {};
   }
 }
 
-function supabasePostToPost(sp: SupabasePost): Post {
+function saveLocal(data: Partial<AppState>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      theme: data.theme,
+      zoomLevel: data.zoomLevel,
+    }));
+  } catch { /* noop */ }
+}
+
+// ============================================
+// Mapper
+// ============================================
+
+function toPost(row: FeedRow): Post {
   return {
-    id: sp.id,
-    authorId: sp.author_id,
-    authorName: (sp as any).author_name || (sp as any).profiles?.display_name || 'Anonymous',
-    authorAvatar: (sp as any).author_avatar || (sp as any).profiles?.avatar_url,
-    content: sp.content || '',
-    angle: sp.angle,
-    radius: sp.radius,
-    floatOffset: sp.float_offset,
-    floatDelay: sp.float_delay,
-    media: sp.media_url || undefined,
-    mediaType: sp.media_type || undefined,
-    createdAt: sp.created_at,
+    id: row.id,
+    authorId: row.author_id,
+    authorName: row.author_display_name || 'Anonymous',
+    authorAvatar: row.author_avatar_url ?? undefined,
+    content: row.content || '',
+    media: row.media_url ?? undefined,
+    mediaType: row.media_type ?? undefined,
+    createdAt: row.created_at,
   };
 }
 
-export function useAppState() {
-  const localData = loadLocalData();
+// ============================================
+// Hook
+// ============================================
 
+export function useAppState() {
   const [state, setState] = useState<AppState>(() => ({
     ...DEFAULT_STATE,
-    ...localData,
-    posts: [],
-    currentUser: null,
-    userName: null,
-    userAvatar: null,
+    ...loadLocal(),
   }));
 
-  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
-
-  // 로컬 상태 저장
+  // Persist theme & zoom
   useEffect(() => {
-    saveLocalData({
-      theme: state.theme,
-      likedPosts: state.likedPosts,
-      zoomLevel: state.zoomLevel,
-      worldPageOpen: state.worldPageOpen,
-      // userLikes는 DB에서 로드하므로 제외 (성능 + 동기화)
-    });
-  }, [state.theme, state.likedPosts, state.zoomLevel, state.worldPageOpen, state.userLikes]);
+    saveLocal({ theme: state.theme, zoomLevel: state.zoomLevel });
+  }, [state.theme, state.zoomLevel]);
 
-  // 인증 상태 감시
+  // Auth listener
   useEffect(() => {
-    const { data: { subscription } } = onAuthChange((user) => {
+    const { data: { subscription } } = onAuthStateChange((user) => {
       if (user) {
         setState(prev => ({
           ...prev,
@@ -106,238 +93,170 @@ export function useAppState() {
           userName: null,
           userAvatar: null,
           posts: [],
-          isAdmin: false,
+          likedPostIds: [],
         }));
       }
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadRandomPosts = useCallback(async (userUid: string, limit: number = 10) => {
-    setIsLoadingPosts(true);
+  // Auto-load data on login
+  useEffect(() => {
+    if (!state.currentUser) return;
+    loadFeed(state.currentUser);
+    loadLikes(state.currentUser);
+  }, [state.currentUser]);
+
+  // ---- Data loaders ----
+
+  const loadFeed = useCallback(async (userId: string, batchSize = 10) => {
     try {
-      const supabasePosts = await getRandomUnviewedPosts(userUid, limit);
-      const posts = supabasePosts.map(supabasePostToPost);
-      setState(prev => ({ ...prev, posts }));
-    } catch (error) {
-      console.error('Failed to load posts:', error);
-    } finally {
-      setIsLoadingPosts(false);
+      const rows = await getFeed(userId, batchSize);
+      setState(prev => ({ ...prev, posts: rows.map(toPost) }));
+    } catch (e) {
+      console.error('Failed to load feed:', e);
     }
   }, []);
 
-  const loadMyPosts = useCallback(async (userUid: string) => {
-    setIsLoadingPosts(true);
+  const loadMyPosts = useCallback(async (userId: string) => {
     try {
-      const supabasePosts = await getUserPosts(userUid);
-      const posts = supabasePosts.map(supabasePostToPost);
-      setState(prev => ({ ...prev, posts }));
-    } catch (error) {
-      console.error('Failed to load my posts:', error);
-    } finally {
-      setIsLoadingPosts(false);
+      const rows = await getUserPosts(userId);
+      setState(prev => ({ ...prev, posts: rows.map(toPost) }));
+    } catch (e) {
+      console.error('Failed to load my posts:', e);
     }
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      theme: prev.theme === 'white' ? 'black' : 'white'
-    }));
-  }, []);
-
-  const loadUserLikes = useCallback(async (userUid: string) => {
+  const loadLikes = useCallback(async (userId: string) => {
     try {
-      const likedPostIds = await getUserLikedPostIds(userUid);
-      setState(prev => ({
-        ...prev,
-        userLikes: { ...prev.userLikes, [userUid]: likedPostIds },
-      }));
-    } catch (error) {
-      console.error('Failed to load user likes:', error);
+      const ids = await getMyLikedPostIds(userId);
+      setState(prev => ({ ...prev, likedPostIds: ids }));
+    } catch (e) {
+      console.error('Failed to load likes:', e);
     }
   }, []);
 
-  const toggleLike = useCallback(async (postId: string, _authorId: string) => {
-    const currentUser = state.currentUser;
-    if (!currentUser) return;
-
-    // 낙관적 업데이트 - setState 내에서 최신 상태를 읽어 stale closure 방지
-    let isCurrentlyLiked = false;
-
-    setState(prev => {
-      const userLikes = { ...prev.userLikes };
-      if (!userLikes[currentUser]) userLikes[currentUser] = [];
-      const likes = [...userLikes[currentUser]];
-      const index = likes.indexOf(postId);
-      isCurrentlyLiked = index !== -1;
-
-      if (index === -1) {
-        likes.push(postId);
-        return {
-          ...prev,
-          userLikes: { ...userLikes, [currentUser]: likes },
-          likedPosts: prev.likedPosts.includes(postId) ? prev.likedPosts : [...prev.likedPosts, postId]
-        };
-      } else {
-        likes.splice(index, 1);
-        return { ...prev, userLikes: { ...userLikes, [currentUser]: likes } };
-      }
-    });
-
-    try {
-      if (isCurrentlyLiked) {
-        await removeLike(currentUser, postId);
-      } else {
-        await addLike(currentUser, postId);
-      }
-    } catch (error) {
-      console.error('Failed to update like:', error);
-      // 롤백
-      loadUserLikes(currentUser);
-    }
-  }, [state.currentUser, loadUserLikes]);
-
-  const setZoomLevel = useCallback((level: number) => {
-    setState(prev => ({
-      ...prev,
-      zoomLevel: Math.max(10, Math.min(100, level))
-    }));
-  }, []);
+  // ---- Actions ----
 
   const login = useCallback(async () => {
-    try {
-      await supabaseSignInWithGoogle();
-    } catch (error) {
-      console.error('Google login failed:', error);
-    }
-  }, []);
-
-  const setUserName = useCallback((name: string) => {
-    setState(prev => ({ ...prev, userName: name }));
+    await signInWithGoogle();
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await supabaseSignOut();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+    await signOut();
     setState(prev => ({
       ...prev,
       currentUser: null,
       userName: null,
       userAvatar: null,
       posts: [],
-      isAdmin: false,
+      likedPostIds: [],
     }));
   }, []);
 
-  const setWorldPageOpen = useCallback((open: boolean) => {
-    setState(prev => ({ ...prev, worldPageOpen: open }));
+  const toggleTheme = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      theme: prev.theme === 'white' ? 'black' : 'white',
+    }));
   }, []);
 
-  const goToMain = useCallback(() => {
-    setState(prev => ({ ...prev, worldPageOpen: false }));
+  const setZoomLevel = useCallback((level: number) => {
+    setState(prev => ({ ...prev, zoomLevel: Math.max(10, Math.min(100, level)) }));
   }, []);
 
-  const addPost = useCallback(async (post: Omit<Post, 'id'> & { mediaFile?: File }) => {
-    const currentUser = state.currentUser;
-    if (!currentUser) throw new Error('Not logged in');
+  const toggleLike = useCallback(async (postId: string) => {
+    const userId = state.currentUser;
+    if (!userId) return;
+
+    const wasLiked = state.likedPostIds.includes(postId);
+
+    // Optimistic update
+    setState(prev => ({
+      ...prev,
+      likedPostIds: wasLiked
+        ? prev.likedPostIds.filter(id => id !== postId)
+        : [...prev.likedPostIds, postId],
+    }));
 
     try {
-      let mediaUrl: string | undefined;
-      let mediaType: 'image' | 'video' | undefined;
-
-      if (post.mediaFile) {
-        const result = await uploadPostMedia(post.mediaFile, currentUser);
-        mediaUrl = result.url;
-        mediaType = result.type;
-      }
-
-      const supabasePost = await createPostInDb({
-        author_id: currentUser,
-        content: post.content,
-        media_url: mediaUrl,
-        media_type: mediaType,
-        angle: post.angle,
-        radius: post.radius,
-        float_offset: post.floatOffset,
-        float_delay: post.floatDelay,
-      });
-
-      const newPost = supabasePostToPost(supabasePost);
-      newPost.authorName = state.userName || 'Anonymous';
-
-      setState(prev => ({ ...prev, posts: [newPost, ...prev.posts] }));
-    } catch (error) {
-      console.error('Failed to create post:', error);
-      throw error;
+      if (wasLiked) await unlikePost(userId, postId);
+      else await likePost(userId, postId);
+    } catch (e) {
+      console.error('Like toggle failed:', e);
+      loadLikes(userId); // rollback
     }
-  }, [state.currentUser, state.userName]);
+  }, [state.currentUser, state.likedPostIds, loadLikes]);
 
-  const dismissPost = useCallback(async (postId: string) => {
-    const currentUser = state.currentUser;
-    if (!currentUser) return;
+  const addPost = useCallback(async (opts: { content: string; mediaFile?: File }) => {
+    const userId = state.currentUser;
+    if (!userId) throw new Error('Not logged in');
 
-    try {
-      await markPostAsViewed(currentUser, postId);
-      setState(prev => ({
-        ...prev,
-        posts: prev.posts.filter(p => p.id !== postId)
-      }));
-    } catch (error) {
-      console.error('Failed to dismiss post:', error);
+    let mediaUrl: string | undefined;
+    let mediaType: 'image' | 'video' | undefined;
+
+    if (opts.mediaFile) {
+      const result = await uploadMedia(opts.mediaFile, userId);
+      mediaUrl = result.url;
+      mediaType = result.type;
     }
-  }, [state.currentUser]);
 
-  const deletePost = useCallback(async (postId: string) => {
-    const currentUser = state.currentUser;
-    if (!currentUser) return false;
+    const row = await createPost({
+      author_id: userId,
+      content: opts.content,
+      media_url: mediaUrl,
+      media_type: mediaType,
+    });
 
+    const post: Post = {
+      id: row.id,
+      authorId: row.author_id,
+      authorName: state.userName || 'Anonymous',
+      authorAvatar: state.userAvatar ?? undefined,
+      content: row.content,
+      media: row.media_url ?? undefined,
+      mediaType: (row.media_type as 'image' | 'video') ?? undefined,
+      createdAt: row.created_at,
+    };
+
+    setState(prev => ({ ...prev, posts: [post, ...prev.posts] }));
+  }, [state.currentUser, state.userName, state.userAvatar]);
+
+  const removePost = useCallback(async (postId: string) => {
     try {
-      await deletePostFromDb(postId, currentUser);
-      setState(prev => ({
-        ...prev,
-        posts: prev.posts.filter(p => p.id !== postId)
-      }));
+      await deletePostDb(postId);
+      setState(prev => ({ ...prev, posts: prev.posts.filter(p => p.id !== postId) }));
       return true;
-    } catch (error) {
-      console.error('Failed to delete post:', error);
+    } catch (e) {
+      console.error('Delete failed:', e);
       return false;
     }
+  }, []);
+
+  const changeDisplayName = useCallback(async (name: string) => {
+    const userId = state.currentUser;
+    if (!userId || !name.trim()) return;
+    const { error } = await updateDisplayName(userId, name.trim());
+    if (!error) setState(prev => ({ ...prev, userName: name.trim() }));
   }, [state.currentUser]);
 
-  const handleUpdateDisplayName = useCallback(async (name: string) => {
-    const currentUser = state.currentUser;
-    if (!currentUser || !name.trim()) return;
-
-    try {
-      await updateDisplayNameInDb(currentUser, name.trim());
-      setUserName(name.trim());
-    } catch (error) {
-      console.error('Failed to update display name:', error);
-    }
-  }, [state.currentUser]);
+  const dismissPost = useCallback(async (postId: string) => {
+    // Just remove from local state — feed is random anyway
+    setState(prev => ({ ...prev, posts: prev.posts.filter(p => p.id !== postId) }));
+  }, []);
 
   return {
     state,
-    isLoadingPosts,
-    toggleTheme,
-    toggleLike,
-    setZoomLevel,
     login,
     logout,
-    setUserName,
-    setWorldPageOpen,
-    goToMain,
+    toggleTheme,
+    setZoomLevel,
+    toggleLike,
     addPost,
+    removePost,
+    changeDisplayName,
     dismissPost,
-    deletePost,
-    loadRandomPosts,
+    loadFeed,
     loadMyPosts,
-    loadUserLikes,
-    updateDisplayName: handleUpdateDisplayName,
   };
 }

@@ -25,7 +25,6 @@ export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProp
 // deleteModeId를 positions 변경 시 함께 계산하여 불필요한 리렌더링 방지
   const deleteModeId = positions.length > 0 ? positionStore.getDeleteModeId() : null;
 
-  const currentUser = state.currentUser || '';
 
   const handleDelete = useCallback((posId: string) => {
     onDelete(posId);
@@ -38,7 +37,7 @@ export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProp
         const post = state.posts.find((p) => p.id === pos.id);
         if (!post) return null;
 
-        const isLiked = state.userLikes[currentUser]?.includes(pos.id) || false;
+        const isLiked = state.likedPostIds.includes(pos.id);
 
         return (
           <PostCard

@@ -15,20 +15,12 @@ import type { Post } from '@/types';
 type View = 'feed' | 'world' | 'my';
 
 function AppContent() {
-  const { state, logout, toggleLike, loadRandomPosts, loadUserLikes, loadMyPosts, dismissPost } = useApp();
+  const { state, logout, toggleLike, loadFeed, loadMyPosts, dismissPost } = useApp();
   const [currentView, setCurrentView] = useState<View>('feed');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
-  const [expandedPost, setExpandedPost] = useState<{ post: Post; cardRect: { x: number; y: number; size: number } } | null>(null);
+  const [expandedPost, setExpandedPost] = useState<Post | null>(null);
   const { toast } = useToast();
-
-  // 로그인 후 데이터 로드
-  useEffect(() => {
-    if (state.currentUser) {
-      loadRandomPosts(state.currentUser, 10);
-      loadUserLikes(state.currentUser);
-    }
-  }, [state.currentUser, loadRandomPosts, loadUserLikes]);
 
   // MyPage 진입 시 내 게시물 로드
   useEffect(() => {
@@ -37,46 +29,26 @@ function AppContent() {
     }
   }, [currentView, state.currentUser, loadMyPosts]);
 
-  const showToast = (message: string) => {
-    toast({ description: message, duration: 2500 });
-  };
+  const isLoggedIn = !!state.currentUser;
 
-  const handleToggleLike = async (postId: string, authorId: string) => {
-    const currentUser = state.currentUser || '';
-    const wasLiked = state.userLikes[currentUser]?.includes(postId) || false;
-    await toggleLike(postId, authorId);
-    // 좋아요를 누른 경우(이전에 좋아요가 없었음)에만 토스트 표시
-    if (!wasLiked) {
-      setTimeout(() => showToast(`Someone liked ${authorId}'s post`), 500);
-    }
-  };
-
-  const openProfile = (post: Post, cardRect: { x: number; y: number; size: number }) => {
-    setExpandedPost({ post, cardRect });
-  };
-
-  const closeExpandedCard = () => {
-    setExpandedPost(null);
+  const handleToggleLike = async (postId: string) => {
+    await toggleLike(postId);
   };
 
   const handleLogout = async () => {
     await logout();
-    showToast('Logged out');
+    toast({ description: 'Logged out', duration: 2000 });
   };
 
   const handleDismiss = async (postId: string) => {
     await dismissPost(postId);
-    if (state.currentUser) {
-      loadRandomPosts(state.currentUser, 1);
-    }
+    if (state.currentUser) loadFeed(state.currentUser, 1);
   };
-
-  const isLoggedIn = !!state.currentUser;
 
   const handleCreatePostClick = () => {
     if (!isLoggedIn) {
       setLoginModalOpen(true);
-      showToast('게시물을 작성하려면 로그인이 필요합니다');
+      toast({ description: '게시물을 작성하려면 로그인이 필요합니다', duration: 2000 });
       return;
     }
     setCreatePostModalOpen(true);
@@ -97,7 +69,12 @@ function AppContent() {
       {currentView === 'feed' && (
         <>
           <main className="pt-14 sm:pt-[64px] w-full h-screen relative flex">
-            <FeedView onCardClick={openProfile} onToggleLike={handleToggleLike} onDelete={handleDismiss} onCreatePostClick={handleCreatePostClick} />
+            <FeedView
+              onCardClick={(post) => setExpandedPost(post)}
+              onToggleLike={handleToggleLike}
+              onDelete={handleDismiss}
+              onCreatePostClick={handleCreatePostClick}
+            />
           </main>
           <ZoomSlider />
         </>
@@ -114,30 +91,15 @@ function AppContent() {
         <MyPage onLogout={handleLogout} />
       )}
 
-      <LoginModal
-        open={loginModalOpen}
-        onOpenChange={setLoginModalOpen}
-      />
-
-      <CreatePostModal
-        open={createPostModalOpen}
-        onOpenChange={setCreatePostModalOpen}
-      />
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
+      <CreatePostModal open={createPostModalOpen} onOpenChange={setCreatePostModalOpen} />
 
       <ExpandedCard
         open={expandedPost !== null}
-        onClose={closeExpandedCard}
-        post={expandedPost?.post ?? null}
-        isLiked={
-          expandedPost
-            ? (state.userLikes[state.currentUser || '']?.includes(expandedPost.post.id) ?? false)
-            : false
-        }
-        onToggleLike={() => {
-          if (expandedPost) {
-            toggleLike(expandedPost.post.id, expandedPost.post.authorId);
-          }
-        }}
+        onClose={() => setExpandedPost(null)}
+        post={expandedPost}
+        isLiked={expandedPost ? state.likedPostIds.includes(expandedPost.id) : false}
+        onToggleLike={() => expandedPost && toggleLike(expandedPost.id)}
       />
 
       <Toaster />
@@ -145,12 +107,10 @@ function AppContent() {
   );
 }
 
-function App() {
+export default function App() {
   return (
     <AppProvider>
       <AppContent />
     </AppProvider>
   );
 }
-
-export default App;

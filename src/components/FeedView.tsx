@@ -23,7 +23,7 @@ interface FeedViewProps {
 }
 
 function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewProps) {
-  const { state, toggleLike, deletePost } = useApp();
+  const { state, toggleLike, removePost } = useApp();
   const { width, height } = useDeviceSize();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [translateX, setTranslateX] = useState(0);
@@ -35,8 +35,6 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
 
   const posts = state.posts;
   const currentPost = posts[currentIndex];
-    const currentUser = state.currentUser || '';
-
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -85,7 +83,7 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
 
   const handleDelete = () => {
     if (currentPost) {
-      deletePost(currentPost.id);
+      removePost(currentPost.id);
       onDelete(currentPost.id);
       if (currentIndex >= posts.length - 1 && currentIndex > 0) {
         setCurrentIndex(currentIndex - 1);
@@ -116,7 +114,7 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
     );
   }
 
-  const isLiked = state.userLikes[currentUser]?.includes(currentPost.id) || false;
+  const isLiked = state.likedPostIds.includes(currentPost.id);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-card/10 grain-overlay">
@@ -147,7 +145,7 @@ function SwipeFeedView({ onCardClick, onCreatePostClick, onDelete }: FeedViewPro
               const rect = { x: width / 2, y: height / 2, size: getDynamicCardSize(width, state.zoomLevel) };
               onCardClick(currentPost, rect);
             }}
-            onToggleLike={() => toggleLike(currentPost.id, currentPost.authorId)}
+            onToggleLike={() => toggleLike(currentPost.id)}
             onDelete={handleDelete}
           />
         </div>

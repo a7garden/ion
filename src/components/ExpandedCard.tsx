@@ -1,17 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Post } from '@/types';
 
-interface CardPosition {
-  x: number;
-  y: number;
-  size: number;
-}
-
 interface ExpandedCardProps {
   open: boolean;
   onClose: () => void;
   post: Post | null;
-  cardRect?: CardPosition | null;
   isLiked: boolean;
   onToggleLike: () => void;
 }
