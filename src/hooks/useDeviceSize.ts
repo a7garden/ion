@@ -91,19 +91,17 @@ export function getDynamicCardSize(windowWidth: number, zoomLevel: number): numb
   return Math.max(minSize, Math.min(base * zoomFactor, maxSize));
 }
 
-export function getCardCountForBreakpoint(breakpoint: Breakpoint, zoomLevel: number): number {
-  const baseCounts: Record<Breakpoint, number> = {
-    mobile: 4,
-    tablet: 8,
-    laptop: 14,
-    desktop: 20,
-  };
+export function getCardCountForViewport(windowWidth: number, windowHeight: number, cardSize: number): number {
+  const TOP_OFFSET = 72;
+  const CARD_MARGIN = 20;
+  const DENSITY = 0.35;
 
-  const base = baseCounts[breakpoint];
-  // 줌인(zoomLevel 높음) → 카드 커짐 → 적은 카드
-  // 줌아웃(zoomLevel 낮음) → 카드 작아짐 → 많은 카드
-  const inverseZoom = 100 - zoomLevel;
-  const zoomBonus = Math.round((inverseZoom / 100) * 8);
+  const effectiveWidth = windowWidth;
+  const effectiveHeight = windowHeight - TOP_OFFSET;
+  const cellSize = cardSize + CARD_MARGIN;
 
-  return Math.max(Math.round(base * 0.5), base + zoomBonus);
+  const cols = Math.max(1, Math.floor(effectiveWidth / cellSize));
+  const rows = Math.max(1, Math.floor(effectiveHeight / cellSize));
+
+  return Math.max(1, Math.round(cols * rows * DENSITY));
 }

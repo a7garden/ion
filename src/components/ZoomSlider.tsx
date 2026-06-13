@@ -1,10 +1,9 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useClient } from '@/hooks/ClientProvider';
-import { useDeviceSize, getCardCountForBreakpoint } from '@/hooks/useDeviceSize';
+import { getCardCountForViewport, getDynamicCardSize } from '@/hooks/useDeviceSize';
 
 export function ZoomSlider() {
   const { zoomLevel, setZoomLevel } = useClient();
-  const { breakpoint } = useDeviceSize();
   const trackRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -64,7 +63,8 @@ export function ZoomSlider() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const cardCount = getCardCountForBreakpoint(breakpoint, zoomLevel);
+  const cardSize = getDynamicCardSize(window.innerWidth, zoomLevel);
+  const cardCount = getCardCountForViewport(window.innerWidth, window.innerHeight, cardSize);
 
   return (
     <div

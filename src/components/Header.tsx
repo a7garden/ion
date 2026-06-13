@@ -1,3 +1,4 @@
+import { useState, useRef, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/hooks/AuthProvider';
 import { useClient } from '@/hooks/ClientProvider';
@@ -5,20 +6,38 @@ import { Button } from '@/components/ui/button';
 import { Home, Globe, User, Sun, Moon } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import { NotificationCenter } from '@/components/NotificationCenter';
+import { DevLoginModal } from '@/components/DevLoginModal';
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, devLogin } = useAuth();
   const { theme, toggleTheme } = useClient();
   const { t } = useI18n();
   const isLoggedIn = !!user;
+  const [devModalOpen, setDevModalOpen] = useState(false);
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<number | null>(null);
+
+  const handleLogoTap = useCallback(() => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      setDevModalOpen(true);
+      return;
+    }
+    tapTimerRef.current = setTimeout(() => {
+      tapCountRef.current = 0;
+    }, 800);
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 h-14 sm:h-[64px] bg-background/80 backdrop-blur-xl border-b border-border/50 z-[500] grid grid-cols-3 items-center px-4 sm:px-6 pt-[var(--safe-area-top)]">
-      {/* Left: Logo */}
+      {/* Left: Logo — tap 5x to open Dev Mode */}
       <div className="flex items-center justify-start">
         <NavLink
           to="/"
-          className="text-xl sm:text-2xl font-bold text-foreground tracking-tight hover:text-accent transition-colors duration-300"
+          onClick={handleLogoTap}
+          className="text-xl sm:text-2xl font-bold text-foreground tracking-tight hover:text-accent transition-colors duration-300 select-none"
         >
           ION
         </NavLink>
@@ -95,6 +114,7 @@ export function Header() {
           )}
         </Button>
       </div>
+      <DevLoginModal open={devModalOpen} onOpenChange={setDevModalOpen} onLogin={devLogin} />
     </header>
   );
 }

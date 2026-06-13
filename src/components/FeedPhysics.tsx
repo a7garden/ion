@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { positionStore } from '@/stores/positionStore';
 import { useClient } from '@/hooks/ClientProvider';
-import { useDeviceSize, getCardCountForBreakpoint, getDynamicCardSize } from '@/hooks/useDeviceSize';
+import { useDeviceSize, getCardCountForViewport, getDynamicCardSize } from '@/hooks/useDeviceSize';
 import type { Post } from '@/types';
 
 const TOP_OFFSET = 72;
@@ -27,7 +27,7 @@ interface FeedPhysicsProps {
 
 export function FeedPhysics({ posts }: FeedPhysicsProps) {
   const { theme, zoomLevel } = useClient();
-  const { breakpoint, width } = useDeviceSize();
+  const { width } = useDeviceSize();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<FloatingNode[]>([]);
   const animationRef = useRef<number | undefined>(undefined);
@@ -46,10 +46,6 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
       nodesRef.current = [];
     }
   }, [posts]);
-
-  const getCardCount = useCallback((zl: number): number => {
-    return getCardCountForBreakpoint(breakpoint, zl);
-  }, [breakpoint]);
 
   const getCardSize = useCallback((zl: number): number => {
     return getDynamicCardSize(width, zl);
@@ -72,9 +68,9 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    const maxCards = getCardCount(zoomLevel);
-    const slicedPosts = posts.slice(0, maxCards);
     const baseSize = getCardSize(zoomLevel);
+    const maxCards = getCardCountForViewport(canvas.width, canvas.height, baseSize);
+    const slicedPosts = posts.slice(0, maxCards);
 
     nodesRef.current = slicedPosts.map((post) => {
       const size = baseSize + Math.random() * 20;
@@ -90,7 +86,7 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
         targetOpacity: 1,
       };
     });
-  }, [posts, zoomLevel, getCardCount, getCardSize, getBounds]);
+  }, [posts, zoomLevel, getCardSize, getBounds]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -187,9 +183,9 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
     if (!canvasRef.current || posts.length === 0) return;
 
     const canvas = canvasRef.current;
-    const maxCards = getCardCount(zoomLevel);
-    const slicedPosts = posts.slice(0, maxCards);
     const baseSize = getCardSize(zoomLevel);
+    const maxCards = getCardCountForViewport(canvas.width, canvas.height, baseSize);
+    const slicedPosts = posts.slice(0, maxCards);
 
     nodesRef.current.forEach((node) => {
       const newSize = baseSize + (node.size % 20);
@@ -220,7 +216,7 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
     });
 
     nodesRef.current = nodesRef.current.filter(node => node.opacity > 0.01 || node.targetOpacity > 0);
-  }, [zoomLevel, posts, getCardCount, getCardSize, getBounds]);
+  }, [zoomLevel, posts, getCardSize, getBounds]);
 
   return (
     <div className="fixed inset-0">

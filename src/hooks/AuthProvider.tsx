@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { queryClient } from '@/lib/queryClient';
 import {
   signInWithGoogle,
+  signInWithEmail,
   signOut,
   onAuthStateChange,
 } from '@/lib/supabase';
@@ -17,6 +18,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   login: () => Promise<void>;
+  devLogin: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setPlanet: (planet: string) => void;
   setDisplayName: (name: string) => void;
@@ -49,6 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithGoogle();
   }, []);
 
+  const devLogin = useCallback(async (email: string, password: string) => {
+    const { error } = await signInWithEmail(email, password);
+    if (error) throw error;
+  }, []);
+
   const logout = useCallback(async () => {
     await signOut();
     setUser(null);
@@ -64,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, setPlanet, setDisplayName }}>
+    <AuthContext.Provider value={{ user, isLoading, login, devLogin, logout, setPlanet, setDisplayName }}>
       {children}
     </AuthContext.Provider>
   );
