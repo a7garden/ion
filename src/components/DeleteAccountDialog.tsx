@@ -67,7 +67,7 @@ export function DeleteAccountDialog({ open, onOpenChange, onConfirm }: DeleteAcc
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="탈퇴"
-              className="w-full px-3 py-2 border border-border/50 rounded-xl text-sm bg-transparent placeholder:text-muted-foreground/40 focus:ring-2 focus:ring-destructive/30 focus:border-destructive/50 outline-none"
+              className="w-full px-3 py-2 ring-1 ring-border rounded-xl text-sm bg-transparent placeholder:text-muted-foreground/40 focus:ring-2 focus:ring-destructive/30 outline-none"
               autoComplete="off"
               spellCheck={false}
             />

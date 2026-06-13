@@ -70,7 +70,7 @@ export function ReportModal({ open, onOpenChange, postId, userId }: ReportModalP
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
               placeholder="상세 내용 (선택)"
-              className="w-full min-h-[80px] resize-none border border-border/50 rounded-xl p-3 text-sm bg-transparent placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-accent/30 focus:border-accent/50 outline-none"
+              className="w-full min-h-[80px] resize-none ring-1 ring-border rounded-xl p-3 text-sm bg-transparent placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-accent/30 outline-none"
             />
           )}
         </div>
