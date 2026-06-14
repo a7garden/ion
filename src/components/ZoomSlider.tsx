@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useClient } from '@/hooks/ClientProvider';
 import { getCardCountForViewport, getDynamicCardSize } from '@/hooks/useDeviceSize';
 
@@ -7,27 +7,14 @@ export function ZoomSlider() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearCollapseTimer = useCallback(() => {
-    if (collapseTimerRef.current) {
-      clearTimeout(collapseTimerRef.current);
-      collapseTimerRef.current = null;
-    }
-  }, []);
-
-  const startCollapseTimer = useCallback(() => {
-    clearCollapseTimer();
-    if (isMobile) {
-      collapseTimerRef.current = setTimeout(() => setIsExpanded(false), 3000);
-    }
-  }, [isMobile, clearCollapseTimer]);
 
   useEffect(() => {
     setIsMobile(window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window);
   }, []);
 
   useEffect(() => {
+    // 모바일(터치) 피드는 풀스크린 카드 스와이프라 줌 개념이 없음 → 휠 리스너 미등록
+    if (isMobile) return;
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('[role="dialog"]') || target.closest('.world-page')) return;
@@ -37,9 +24,7 @@ export function ZoomSlider() {
     };
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, [zoomLevel, setZoomLevel]);
-
-  useEffect(() => { return () => clearCollapseTimer(); }, [clearCollapseTimer]);
+  }, [zoomLevel, setZoomLevel, isMobile]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -63,27 +48,23 @@ export function ZoomSlider() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // 모바일에서는 줌 컨트롤 패널 자체가 불필요
+  if (isMobile) return null;
+
   const cardSize = getDynamicCardSize(window.innerWidth, zoomLevel);
   const cardCount = getCardCountForViewport(window.innerWidth, window.innerHeight, cardSize);
 
   return (
     <div
       className="fixed right-4 sm:right-5 top-1/2 -translate-y-1/2 z-[450]"
-      onMouseEnter={() => !isMobile && setIsExpanded(true)}
-      onMouseLeave={() => !isMobile && setIsExpanded(false)}
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
     >
       <div
         className="relative flex items-center justify-center rounded-full bg-card/70 backdrop-blur-xl border border-border/40 transition-all duration-300 ease-out cursor-pointer hover:border-accent/30 hover:bg-card/90"
         style={{
           width: isExpanded ? 48 : 20,
           height: isExpanded ? 220 : 20,
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isMobile) {
-            setIsExpanded(prev => !prev);
-            startCollapseTimer();
-          }
         }}
       >
         {!isExpanded && (

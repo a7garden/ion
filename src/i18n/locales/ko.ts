@@ -29,6 +29,9 @@ export const ko = {
   'feed.noPosts': '아직 게시물이 없습니다',
   'feed.noPostsHint': '첫 게시물을 작성해보세요',
   'feed.createPost': '게시물 작성',
+  'feed.exclude': '피드에서 제외',
+  'feed.hintUp': '위로 밀어 다음 피드 보기',
+  'feed.hintLeft': '왼쪽으로 밀어 이 피드 제외',
 
   // MyPage
   'myPage.failed': '게시물을 불러오지 못했습니다',

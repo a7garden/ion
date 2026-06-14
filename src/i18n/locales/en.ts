@@ -29,6 +29,9 @@ export const en = {
   'feed.noPosts': 'No posts yet',
   'feed.noPostsHint': 'Create your first post to see it here',
   'feed.createPost': 'Create Post',
+  'feed.exclude': 'Exclude from feed',
+  'feed.hintUp': 'Swipe up for next',
+  'feed.hintLeft': 'Swipe left to exclude',
 
   // MyPage
   'myPage.failed': 'Failed to load posts',

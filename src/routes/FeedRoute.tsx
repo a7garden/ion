@@ -96,6 +96,8 @@ export function FeedRoute() {
           onCreatePostClick={handleCreatePostClick}
           expandedPostId={expandedPostId}
           onRefetch={refetchFeed}
+          likedIds={likedIds}
+          onToggleLike={handleToggleLike}
         />
       </main>
       <ZoomSlider />
