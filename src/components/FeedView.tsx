@@ -53,6 +53,24 @@ function SwipeFeedView({
   const velRef = useRef({ x: 0, y: 0 });
   const indexRef = useRef(0);
   const dismissTimerRef = useRef<number | undefined>(undefined);
+  const pendingDragRef = useRef<{ x: number; y: number } | null>(null);
+  const dragRafRef = useRef<number | undefined>(undefined);
+
+  const flushDrag = useCallback(() => {
+    if (pendingDragRef.current) {
+      setDrag(pendingDragRef.current);
+      dragRef.current = pendingDragRef.current;
+      pendingDragRef.current = null;
+    }
+    dragRafRef.current = undefined;
+  }, []);
+
+  const scheduleDragUpdate = useCallback((x: number, y: number) => {
+    pendingDragRef.current = { x, y };
+    if (dragRafRef.current === undefined) {
+      dragRafRef.current = requestAnimationFrame(flushDrag);
+    }
+  }, [flushDrag]);
 
   const currentPost = posts[currentIndex];
   indexRef.current = currentIndex;
@@ -67,7 +85,12 @@ function SwipeFeedView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posts.length]);
 
-  useEffect(() => () => window.clearTimeout(dismissTimerRef.current), []);
+  useEffect(() => () => {
+    window.clearTimeout(dismissTimerRef.current);
+    if (dragRafRef.current !== undefined) {
+      cancelAnimationFrame(dragRafRef.current);
+    }
+  }, []);
 
   // 왼쪽 스와이프 제외: 현재 카드가 왼쪽으로 날아가고, 다음 카드가 올라온 뒤 dismiss.
   // 다음 카드가 없는 마지막 카드는 퇴장 애니메이션을 기다리면 빈 화면이 점맧되므로
@@ -102,6 +125,13 @@ function SwipeFeedView({
     const target = e.target as HTMLElement;
     // 좋아요 등 버튼 위에서는 드래그 시작 안 함
     if (target.closest('button, a')) return;
+
+    if (dragRafRef.current !== undefined) {
+      flushDrag();
+      cancelAnimationFrame(dragRafRef.current);
+      dragRafRef.current = undefined;
+    }
+    pendingDragRef.current = null;
 
     setDragging(true);
     setAxis(null);
@@ -138,12 +168,12 @@ function SwipeFeedView({
     lastRef.current = { x: e.clientX, y: e.clientY, time: now };
 
     if (axisRef.current === 'v') {
-      setDrag({ x: 0, y: dy });
+      scheduleDragUpdate(0, dy);
       dragRef.current = { x: 0, y: dy };
     } else if (axisRef.current === 'h') {
       // 왼쪽으로만 (dx <= 0)
       const nx = Math.min(0, dx);
-      setDrag({ x: nx, y: 0 });
+      scheduleDragUpdate(nx, 0);
       dragRef.current = { x: nx, y: 0 };
     }
   };
@@ -151,6 +181,11 @@ function SwipeFeedView({
   const handlePointerUp = (e: React.PointerEvent) => {
     if (!dragging) return;
     setDragging(false);
+    if (dragRafRef.current !== undefined) {
+      flushDrag();
+      cancelAnimationFrame(dragRafRef.current);
+      dragRafRef.current = undefined;
+    }
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {

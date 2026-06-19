@@ -273,7 +273,7 @@ export function PostCard({
           </div>
         )}
 
-        <div className="text-[11px] font-medium text-muted-foreground/80 flex-1 line-clamp-6 leading-relaxed">
+        <div className="text-[11px] font-medium text-muted-foreground/80 flex-1 flex items-center justify-center line-clamp-6 leading-relaxed text-center">
           {post.content}
         </div>
 

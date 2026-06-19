@@ -107,7 +107,7 @@ export function ExpandedCard({
                         className="w-full max-h-[50vw] sm:max-h-72 object-contain rounded-lg"
                       />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-card/40 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 pointer-events-none" />
                   </motion.div>
                 )}
 

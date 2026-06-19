@@ -38,9 +38,37 @@ let dismissDirection: { vx: number; vy: number } | null = null;
 let pendingDataDeleteId: string | null = null;
 let cachedSnapshot: NodePosition[] = [];
 const dragVelocities = new Map<string, { vx: number; vy: number }>();
+let rafId: number | null = null;
+let pendingUpdate: { id: string; x: number; y: number }[] = [];
 
 const notifyListeners = () => {
   listeners.forEach((listener) => listener());
+};
+
+const flushPendingUpdates = () => {
+  pendingUpdate.forEach(({ id, x, y }) => {
+    const node = positions.get(id);
+    if (node) {
+      node.x = x;
+      node.y = y;
+    }
+  });
+  cachedSnapshot = Array.from(positions.values());
+  notifyListeners();
+  pendingUpdate = [];
+  rafId = null;
+};
+
+const scheduleUpdate = (id: string, x: number, y: number) => {
+  const existing = pendingUpdate.findIndex(p => p.id === id);
+  if (existing >= 0) {
+    pendingUpdate[existing] = { id, x, y };
+  } else {
+    pendingUpdate.push({ id, x, y });
+  }
+  if (rafId === null) {
+    rafId = requestAnimationFrame(flushPendingUpdates);
+  }
 };
 
 const positionStore: PositionStoreAPI = {
@@ -54,16 +82,13 @@ const positionStore: PositionStoreAPI = {
   },
 
   updateSinglePosition(id: string, x: number, y: number) {
-    const node = positions.get(id);
-    if (node) {
-      node.x = x;
-      node.y = y;
-      cachedSnapshot = Array.from(positions.values());
-      notifyListeners();
-    }
+    scheduleUpdate(id, x, y);
   },
 
   setDragging(id: string | null) {
+    if (id === null && rafId !== null) {
+      flushPendingUpdates();
+    }
     draggingId = id;
     notifyListeners();
   },
