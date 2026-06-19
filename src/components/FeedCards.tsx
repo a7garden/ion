@@ -1,6 +1,5 @@
-import { useSyncExternalStore, useCallback } from 'react';
+import { useSyncExternalStore, useCallback, useEffect } from 'react';
 import type { Post } from '@/types';
-import { useApp } from '@/hooks/AppProvider';
 import { positionStore } from '@/stores/positionStore';
 import { PostCard } from './PostCard';
 
@@ -11,36 +10,37 @@ interface CardPosition {
 }
 
 interface FeedCardsProps {
+  posts: Post[];
   onCardClick: (post: Post, cardRect: CardPosition) => void;
-  onToggleLike: (postId: string, authorId: string) => void;
   onDelete: (postId: string) => void;
+  expandedPostId?: string | null;
 }
 
-export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProps) {
-  const { state, toggleLike } = useApp();
+export function FeedCards({ posts, onCardClick, onDelete, expandedPostId }: FeedCardsProps) {
   const positions = useSyncExternalStore(
     positionStore.subscribe,
     positionStore.getSnapshot
   );
-  const deleteModeId = useSyncExternalStore(
-    positionStore.subscribe,
-    positionStore.getDeleteModeId
-  );
-
-  const currentUser = state.currentUser || 'guest';
+  const deleteModeId = positions.length > 0 ? positionStore.getDeleteModeId() : null;
 
   const handleDelete = useCallback((posId: string) => {
     onDelete(posId);
     positionStore.setDeleteMode(null);
   }, [onDelete]);
 
+  // edge-drag dismiss 감시 (FeedPhysics가 처리 완료 후 notify → 여기서 onDelete)
+  useEffect(() => {
+    const id = positionStore.consumePendingDataDelete();
+    if (id) onDelete(id);
+  });
+
   return (
-    <div className="fixed inset-0">
+    <div className="fixed inset-0 select-none">
       {positions.map((pos) => {
-        const post = state.posts.find((p) => p.id === pos.id);
+        const post = posts.find((p) => p.id === pos.id);
         if (!post) return null;
 
-        const isLiked = state.userLikes[currentUser]?.includes(pos.id) || false;
+        if (expandedPostId && pos.id === expandedPostId) return null;
 
         return (
           <PostCard
@@ -52,12 +52,7 @@ export function FeedCards({ onCardClick, onToggleLike, onDelete }: FeedCardsProp
             opacity={pos.opacity}
             isDragging={pos.isDragging}
             isDeleteMode={deleteModeId === pos.id}
-            isLiked={isLiked}
             onClick={() => onCardClick(post, { x: pos.x, y: pos.y, size: pos.size })}
-            onToggleLike={() => {
-              toggleLike(pos.id, post.authorId);
-              onToggleLike(pos.id, post.authorId);
-            }}
             onDelete={() => handleDelete(pos.id)}
           />
         );

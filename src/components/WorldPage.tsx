@@ -1,5 +1,6 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react';
-import { useApp } from '@/hooks/AppProvider';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useI18n } from '@/i18n';
+import { useClient } from '@/hooks/ClientProvider';
 import {
   forceSimulation,
   forceLink,
@@ -7,6 +8,7 @@ import {
   forceCenter,
   forceCollide,
 } from 'd3-force';
+import type { Post } from '@/types';
 import './WorldPage.css';
 
 interface GraphNode {
@@ -16,6 +18,8 @@ interface GraphNode {
   y?: number;
   vx?: number;
   vy?: number;
+  fx?: number | null;
+  fy?: number | null;
   radius: number;
   isCurrentUser: boolean;
   color: string;
@@ -61,51 +65,63 @@ const DEFAULT_COHESION: CohesionSettings = {
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 3.0;
 
-function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, outerRadius: number, innerRadius: number, points: number, rotation: number) {
-  ctx.beginPath();
-  for (let i = 0; i < points * 2; i++) {
-    const radius = i % 2 === 0 ? outerRadius : innerRadius;
-    const angle = (i * Math.PI) / points - Math.PI / 2 + rotation;
-    const x = cx + Math.cos(angle) * radius;
-    const y = cy + Math.sin(angle) * radius;
-    if (i === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
-  }
-  ctx.closePath();
-  ctx.fill();
+interface WorldPageProps {
+  posts: Post[];
+  connections: string[];
+  currentUserId: string;
+  currentUserPlanet: string;
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
 }
 
-function drawMoon(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number) {
-  const moonGradient = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, 0, cx, cy, radius);
-  moonGradient.addColorStop(0, 'hsl(45, 10%, 97%)');
-  moonGradient.addColorStop(0.5, 'hsl(42, 8%, 92%)');
-  moonGradient.addColorStop(1, 'hsl(40, 5%, 85%)');
+const PLANET_COLORS: Record<string, { light: string; mid: string; dark: string; glow: string }> = {
+  moon:    { light: 'hsl(45, 10%, 97%)', mid: 'hsl(42, 8%, 92%)', dark: 'hsl(40, 5%, 85%)', glow: 'hsl(45, 50%, 80%)' },
+  earth:   { light: 'hsl(155, 45%, 64%)', mid: 'hsl(210, 55%, 57%)', dark: 'hsl(210, 58%, 41%)', glow: 'hsl(200, 60%, 60%)' },
+  mars:    { light: 'hsl(30, 85%, 49%)', mid: 'hsl(15, 85%, 41%)', dark: 'hsl(10, 70%, 34%)', glow: 'hsl(20, 80%, 55%)' },
+  crystal: { light: 'hsl(280, 65%, 80%)', mid: 'hsl(280, 45%, 53%)', dark: 'hsl(210, 65%, 62%)', glow: 'hsl(270, 60%, 70%)' },
+  saturn:  { light: 'hsl(48, 85%, 62%)', mid: 'hsl(45, 75%, 59%)', dark: 'hsl(35, 60%, 50%)', glow: 'hsl(45, 75%, 60%)' },
+  jupiter: { light: 'hsl(30, 65%, 70%)', mid: 'hsl(25, 45%, 60%)', dark: 'hsl(15, 55%, 42%)', glow: 'hsl(25, 55%, 60%)' },
+  venus:   { light: 'hsl(350, 50%, 83%)', mid: 'hsl(350, 40%, 72%)', dark: 'hsl(25, 40%, 59%)', glow: 'hsl(10, 50%, 75%)' },
+  neptune: { light: 'hsl(200, 40%, 70%)', mid: 'hsl(215, 35%, 37%)', dark: 'hsl(215, 55%, 23%)', glow: 'hsl(210, 50%, 60%)' },
+  uranus:  { light: 'hsl(155, 50%, 75%)', mid: 'hsl(170, 40%, 60%)', dark: 'hsl(170, 35%, 48%)', glow: 'hsl(170, 50%, 70%)' },
+  pluto:   { light: 'hsl(35, 20%, 70%)', mid: 'hsl(30, 15%, 49%)', dark: 'hsl(25, 15%, 36%)', glow: 'hsl(35, 25%, 65%)' },
+};
+
+function drawPlanet(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, planetKey: string) {
+  const colors = PLANET_COLORS[planetKey] ?? PLANET_COLORS.moon;
+  const gradient = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, 0, cx, cy, radius);
+  gradient.addColorStop(0, colors.light);
+  gradient.addColorStop(0.5, colors.mid);
+  gradient.addColorStop(1, colors.dark);
 
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fillStyle = moonGradient;
+  ctx.fillStyle = gradient;
   ctx.fill();
 
-  const craters = [
-    { x: cx - radius * 0.3, y: cy - radius * 0.2, r: radius * 0.12 },
-    { x: cx + radius * 0.2, y: cy + radius * 0.3, r: radius * 0.08 },
-    { x: cx - radius * 0.1, y: cy + radius * 0.1, r: radius * 0.06 },
-  ];
-
-  for (let i = 0; i < craters.length; i++) {
-    const crater = craters[i];
-    ctx.beginPath();
-    ctx.arc(crater.x, crater.y, crater.r, 0, Math.PI * 2);
-    ctx.fillStyle = 'hsla(30, 10%, 55%, 0.12)';
-    ctx.fill();
+  // Subtle surface detail for moon specifically
+  if (planetKey === 'moon') {
+    const craters = [
+      { x: cx - radius * 0.3, y: cy - radius * 0.2, r: radius * 0.12 },
+      { x: cx + radius * 0.2, y: cy + radius * 0.3, r: radius * 0.08 },
+      { x: cx - radius * 0.1, y: cy + radius * 0.1, r: radius * 0.06 },
+    ];
+    for (const crater of craters) {
+      ctx.beginPath();
+      ctx.arc(crater.x, crater.y, crater.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(30, 10%, 55%, 0.12)';
+      ctx.fill();
+    }
   }
 }
 
-export function WorldPage() {
-  const { state } = useApp();
+export function WorldPage({ posts, connections, currentUserId, currentUserPlanet, isLoading, isError, onRetry }: WorldPageProps) {
+  const { t } = useI18n();
+  const { theme, setZoomLevel } = useClient();
+  const isDarkMode = theme === 'black';
+  const isDarkModeRef = useRef(isDarkMode);
+  useEffect(() => { isDarkModeRef.current = isDarkMode; }, [isDarkMode]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<GraphNode[]>([]);
   const edgesRef = useRef<Edge[]>([]);
@@ -122,6 +138,9 @@ export function WorldPage() {
   const viewModeRef = useRef(viewMode);
   const cohesionRef = useRef(cohesion);
   const renderModeRef = useRef<RenderMode>('active');
+  const moonAnimStartRef = useRef<number>(0);
+  const moonAnimProgressRef = useRef<number>(0);
+  const MOON_ANIM_DURATION = 900;
 
   const isDraggingRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
@@ -130,6 +149,10 @@ export function WorldPage() {
     initialPinchDistance: null,
     initialScale: 1,
   });
+  const isInternalZoomRef = useRef(false);
+
+  const scaleToZoom = useCallback((scale: number) => Math.round(10 + (scale - MIN_SCALE) / (MAX_SCALE - MIN_SCALE) * 90), []);
+  // WorldPage는 자체 zoom 관리, ZoomSlider에 동기화만
 
   useEffect(() => {
     transformRef.current = transform;
@@ -144,50 +167,67 @@ export function WorldPage() {
   }, [cohesion]);
 
   const buildGraph = useCallback(() => {
-    const currentUser = state.currentUser || 'guest';
-
     const authorSet = new Set<string>();
-    state.posts.forEach(post => authorSet.add(post.authorId));
-    const authors = Array.from(authorSet);
+    posts.forEach(post => authorSet.add(post.authorId));
+    const allAuthors = Array.from(authorSet);
+    const myConnections = new Set(connections);
 
-    const nodes: GraphNode[] = authors.map((author, idx) => ({
-      id: author,
-      authorId: author,
-      radius: 10 + Math.random() * 6,
-      isCurrentUser: author === currentUser,
-      x: dimensions.width / 2 + (Math.random() - 0.5) * 200,
-      y: dimensions.height / 2 + (Math.random() - 0.5) * 200,
-      color: `hsla(${38 + idx * 15}, 70%, ${60 + Math.random() * 20}%, 0.9)`,
-      glowColor: author === currentUser
-        ? 'hsla(45, 90%, 65%, 0.6)'
-        : 'hsla(38, 80%, 55%, 0.3)',
-    }));
+    const MAX_NODES = 100;
 
-    const isMutualLike = (userA: string, userB: string): boolean => {
-      const aLikes = state.userLikes[userA] || [];
-      const bLikes = state.userLikes[userB] || [];
-
-      const aLikedBPosts = state.posts.some(p => p.authorId === userB && aLikes.includes(p.id));
-      const bLikedAPosts = state.posts.some(p => p.authorId === userA && bLikes.includes(p.id));
-
-      return aLikedBPosts && bLikedAPosts;
-    };
-
-    const edges: Edge[] = [];
-    for (let i = 0; i < authors.length; i++) {
-      for (let j = i + 1; j < authors.length; j++) {
-        if (isMutualLike(authors[i], authors[j])) {
-          edges.push({ source: authors[i], target: authors[j], isMutual: true });
-        }
-      }
+    // 1. Divide authors: current user, connected, unconnected
+    const connected = allAuthors.filter(a => myConnections.has(a));
+    const unconnected = allAuthors.filter(a => !myConnections.has(a) && a !== currentUserId);
+    // Shuffle unconnected for random fill
+    for (let i = unconnected.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [unconnected[i], unconnected[j]] = [unconnected[j], unconnected[i]];
     }
 
-    return { nodes, edges };
-  }, [state.posts, state.userLikes, state.currentUser, dimensions]);
+    // 2. Select nodes up to limit
+    const remaining = MAX_NODES - 1; // minus current user
+    const connectedCount = Math.min(connected.length, remaining);
+    const unconnectedCount = Math.min(unconnected.length, remaining - connectedCount);
+
+    const selected = [
+      currentUserId,
+      ...connected.slice(0, connectedCount),
+      ...unconnected.slice(0, unconnectedCount),
+    ];
+
+    const cx = dimensions.width / 2;
+    const cy = dimensions.height / 2;
+
+    const graphNodes: GraphNode[] = selected.map((author) => ({
+      id: author,
+      authorId: author,
+      radius: author === currentUserId ? 50 : 3 + Math.random() * 2,
+      isCurrentUser: author === currentUserId,
+      x: author === currentUserId ? cx : cx + (Math.random() - 0.5) * dimensions.width * 0.6,
+      y: author === currentUserId ? cy : cy + (Math.random() - 0.5) * dimensions.height * 0.6,
+      fx: author === currentUserId ? cx : null,
+      fy: author === currentUserId ? cy : null,
+      color: 'hsla(0, 0%, 100%, 0.7)',
+      glowColor: author === currentUserId
+        ? 'hsla(45, 90%, 65%, 0.6)'
+        : 'hsla(0, 0%, 100%, 0.15)',
+    }));
+
+    // 3. Only edges from current user to connected (selected) users
+    const connectedSelected = new Set(selected.filter(a => myConnections.has(a)));
+    const graphEdges: Edge[] = [];
+    for (const conn of connectedSelected) {
+      graphEdges.push({ source: currentUserId, target: conn, isMutual: true });
+    }
+
+    return { nodes: graphNodes, edges: graphEdges };
+  }, [posts, connections, currentUserId, dimensions]);
 
   const renderLoopRef = useRef<(() => void) | null>(null);
 
   const startRenderLoop = useCallback(() => {
+    if (moonAnimStartRef.current === 0) {
+      moonAnimStartRef.current = Date.now();
+    }
     if (renderModeRef.current === 'idle') {
       renderModeRef.current = 'active';
       simulationRef.current?.alpha(0.3).restart();
@@ -223,6 +263,8 @@ export function WorldPage() {
 
     simulationRef.current?.stop();
     renderModeRef.current = 'active';
+    moonAnimStartRef.current = Date.now();
+    moonAnimProgressRef.current = 0;
 
     const simulation = forceSimulation<GraphNode>(nodes)
       .force('link', forceLink<GraphNode, Edge>(edges)
@@ -250,7 +292,6 @@ export function WorldPage() {
       if (!ctx) return;
 
       const currentTransform = transformRef.current;
-      const currentViewMode = viewModeRef.current;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -260,77 +301,95 @@ export function WorldPage() {
 
       const myNode = nodesRef.current.find(n => n.isCurrentUser);
 
-      let moonX = dimensions.width / 2;
-      let moonY = dimensions.height / 2;
-      const moonRadius = 50;
+      const moonBaseRadius = 50;
 
-      if (currentViewMode === 'centered' && myNode && myNode.x !== undefined && myNode.y !== undefined) {
-        moonX = myNode.x;
-        moonY = myNode.y;
+      const elapsed = Date.now() - moonAnimStartRef.current;
+      const rawT = Math.min(1, elapsed / MOON_ANIM_DURATION);
+      const t = rawT === 0 ? 0 : rawT >= 1 ? 1 : Math.pow(2, -10 * rawT) * Math.sin((rawT * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1;
+      moonAnimProgressRef.current = t;
+
+      const screenCenterX = (dimensions.width / 2 - currentTransform.x) / currentTransform.scale;
+      const screenCenterY = (dimensions.height / 2 - currentTransform.y) / currentTransform.scale;
+
+      let targetX = screenCenterX;
+      let targetY = screenCenterY;
+      if (myNode && myNode.x !== undefined && myNode.y !== undefined) {
+        targetX = myNode.x;
+        targetY = myNode.y;
       }
 
-      drawMoon(ctx, moonX, moonY, moonRadius);
+      const blendT = Math.min(1, rawT * 2);
+      const moonX = screenCenterX + (targetX - screenCenterX) * blendT;
+      const moonY = screenCenterY + (targetY - screenCenterY) * blendT;
 
-      const edges = edgesRef.current;
-      for (let i = 0; i < edges.length; i++) {
-        const edge = edges[i];
+      const moonScale = t;
+      const moonYOffset = (1 - t) * 120;
+      const moonRadius = moonBaseRadius * moonScale;
+
+      // Draw edges: only from current user to connected users
+      const currentEdges = edgesRef.current;
+      const dark = isDarkModeRef.current;
+      for (let i = 0; i < currentEdges.length; i++) {
+        const edge = currentEdges[i];
         const source = edge.source as GraphNode;
         const target = edge.target as GraphNode;
 
         if (source.x === undefined || source.y === undefined ||
             target.x === undefined || target.y === undefined) continue;
 
+        const edgeColor = dark
+          ? ['hsla(45, 80%, 70%, 0.3)', 'hsla(50, 90%, 80%, 0.5)', 'hsla(45, 80%, 70%, 0.3)']
+          : ['hsla(45, 90%, 70%, 0.5)', 'hsla(50, 100%, 80%, 0.7)', 'hsla(45, 90%, 70%, 0.5)'];
+
         const gradient = ctx.createLinearGradient(source.x, source.y, target.x, target.y);
-        gradient.addColorStop(0, 'hsla(38, 70%, 55%, 0.3)');
-        gradient.addColorStop(0.5, 'hsla(45, 80%, 70%, 0.5)');
-        gradient.addColorStop(1, 'hsla(38, 70%, 55%, 0.3)');
+        gradient.addColorStop(0, edgeColor[0]);
+        gradient.addColorStop(0.5, edgeColor[1]);
+        gradient.addColorStop(1, edgeColor[2]);
 
         ctx.beginPath();
         ctx.strokeStyle = gradient;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
         ctx.moveTo(source.x, source.y);
         ctx.lineTo(target.x, target.y);
         ctx.stroke();
 
+        // Outer glow
+        const glowAlpha = dark ? 0.15 : 0.25;
         ctx.beginPath();
-        ctx.strokeStyle = 'hsla(45, 90%, 80%, 0.2)';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = `hsla(45, 100%, 85%, ${glowAlpha})`;
+        ctx.lineWidth = 5;
         ctx.moveTo(source.x, source.y);
         ctx.lineTo(target.x, target.y);
         ctx.stroke();
       }
 
-      const nodes = nodesRef.current;
-      const now = Date.now();
-      const rotation = now * 0.0005;
-
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
+      // Draw other nodes as circles
+      const currentNodes = nodesRef.current;
+      const nodeOpacity = dark ? 0.5 : 0.7;
+      for (let i = 0; i < currentNodes.length; i++) {
+        const node = currentNodes[i];
         if (node.x === undefined || node.y === undefined) continue;
-
         if (node.isCurrentUser) continue;
 
-        const starOuterRadius = node.radius * 0.375;
-        const starInnerRadius = node.radius * 0.15;
-        const starRotation = rotation + i;
+        const r = 4;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(0, 0%, 100%, ${nodeOpacity})`;
+        ctx.fill();
+      }
 
-        const starGradient = ctx.createRadialGradient(
-          node.x - starOuterRadius * 0.2,
-          node.y - starOuterRadius * 0.2,
-          0,
-          node.x,
-          node.y,
-          starOuterRadius
-        );
-        starGradient.addColorStop(0, 'hsl(40, 85%, 78%)');
-        starGradient.addColorStop(0.6, 'hsl(38, 75%, 55%)');
-        starGradient.addColorStop(1, 'hsl(32, 65%, 42%)');
+      // Draw moon on TOP (last, so it's never obscured)
+      drawPlanet(ctx, moonX, moonY + moonYOffset, moonRadius, currentUserPlanet);
 
-        ctx.fillStyle = starGradient;
-        drawStar(ctx, node.x, node.y, starOuterRadius, starInnerRadius, 5, starRotation);
-
-        ctx.fillStyle = 'hsla(0, 0%, 100%, 0.5)';
-        drawStar(ctx, node.x - starOuterRadius * 0.15, node.y - starOuterRadius * 0.15, starOuterRadius * 0.25, starInnerRadius * 0.25, 5, starRotation);
+      if (t < 1 && moonRadius > 5) {
+        const glowAlpha = (1 - t) * 0.4;
+        const glowGrad = ctx.createRadialGradient(moonX, moonY + moonYOffset, moonRadius * 0.5, moonX, moonY + moonYOffset, moonRadius * 2.5);
+        glowGrad.addColorStop(0, `hsla(45, 80%, 85%, ${glowAlpha})`);
+        glowGrad.addColorStop(1, 'hsla(45, 80%, 85%, 0)');
+        ctx.beginPath();
+        ctx.arc(moonX, moonY + moonYOffset, moonRadius * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = glowGrad;
+        ctx.fill();
       }
 
       ctx.restore();
@@ -359,6 +418,8 @@ export function WorldPage() {
     loop();
 
     return () => {
+      simulation.on('tick', null as any);
+      simulation.on('end', null as any);
       simulation.stop();
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -406,9 +467,9 @@ export function WorldPage() {
       setViewMode('centered');
       startRenderLoop();
     }
-  }, [startRenderLoop, dimensions]);
+  }, [startRenderLoop]);
 
-const handleWheel = useCallback((e: WheelEvent) => {
+  const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const currentScale = transformRef.current.scale;
@@ -422,8 +483,10 @@ const handleWheel = useCallback((e: WheelEvent) => {
     const newY = currentTransform.y - mouseY * (newScale - currentScale);
 
     setTransform({ x: newX, y: newY, scale: newScale });
+    isInternalZoomRef.current = true;
+    setZoomLevel(scaleToZoom(newScale));
     startRenderLoop();
-  }, [startRenderLoop]);
+  }, [startRenderLoop, setZoomLevel, scaleToZoom]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isDraggingRef.current = true;
@@ -441,7 +504,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
       y: prev.y + dy,
     }));
     startRenderLoop();
-  }, [startRenderLoop, dimensions]);
+  }, [startRenderLoop]);
 
   const handleMouseUp = useCallback(() => {
     isDraggingRef.current = false;
@@ -480,7 +543,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
         y: prev.y + dy,
       }));
       startRenderLoop();
-} else if (e.touches.length === 2 && touchStateRef.current.initialPinchDistance) {
+    } else if (e.touches.length === 2 && touchStateRef.current.initialPinchDistance) {
       const currentDistance = getTouchDistance(e.touches);
       const scale = currentDistance / touchStateRef.current.initialPinchDistance;
       const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, touchStateRef.current.initialScale * scale));
@@ -494,9 +557,11 @@ const handleWheel = useCallback((e: WheelEvent) => {
       const newX = currentTransform.x - pinchCenterX * (newScale - currentTransform.scale);
       const newY = currentTransform.y - pinchCenterY * (newScale - currentTransform.scale);
       setTransform({ x: newX, y: newY, scale: newScale });
+      isInternalZoomRef.current = true;
+      setZoomLevel(scaleToZoom(newScale));
       startRenderLoop();
     }
-  }, [startRenderLoop, dimensions]);
+  }, [startRenderLoop, setZoomLevel, scaleToZoom]);
 
   const handleTouchEnd = useCallback(() => {
     isDraggingRef.current = false;
@@ -522,6 +587,34 @@ const handleWheel = useCallback((e: WheelEvent) => {
     startRenderLoop();
   };
 
+  // Loading / Error states
+  if (isLoading) {
+    return (
+      <div className="world-page">
+        <div className="world-page__backdrop" />
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="world-page">
+        <div className="world-page__backdrop" />
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">{t('world.failed')}</p>
+            <button onClick={onRetry} className="px-4 py-2 bg-accent text-accent-foreground rounded-xl">
+              {t('world.retry')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="world-page">
       <div className="world-page__backdrop" />
@@ -529,12 +622,12 @@ const handleWheel = useCallback((e: WheelEvent) => {
         <button
           className="world-page__btn"
           onClick={handleGoToMyNode}
-          title="???占쎈뱶占??占쎈룞"
+          title={t('world.goToMyLocation')}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 12h4m4 0h4m40h4M7 8l33-3 3m8-6l3 3-3 3" />
+            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
           </svg>
-          ???占쎈뱶占?        </button>
+          {t('world.goToMyLocation')}</button>
         <button
           className={`world-page__btn ${viewMode === 'full' ? 'world-page__btn--active' : ''}`}
           onClick={() => setViewMode(prev => prev === 'centered' ? 'full' : 'centered')}
@@ -546,7 +639,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 11 0 14 7 7 0 0 1 0-14z" />
             )}
           </svg>
-          {viewMode === 'full' ? '전체 보기' : '특정 보기'}
+          {viewMode === 'full' ? t('world.fullView') : t('world.centeredView')}
         </button>
       </div>
 
@@ -571,7 +664,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <circle cx="12" cy="12" r="3" />
               <path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83" />
             </svg>
-            ?占쎌쭛???占쎌젙
+            {t('world.connectionSettings')}
           </div>
           <div className={`world-page__panel-toggle ${!panelOpen ? 'world-page__panel-toggle--collapsed' : ''}`}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -582,7 +675,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
         <div className={`world-page__panel-content ${!panelOpen ? 'world-page__panel-content--collapsed' : ''}`}>
           <div className="world-page__slider-group">
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">?占쎄껐 媛뺣룄</span>
+              <span className="world-page__slider-label">{t('world.linkStrength')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -595,7 +688,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <span className="world-page__slider-value">{cohesion.linkStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">충전 강도</span>
+              <span className="world-page__slider-label">{t('world.chargeStrength')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -608,7 +701,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <span className="world-page__slider-value">{cohesion.chargeStrength}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">異⑸룎 諛⑼옙?</span>
+              <span className="world-page__slider-label">{t('world.collideStrength')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -621,7 +714,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <span className="world-page__slider-value">{cohesion.collideStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">以묐젰</span>
+              <span className="world-page__slider-label">{t('world.center')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -634,7 +727,7 @@ const handleWheel = useCallback((e: WheelEvent) => {
               <span className="world-page__slider-value">{cohesion.centerStrength.toFixed(2)}</span>
             </div>
             <div className="world-page__slider-row">
-              <span className="world-page__slider-label">?占쎈뱶 嫄곕━</span>
+              <span className="world-page__slider-label">{t('world.linkDistance')}</span>
               <input
                 type="range"
                 className="world-page__slider"
@@ -651,9 +744,8 @@ const handleWheel = useCallback((e: WheelEvent) => {
       </div>
 
       <div className="world-page__zoom-hint">
-        ?占쏀겕占? ?占쏙옙?/異뺤냼 쨌 ?占쎈옒占? ?占쎈룞
+        {t('world.exploreHint')}
       </div>
     </div>
   );
 }
-

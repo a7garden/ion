@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useApp } from '@/hooks/AppProvider';
-import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/AuthProvider';
 import {
   Dialog,
   DialogContent,
@@ -8,99 +7,85 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Image, Music, X, Loader2, Sparkles } from 'lucide-react';
-import { uploadPostMedia } from '@/lib/firebase';
+import { Image, X, Loader2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 interface CreatePostModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (opts: { content: string; mediaFile?: File }) => Promise<void>;
+  requestImageCrop: (file: File) => Promise<Blob>;
 }
 
-export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
-  const { state, addPost } = useApp();
-  const { toast } = useToast();
+export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop }: CreatePostModalProps) {
+  const { user } = useAuth();
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const [bgmFile, setBgmFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const mediaInputRef = useRef<HTMLInputElement>(null);
-  const bgmInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    return () => {
+    if (!open) {
       setContent('');
       setMediaFile(null);
       setMediaPreview(null);
-      setBgmFile(null);
-    };
-  }, []);
+      setIsSubmitting(false);
+      setIsDragOver(false);
+      if (mediaInputRef.current) mediaInputRef.current.value = '';
+    }
+  }, [open]);
 
-  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
-      setMediaFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setMediaPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  const previewFile = (file: File) => {
+    setMediaFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setMediaPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageFile = async (file: File) => {
+    try {
+      const blob = await requestImageCrop(file);
+      const croppedFile = new File([blob], 'cropped.jpg', { type: 'image/jpeg' });
+      previewFile(croppedFile);
+    } catch {
+      // User cancelled crop — do nothing
     }
   };
 
-  const handleBgmSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('audio/')) {
-      setBgmFile(file);
+    if (!file) return;
+    if (file.type.startsWith('video/')) {
+      previewFile(file);
+    } else if (file.type.startsWith('image/')) {
+      handleImageFile(file);
     }
   };
 
   const handleSubmit = async () => {
-    if (!content.trim() && !mediaFile && !bgmFile) {
-      toast({ description: '내용, 사진, 또는 음악을 추가해주세요', duration: 2000 });
-      return;
-    }
-
-    if (!state.currentUser) {
-      toast({ description: '로그인이 필요합니다', duration: 2000 });
+    if (!content.trim() && !mediaFile) {
+      toast('내용 또는 사진/동영상을 추가해주세요', { duration: 2000 });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      let mediaUrl: string | undefined;
-
-      if (mediaFile) {
-        mediaUrl = await uploadPostMedia(mediaFile, state.currentUser);
-      }
-
-      let bgmUrl: string | undefined;
-      if (bgmFile) {
-        bgmUrl = await uploadPostMedia(bgmFile, state.currentUser);
-      }
-
-      const newPost = {
-        authorId: state.currentUser,
-        authorName: state.userName || state.currentUser,
+      await onSubmit({
         content: content,
-        angle: Math.random() * 360,
-        radius: 0,
-        floatOffset: Math.random() * 2 - 1,
-        floatDelay: Math.random() * 3,
-        media: mediaUrl,
-        bgm: bgmUrl,
-      };
+        mediaFile: mediaFile || undefined,
+      });
 
-      await addPost(newPost);
-
-      toast({ description: '게시물이 생성되었습니다!', duration: 2000 });
+      toast('게시물이 생성되었습니다!', { duration: 2000 });
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to create post:', error);
-      toast({ description: '게시물 생성에 실패했습니다', duration: 2000 });
+      toast('게시물 생성에 실패했습니다', { duration: 2000 });
     } finally {
       setIsSubmitting(false);
     }
@@ -108,13 +93,13 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[150px] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 warm-glow">
+      <DialogContent className="sm:max-w-[150px] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 shadow-glow">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
 
         <DialogHeader className="relative border-b border-border/50 px-4 sm:px-6 py-4 sm:py-5">
           <DialogTitle className="text-lg sm:text-xl font-semibold text-foreground flex items-center gap-2">
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
-            새로운 게시물
+            새로운 피드
           </DialogTitle>
         </DialogHeader>
 
@@ -123,10 +108,10 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
             <div className="flex items-center gap-2.5 sm:gap-3">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-sm">
                 <span className="text-sm font-semibold text-primary-foreground">
-                  {(state.userName || state.currentUser)?.[0]?.toUpperCase()}
+                  {(user?.displayName || user?.id)?.[0]?.toUpperCase()}
                 </span>
               </div>
-              <span className="font-semibold text-sm text-foreground">{state.userName || state.currentUser}</span>
+              <span className="font-semibold text-sm text-foreground">{user?.displayName}</span>
             </div>
 
             <textarea
@@ -160,6 +145,7 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
                     onClick={() => {
                       setMediaFile(null);
                       setMediaPreview(null);
+                      if (mediaInputRef.current) mediaInputRef.current.value = '';
                     }}
                     className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-foreground/80 hover:bg-foreground text-background rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
                     whileHover={{ backgroundColor: 'hsl(var(--accent))' }}
@@ -183,43 +169,19 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
                     e.preventDefault();
                     setIsDragOver(false);
                     const file = e.dataTransfer.files[0];
-                    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
-                      setMediaFile(file);
-                      const reader = new FileReader();
-                      reader.onload = (e) => {
-                        setMediaPreview(e.target?.result as string);
-                      };
-                      reader.readAsDataURL(file);
+                    if (!file) return;
+                    if (file.type.startsWith('video/')) {
+                      previewFile(file);
+                    } else if (file.type.startsWith('image/')) {
+                      handleImageFile(file);
                     }
                   }}
                 >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-2 sm:mb-3">
                     <Image className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground/60" />
                   </div>
-                  <span className="text-xs sm:text-sm text-muted-foreground/70">사진을 추가해주세요</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground/70">사진 또는 동영상을 추가해주세요</span>
                   <span className="text-xs text-muted-foreground/50 mt-1">또는 드래그하여 업로드</span>
-                </motion.div>
-              )}
-
-              {bgmFile && (
-                <motion.div
-                  className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 bg-muted/30 rounded-xl sm:rounded-2xl border border-border/50"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
-                    <Music className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate text-foreground">{bgmFile.name}</div>
-                    <div className="text-xs text-muted-foreground/60">음악</div>
-                  </div>
-                  <button
-                    onClick={() => setBgmFile(null)}
-                    className="p-1.5 sm:p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground touch-target"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
                 </motion.div>
               )}
             </div>
@@ -231,7 +193,7 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
             <input
               ref={mediaInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               className="hidden"
               onChange={handleMediaSelect}
             />
@@ -242,24 +204,7 @@ export function CreatePostModal({ open, onOpenChange }: CreatePostModalProps) {
               className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center border-accent/30 hover:bg-accent/10 hover:border-accent/50 transition-all touch-target"
             >
               <Image className="w-4 h-4" />
-              <span>사진</span>
-            </Button>
-
-            <input
-              ref={bgmInputRef}
-              type="file"
-              accept="audio/*"
-              className="hidden"
-              onChange={handleBgmSelect}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => bgmInputRef.current?.click()}
-              className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center border-accent/30 hover:bg-accent/10 hover:border-accent/50 transition-all touch-target"
-            >
-              <Music className="w-4 h-4" />
-              <span>음악</span>
+              <span>미디어</span>
             </Button>
           </div>
 

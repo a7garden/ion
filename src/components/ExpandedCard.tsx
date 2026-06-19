@@ -1,17 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Post } from '@/types';
-
-interface CardPosition {
-  x: number;
-  y: number;
-  size: number;
-}
+import { PlanetAvatar } from '@/components/PlanetAvatar';
+import { useI18n } from '@/i18n';
 
 interface ExpandedCardProps {
   open: boolean;
   onClose: () => void;
   post: Post | null;
-  cardRect?: CardPosition | null;
   isLiked: boolean;
   onToggleLike: () => void;
 }
@@ -23,6 +18,7 @@ export function ExpandedCard({
   isLiked,
   onToggleLike,
 }: ExpandedCardProps) {
+  const { t } = useI18n();
   if (!post) return null;
 
   return (
@@ -43,9 +39,10 @@ export function ExpandedCard({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
+            onClick={onClose}
           >
             <motion.div
-              className="w-full max-w-md bg-card rounded-2xl sm:rounded-3xl border border-border/50 shadow-2xl overflow-hidden warm-glow"
+              className="w-full max-w-md bg-card rounded-2xl sm:rounded-3xl border border-border/50 shadow-ds-xl shadow-glow overflow-hidden"
               layoutId={`card-${post.id}`}
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -55,6 +52,7 @@ export function ExpandedCard({
                 stiffness: 300,
                 damping: 28,
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
 
@@ -81,14 +79,10 @@ export function ExpandedCard({
                 </motion.button>
 
                 <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-5">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-sm">
-                    <span className="text-sm font-semibold text-primary-foreground">
-                      {post.authorId[0]?.toUpperCase()}
-                    </span>
-                  </div>
+                  <PlanetAvatar planet={post.authorPlanet} size={40} />
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-foreground">{post.authorName || 'Anonymous'}</h2>
-                    <p className="text-xs text-muted-foreground">Posted recently</p>
+                    <h2 className="text-base sm:text-lg font-semibold text-foreground">{post.authorName || t('expanded.anonymous')}</h2>
+                    <p className="text-xs text-muted-foreground">{t('expanded.postedRecently')}</p>
                   </div>
                 </div>
 
@@ -99,10 +93,10 @@ export function ExpandedCard({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                   >
-                    {post.media.includes('video') || post.media.startsWith('data:video') ? (
+                    {post.mediaType === 'video' ? (
                       <video
                         src={post.media}
-                        className="w-full max-h-[50vw] sm:max-h-72 object-cover"
+                        className="w-full max-h-[50vw] sm:max-h-72 object-contain bg-black/5 rounded-lg"
                         controls
                         muted={false}
                       />
@@ -110,7 +104,7 @@ export function ExpandedCard({
                       <img
                         src={post.media}
                         alt="Post media"
-                        className="w-full max-h-[50vw] sm:max-h-72 object-cover"
+                        className="w-full max-h-[50vw] sm:max-h-72 object-contain rounded-lg"
                       />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-card/40 to-transparent pointer-events-none" />
@@ -123,7 +117,7 @@ export function ExpandedCard({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.15 }}
                 >
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap select-text">
                     {post.content}
                   </p>
                 </motion.div>

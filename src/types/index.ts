@@ -1,27 +1,24 @@
+import type { PlanetKey } from '@/constants/planets';
+
 export interface Post {
   id: string;
   authorId: string;
   authorName: string;
+  authorPlanet: PlanetKey;
   content: string;
-  angle: number;
-  radius: number;
-  floatOffset: number;
-  floatDelay: number;
   media?: string;
-  thumbnail?: string;
-  bgm?: string;
+  mediaType?: 'image' | 'video';
+  createdAt?: string;
+}
+
+export interface Resonance {
+  id: string;
+  userA: string;
+  userB: string;
+  postA: string;
+  postB: string;
+  seen: boolean;
+  createdAt: string;
 }
 
 export type Theme = 'white' | 'black';
-
-export interface AppState {
-  posts: Post[];
-  theme: Theme;
-  likedPosts: string[];
-  zoomLevel: number;
-  worldPageOpen: boolean;
-  currentUser: string | null;
-  userName: string | null;
-  userLikes: Record<string, string[]>;
-  isAdmin: boolean;
-}

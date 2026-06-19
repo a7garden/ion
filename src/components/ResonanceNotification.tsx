@@ -1,0 +1,104 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, X } from 'lucide-react';
+import { useUnseenResonancesQuery, useMarkResonanceSeen } from '@/hooks/queries/useResonances';
+
+interface ResonanceNotificationProps {
+  userId: string;
+}
+
+export function ResonanceNotification({ userId }: ResonanceNotificationProps) {
+  const { data: resonances = [] } = useUnseenResonancesQuery(userId);
+  const { mutate: markSeen } = useMarkResonanceSeen(userId);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const unseenCount = resonances.length;
+
+  const handleDismiss = (resonanceId: string) => {
+    markSeen(resonanceId);
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 rounded-full hover:bg-accent/10 transition-colors touch-target"
+      >
+        <Sparkles className="w-5 h-5 text-muted-foreground" />
+        {unseenCount > 0 && (
+          <motion.span
+            className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center px-1"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          >
+            {unseenCount}
+          </motion.span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-[599]"
+              onClick={() => setIsOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+            <motion.div
+              className="fixed top-14 sm:top-[60px] right-2 sm:right-4 z-[600] w-[calc(100vw-1rem)] max-w-[320px] bg-card border border-border/50 rounded-2xl shadow-xl overflow-hidden"
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
+              <div className="relative px-4 py-3 border-b border-border/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-accent" />
+                  <span className="text-sm font-semibold text-foreground">공명</span>
+                </div>
+                <button onClick={() => setIsOpen(false)} className="p-1 rounded-full hover:bg-muted">
+                  <X className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="relative max-h-[60vh] overflow-y-auto">
+                {resonances.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <p className="text-sm text-muted-foreground">아직 공명이 없습니다</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">마음이 닿으면 여기에 나타납니다</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/30">
+                    {resonances.map((r: any) => (
+                      <div key={r.id} className="px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Sparkles className="w-4 h-4 text-accent" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">누군가와 공명했습니다</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">두 우주가 잠시 겹쳤습니다</p>
+                          <p className="text-[10px] text-muted-foreground/50 mt-1">
+                            {new Date(r.created_at).toLocaleDateString('ko-KR')}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleDismiss(r.id)}
+                          className="p-1 rounded-full hover:bg-muted shrink-0"
+                        >
+                          <X className="w-3 h-3 text-muted-foreground" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}

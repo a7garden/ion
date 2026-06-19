@@ -1,185 +1,36 @@
-import { useState, useEffect } from 'react';
-import { AppProvider, useApp } from '@/hooks/AppProvider';
-import { Header } from '@/components/Header';
-import { FeedView } from '@/components/FeedView';
-import { ZoomSlider } from '@/components/ZoomSlider';
-import { LoginModal } from '@/components/LoginModal';
-import { CreatePostModal } from '@/components/CreatePostModal';
-import { ExpandedCard } from '@/components/ExpandedCard';
-import { WorldPage } from '@/components/WorldPage';
-import { MyPage } from '@/components/MyPage';
-import { Toaster } from '@/components/ui/toaster';
-import { useToast } from '@/components/ui/use-toast';
-import type { Post } from '@/types';
-import { onAuthChange, getUserProfile } from '@/lib/firebase';
-import { upsertUser, getUserByUid } from '@/lib/neon';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { AuthProvider } from '@/hooks/AuthProvider';
+import { ClientProvider } from '@/hooks/ClientProvider';
+import { I18nProvider } from '@/i18n';
+import { Layout } from '@/routes/Layout';
+import { FeedRoute } from '@/routes/FeedRoute';
+import { WorldRoute } from '@/routes/WorldRoute';
+import { MyPageRoute } from '@/routes/MyPageRoute';
+import { PrivacyRoute } from '@/routes/PrivacyRoute';
+import { TermsRoute } from '@/routes/TermsRoute';
 
-type View = 'feed' | 'world' | 'my';
-
-function AppContent() {
-  const { state, logout, toggleLike, login, setUserName, dismissPost, loadRandomPosts, loadUserLikes } = useApp();
-  const [currentView, setCurrentView] = useState<View>('feed');
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
-  const [expandedPost, setExpandedPost] = useState<{ post: Post; cardRect: { x: number; y: number; size: number } } | null>(null);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const unsubscribe = onAuthChange(async (user) => {
-      if (user) {
-        const profile = getUserProfile(user);
-        login(user.uid, 'firebase', profile.displayName);
-
-        try {
-          await upsertUser({
-            uid: profile.uid,
-            display_name: profile.displayName,
-            email: profile.email,
-            photo_url: profile.photoURL,
-          });
-
-          const existingUser = await getUserByUid(profile.uid);
-          if (existingUser?.display_name) {
-            setUserName(existingUser.display_name);
-          }
-        } catch (error) {
-          console.error('Failed to sync user to Neon:', error);
-        }
-      }
-    });
-    return () => unsubscribe();
-  }, [login, setUserName]);
-
-  useEffect(() => {
-    if (state.currentUser && state.currentUser !== 'guest') {
-      loadRandomPosts(state.currentUser, 10);
-      loadUserLikes(state.currentUser);
-    }
-  }, [state.currentUser, loadRandomPosts, loadUserLikes]);
-
-  const showToast = (message: string) => {
-    toast({
-      description: message,
-      duration: 2500,
-    });
-  };
-
-  const notifyAuthor = (postAuthor: string) => {
-    setTimeout(() => {
-      showToast(`Someone liked ${postAuthor}'s post`);
-    }, 500);
-  };
-
-  const handleToggleLike = async (postId: string, authorId: string) => {
-    await toggleLike(postId, authorId);
-    const currentUser = state.currentUser || 'guest';
-    const isLiked = state.userLikes[currentUser]?.includes(postId) || false;
-
-    if (isLiked) {
-      notifyAuthor(authorId);
-    }
-  };
-
-  const openProfile = (post: Post, cardRect: { x: number; y: number; size: number }) => {
-    setExpandedPost({ post, cardRect });
-  };
-
-  const closeExpandedCard = () => {
-    setExpandedPost(null);
-  };
-
-  const handleLogout = () => {
-    logout();
-    showToast('Logged out');
-  };
-
-  const handleDismiss = async (postId: string) => {
-    await dismissPost(postId);
-    if (state.currentUser) {
-      loadRandomPosts(state.currentUser, 1);
-    }
-  };
-
-  const isLoggedIn = state.currentUser && state.currentUser !== 'guest';
-
-  const handleCreatePostClick = () => {
-    if (!isLoggedIn) {
-      setLoginModalOpen(true);
-      showToast('게시물을 작성하려면 로그인이 필요합니다');
-      return;
-    }
-    setCreatePostModalOpen(true);
-  };
-
+export default function App() {
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-500 grain-overlay">
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-accent/5 opacity-30" />
-      </div>
-
-      <Header
-        currentView={currentView}
-        onViewChange={setCurrentView}
-        onLoginClick={() => setLoginModalOpen(true)}
-      />
-
-      {currentView === 'feed' && (
-        <>
-          <main className="pt-14 sm:pt-[64px] w-full h-screen relative flex">
-            <FeedView onCardClick={openProfile} onToggleLike={handleToggleLike} onDelete={handleDismiss} onCreatePostClick={handleCreatePostClick} />
-          </main>
-          <ZoomSlider />
-        </>
-      )}
-
-      {currentView === 'world' && (
-        <>
-          <WorldPage />
-          <ZoomSlider />
-        </>
-      )}
-
-      {currentView === 'my' && isLoggedIn && (
-        <MyPage onLogout={handleLogout} />
-      )}
-
-      <LoginModal
-        open={loginModalOpen}
-        onOpenChange={setLoginModalOpen}
-      />
-
-      <CreatePostModal
-        open={createPostModalOpen}
-        onOpenChange={setCreatePostModalOpen}
-      />
-
-      <ExpandedCard
-        open={expandedPost !== null}
-        onClose={closeExpandedCard}
-        post={expandedPost?.post ?? null}
-        isLiked={
-          expandedPost
-            ? (state.userLikes[state.currentUser || 'guest']?.includes(expandedPost.post.id) ?? false)
-            : false
-        }
-        onToggleLike={() => {
-          if (expandedPost) {
-            toggleLike(expandedPost.post.id, expandedPost.post.authorId);
-          }
-        }}
-      />
-
-      <Toaster />
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <ClientProvider>
+            <I18nProvider>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route index element={<FeedRoute />} />
+                  <Route path="world" element={<WorldRoute />} />
+                  <Route path="privacy" element={<PrivacyRoute />} />
+                  <Route path="terms" element={<TermsRoute />} />
+                  <Route path="my" element={<MyPageRoute />} />
+                </Route>
+              </Routes>
+            </I18nProvider>
+          </ClientProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
-
-function App() {
-  return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
-  );
-}
-
-export default App;

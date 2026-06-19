@@ -78,30 +78,30 @@ export function getCardSizeForBreakpoint(breakpoint: Breakpoint, zoomLevel: numb
 }
 
 export function getDynamicCardSize(windowWidth: number, zoomLevel: number): number {
-  const minSize = 88;
-  const maxSize = 100;
-  const zoomFactor = 1 + (zoomLevel / 100) * 0.3;
+  const minSize = 80;
+  const maxSize = 260;
+  const zoomFactor = 1 + (zoomLevel / 100) * 1.5;
 
   if (windowWidth < 640) {
-    return Math.min(75, maxSize);
+    return Math.min(75 * zoomFactor, maxSize);
   }
 
-  const calculated = windowWidth * 0.0375;
-  const base = Math.max(minSize, Math.min(maxSize, calculated));
+  const base = windowWidth * 0.09;
 
-  return Math.min(base * zoomFactor, maxSize);
+  return Math.max(minSize, Math.min(base * zoomFactor, maxSize));
 }
 
-export function getCardCountForBreakpoint(breakpoint: Breakpoint, zoomLevel: number): number {
-  const baseCounts: Record<Breakpoint, number> = {
-    mobile: 4,
-    tablet: 8,
-    laptop: 14,
-    desktop: 20,
-  };
+export function getCardCountForViewport(windowWidth: number, windowHeight: number, cardSize: number): number {
+  const TOP_OFFSET = 72;
+  const CARD_MARGIN = 20;
+  const DENSITY = 0.35;
 
-  const base = baseCounts[breakpoint];
-  const zoomBonus = Math.round((zoomLevel / 100) * 8);
+  const effectiveWidth = windowWidth;
+  const effectiveHeight = windowHeight - TOP_OFFSET;
+  const cellSize = cardSize + CARD_MARGIN;
 
-  return base + zoomBonus;
+  const cols = Math.max(1, Math.floor(effectiveWidth / cellSize));
+  const rows = Math.max(1, Math.floor(effectiveHeight / cellSize));
+
+  return Math.max(1, Math.round(cols * rows * DENSITY));
 }
