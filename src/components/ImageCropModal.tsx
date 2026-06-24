@@ -45,7 +45,7 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
     canvas.height = CANVAS_SIZE;
 
     // Dark background
-    ctx.fillStyle = 'hsl(var(--muted))';
+    ctx.fillStyle = 'oklch(var(--muted))';
     ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     const scale = Math.min(CANVAS_SIZE / imageEl.width, CANVAS_SIZE / imageEl.height) * zoom;
@@ -129,7 +129,7 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
     const drawSourceSize = Math.min(maxSource, sSize);
     const drawDestSize = drawSourceSize * (OUTPUT_SIZE / sSize);
 
-    ctx.fillStyle = 'hsl(var(--background))';
+    ctx.fillStyle = 'oklch(var(--background))';
     ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
     ctx.drawImage(
       imageEl,

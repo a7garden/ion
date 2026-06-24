@@ -258,7 +258,7 @@ export function CalendarPage({
                     min-h-[100px] rounded-xl border-2 transition-all duration-200 overflow-hidden
                     flex flex-col items-center justify-start p-1
                     ${isTodayCell
-                      ? 'border-accent shadow-[0_0_12px_hsl(var(--accent)/0.3)]'
+                      ? 'border-accent shadow-[0_0_12px_oklch(var(--accent)/0.3)]'
                       : 'border-transparent hover:border-border'
                     }
                     ${postCount > 0 ? 'bg-muted/30' : 'bg-muted/10'}

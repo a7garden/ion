@@ -69,7 +69,7 @@ export function ExpandedCard({
             layoutId={`card-${post.id}`}
             className="relative aspect-square w-[min(90vw,82vh)] rounded-[20px] overflow-hidden"
             style={{
-              backgroundColor: 'hsl(var(--surface-elevated))',
+              backgroundColor: 'oklch(var(--surface-elevated))',
               boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
             }}
             initial={{ opacity: 0, scale: 0.95, y: 12 }}

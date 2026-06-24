@@ -214,10 +214,10 @@ export function PostCard({
   );
 
   const cardBorderStyle: React.CSSProperties = isDeleteMode
-    ? { boxShadow: '0 0 0 2px hsl(var(--destructive)), var(--shadow-md)' }
+    ? { boxShadow: '0 0 0 2px oklch(var(--destructive)), var(--shadow-md)' }
     : isDragging
-      ? { boxShadow: '0 0 0 1px hsl(var(--border)), var(--shadow-md)' }
-      : { boxShadow: '0 0 0 1px hsl(var(--border)), var(--shadow-md)' };
+      ? { boxShadow: '0 0 0 1px oklch(var(--border)), var(--shadow-md)' }
+      : { boxShadow: '0 0 0 1px oklch(var(--border)), var(--shadow-md)' };
 
   return (
     <div
@@ -241,7 +241,7 @@ export function PostCard({
     >
       <div
         className="w-full h-full rounded-[20px] overflow-hidden relative"
-        style={{ ...cardBorderStyle, backgroundColor: 'hsl(var(--surface-elevated))' }}
+        style={{ ...cardBorderStyle, backgroundColor: 'oklch(var(--surface-elevated))' }}
       >
         {post.media ? (
           <div className="absolute inset-0">

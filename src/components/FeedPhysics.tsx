@@ -123,15 +123,13 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
       if (!ctx) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (isDarkModeRef.current) {
-        ctx.fillStyle = 'hsl(25, 15%, 8%)';
-      } else {
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, 'hsl(50, 20%, 97%)');
-        gradient.addColorStop(0.5, 'hsl(50, 15%, 95%)');
-        gradient.addColorStop(1, 'hsl(45, 12%, 93%)');
-        ctx.fillStyle = gradient;
-      }
+      const bgVar = getComputedStyle(document.documentElement)
+        .getPropertyValue('--background')
+        .trim();
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, `oklch(${bgVar})`);
+      gradient.addColorStop(1, `oklch(${bgVar})`);
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // dismiss 처리: 노드를 dismissing 상태로 만들고 onDelete 예약
