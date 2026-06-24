@@ -238,6 +238,8 @@ export function PostCard({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onMouseEnter={() => positionStore.setHovered(post.id)}
+      onMouseLeave={() => positionStore.setHovered(null)}
     >
       <div
         className="w-full h-full rounded-[20px] overflow-hidden relative"

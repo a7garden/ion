@@ -27,12 +27,14 @@ interface PositionStoreAPI {
   consumePendingDataDelete: () => string | null;
   subscribe: (listener: Listener) => () => void;
   getSnapshot: () => NodePosition[];
+  setHovered: (id: string | null) => void;
+  getHoveredId: () => string | null;
 }
-
 const positions = new Map<string, NodePosition>();
 const listeners = new Set<Listener>();
 let draggingId: string | null = null;
 let deleteModeId: string | null = null;
+let hoveredId: string | null = null;
 let dismissedId: string | null = null;
 let dismissDirection: { vx: number; vy: number } | null = null;
 let pendingDataDeleteId: string | null = null;
@@ -104,6 +106,14 @@ const positionStore: PositionStoreAPI = {
 
   getDeleteModeId() {
     return deleteModeId;
+  },
+
+  setHovered(id: string | null) {
+    hoveredId = id;
+  },
+
+  getHoveredId() {
+    return hoveredId;
   },
 
   setDragVelocity(id: string, vx: number, vy: number) {

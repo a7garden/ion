@@ -8,6 +8,8 @@ const TOP_OFFSET = 72;
 const MAX_VELOCITY = 20;
 const FRICTION = 0.9985;
 const MIN_SPEED = 1.5;
+const HOVER_FRICTION = 0.92;
+const HOVER_MIN_SPEED = 0.3;
 const BOUNCE_RETENTION = 0.85;
 
 interface FloatingNode {
@@ -201,12 +203,16 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
               node.vy = -Math.abs(node.vy) * BOUNCE_RETENTION;
             }
 
-            node.vx *= FRICTION;
-            node.vy *= FRICTION;
+            const isHovered = node.id === positionStore.getHoveredId();
+            const friction = isHovered ? HOVER_FRICTION : FRICTION;
+            const minSpeed = isHovered ? HOVER_MIN_SPEED : MIN_SPEED;
+
+            node.vx *= friction;
+            node.vy *= friction;
 
             const currentSpeed = Math.sqrt(node.vx ** 2 + node.vy ** 2);
-            if (currentSpeed > 0 && currentSpeed < MIN_SPEED) {
-              const scale = MIN_SPEED / currentSpeed;
+            if (currentSpeed > 0 && currentSpeed < minSpeed) {
+              const scale = minSpeed / currentSpeed;
               node.vx *= scale;
               node.vy *= scale;
             }
