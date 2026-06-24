@@ -73,11 +73,14 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
 
   const initNodes = useCallback((canvas: HTMLCanvasElement) => {
     if (initializedRef.current) return;
-    initializedRef.current = true;
 
     const baseSize = getCardSize(zoomLevel);
     const maxCards = getCardCountForViewport(canvas.width, canvas.height, baseSize);
     const slicedPosts = posts.slice(0, maxCards);
+
+    if (slicedPosts.length === 0) return;
+
+    initializedRef.current = true;
 
     nodesRef.current = slicedPosts.map((post) => {
       const size = baseSize + Math.random() * 20;
