@@ -249,6 +249,52 @@ Hahmlet provides Korean text with the serif elegance that Cormorant Garamond bro
 - Background: `var(--surface-subtle)`
 - Border-radius: `var(--radius-lg)` (16px)
 
+### PostCard (Feed Node — Instagram Story style)
+
+떠다니는 정사각형 노드. **카드 자체가 곧 미디어** (또는 텍스트 단독). 인스타 스토리 콜라주처럼 — 한 카드에 사용자 이름/프로필/액션 바 없음. 미디어 위에 텍스트를 직접 콜라주.
+
+**Geometry**
+- Container: 1:1 정사각형 (width = height, FeedPhysics가 결정)
+- Border-radius: `--radius-xl` (20px) — 카드 컨테이너
+
+**Surface**
+- Background: `hsl(var(--surface-elevated))` (배경 위에서 hairline+shadow로 떠보이는 cream)
+- Hairline: `box-shadow: 0 0 0 1px hsl(var(--border))`
+- Elevation: `var(--shadow-md)` (`0 4px 12px rgba(0,0,0,0.08)`)
+
+**Card variants**
+
+1. **Media card** (post.media 존재)
+   - `<img>` 또는 `<video>`가 `absolute inset-0 object-cover`로 카드 전체 채움
+   - 텍스트가 있으면 `CollageOverlay` 렌더
+   - `CollageOverlay`: 카드 하단 60% 그라데이션 + 텍스트 (인스타 스토리 콜라주)
+     - `textOverlay: 'white'` (기본): 검은 그라데이션 + 흰 텍스트 + dark text-shadow
+     - `textOverlay: 'black'`: 흰 그라데이션 + 검은 텍스트 + light text-shadow
+     - `textOverlay: 'color'`: 그라데이션 없음, `textColor` hex로 직접
+   - 텍스트 폰트: 14px, weight 500, line-height 1.35, 가운데 정렬
+
+2. **Text-only card** (post.media 없음)
+   - 배경: `--surface-elevated`
+   - 본문: 15px, line-height 1.5, `var(--text-primary)`, 가운데, `line-clamp-6`
+
+**Action (one only)**
+- 위치: 카드 우하단 (`bottom-2 right-2`)
+- 32×32px 원형 버튼, `backdrop-blur-md` + 반투명 검정 (`rgba(0,0,0,0.32)` idle / `0.55` liked)
+- 하트 아이콘 16×16px, stroke white 2px
+  - Liked: `fill: #ec4899`, `stroke: #ffffff`
+  - Idle: `fill: none`, `stroke: #ffffff`
+- 공유/댓글/DM 버튼 없음 (인스타 스토리와 동일)
+
+**Drag-dismiss edge cue**: `linear-gradient(to edge, rgba(0,0,0,0.18), transparent 70%)` — 단일 hue, 멀티 hue 글로우 금지
+
+**Forbidden on PostCard**
+- Author name, profile, action bar, share button, comment button (인스타 스토리처럼)
+- `box-shadow` with multiple colored stops (no neon glow)
+- Card-level `linear-gradient` (no `purple→pink` wash)
+- Media-level glow (no 3-stack box-shadow on image)
+
+**Mobile post content card (MobileFeedCard, when used)**
+> Deprecated. 메인 피드는 PostCard만 사용. MobileFeedCard는 향후 다른 뷰에서만 재사용.
 ### Badges
 
 | Variant | Background | Text |

@@ -1,5 +1,7 @@
 import type { PlanetKey } from '@/constants/planets';
 
+export type TextOverlayColor = 'white' | 'black' | 'color';
+
 export interface Post {
   id: string;
   authorId: string;
@@ -8,9 +10,10 @@ export interface Post {
   content: string;
   media?: string;
   mediaType?: 'image' | 'video';
+  textOverlay?: TextOverlayColor;
+  textColor?: string;
   createdAt?: string;
 }
-
 export interface Resonance {
   id: string;
   userA: string;

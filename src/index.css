@@ -21,6 +21,15 @@
     --safe-area-left: env(safe-area-inset-left, 0px);
     --safe-area-right: env(safe-area-inset-right, 0px);
 
+    /* === Radius scale (PostCard: card 20px / media 16px) === */
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-full: 9999px;
+
     /* === Color tokens — values from DESIGN.md OKLCH, expressed as HSL channels for Tailwind opacity modifiers === */
 
     /* Surfaces */
@@ -49,6 +58,7 @@
     --gold-glow: 40 60% 55%;
     --card-hover: 45 12% 94%;
     --border-hover: 40 10% 78%;
+    --card-elevated: 40 14% 92%;        /* PostCard/Modal: oklch(0.9284 0.0089 75) — 배경·subtle과 구분되는 elevated cream */
 
     /* Threads-style gradient */
     --thread-gradient: linear-gradient(135deg, #664ead 0%, #a855f7 50%, #ec4899 100%);
@@ -60,6 +70,7 @@
     --surface-default: var(--background);
     --surface-subtle: var(--card);
     --surface-muted: var(--muted);
+    --surface-elevated: var(--card-elevated);
     --text-primary: var(--foreground);
     --text-secondary: var(--muted-foreground);
     --text-tertiary: 40 15% 60%;
@@ -124,6 +135,7 @@
     --gold-glow: 40 55% 45%;
     --card-hover: 25 13% 16%;
     --border-hover: 25 12% 30%;
+    --card-elevated: 25 13% 18%;        /* dark: oklch(0.2359 0.0083 48.3) — 배경 위 떠보이는 warm dark */
 
     /* Threads-style gradient */
     --thread-gradient: linear-gradient(135deg, #7c5cd4 0%, #b574f7 50%, #f06292 100%);
@@ -131,10 +143,10 @@
     --thread-pink: 330 60% 60%;
     --thread-accent: 270 60% 60%;
 
-    /* Semantic aliases (re-aliased to inherit dark values) */
     --surface-default: var(--background);
     --surface-subtle: var(--card);
     --surface-muted: var(--muted);
+    --surface-elevated: var(--card-elevated);
     --text-primary: var(--foreground);
     --text-secondary: var(--muted-foreground);
     --text-tertiary: 40 14% 60%;

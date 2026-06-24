@@ -10,6 +10,8 @@ export function toPost(row: FeedRow): Post {
     content: row.content || '',
     media: row.media_url ?? undefined,
     mediaType: row.media_type ?? undefined,
+    textOverlay: (row.text_overlay as Post['textOverlay']) ?? undefined,
+    textColor: row.text_color ?? undefined,
     createdAt: row.created_at,
   };
 }

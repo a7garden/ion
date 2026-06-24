@@ -15,11 +15,14 @@ ion은 이런 수치를 모두 제거했다.
 
 ### Feed
 - 사용자가 올리는 하나의 게시물 단위
-- **텍스트**, **사진(1장)**, **동영상(1개)** 중 선택
-  - 사진과 동영상은 혼재 불가 (한 피드당 미디어 1개)
-  - 텍스트는 어떤 조합이든 상관없음
+- **인스타 스토리 콜라주 모델**:
+  - **텍스트만**: 정사각형 카드 안에 본문 15px, line-clamp-6
+  - **이미지/영상만**: 미디어가 카드 전체를 채움 (1:1 정사각형)
+  - **콜라주**: 미디어 위에 텍스트 오버레이 (white/black/color 선택)
 - 피드 화면에서는 전 세계의 **모든 피드 중 k개를 무작위**로 보여줌
   - 팔로잉 개념이 없음
+- 카드는 사용자의 이름/프로필/액션 바 없이 **미디어 그 자체**로 떠다님
+  - 우하단 하트 1개만 (인스타 스토리와 동일)
 
 ### Like
 - 유일한 상호작용. **수치로 표시되지 않음**
@@ -33,9 +36,11 @@ ion은 이런 수치를 모두 제거했다.
 ### 없는 것
 - ❌ 좋아요 수, 댓글 수, 팔로워 수
 - ❌ 댓글 시스템
+- ❌ 공유 버튼 (피드 카드 내부)
 - ❌ 팔로잉 / 팔로워
 - ❌ 알림 뱃지
 - ❌ 사용자 프로필 통계
+- ❌ 카드 안 작성자 이름 / 프로필 사진
 
 ## Tech Stack
 
@@ -47,9 +52,6 @@ ion은 이런 수치를 모두 제거했다.
 | **미디어 저장** | Supabase Storage | `media` 버킷 (공개 읽기) |
 | **프론트엔드** | React 19 + TypeScript | Vite 빌드 |
 | **스타일** | Tailwind CSS | 다크/라이트 테마 |
-| **애니메이션** | Framer Motion | 카드 피직스 |
-| **그래프** | d3-force + Canvas | World 뷰 노드 시뮬레이션 |
-
 ## Database Schema (3 tables)
 
 ```sql
@@ -69,6 +71,8 @@ posts (
   content     TEXT NOT NULL DEFAULT ''
   media_url   TEXT            -- NULL = 텍스트 전용
   media_type  TEXT            -- 'image' | 'video' | NULL
+  text_overlay TEXT           -- 'white' | 'black' | 'color' | NULL
+  text_color  TEXT            -- 'color' 모드일 때 hex
   created_at  TIMESTAMPTZ
   -- 제약: media_url이 있으면 media_type도 필수
 )
@@ -92,8 +96,10 @@ likes (
 ### RPC
 
 ```sql
--- 무작위 피드 (author 정보 포함)
-feed_random(viewer_id UUID, batch_size INT) → TABLE(...)
+-- 무작위 피드 (author 정보 + 오버레이 포함)
+feed_random(viewer_id UUID, batch_size INT DEFAULT 10, exclude_ids UUID[] DEFAULT '{}')
+  → TABLE(id, author_id, content, media_url, media_type, text_overlay, text_color,
+          created_at, author_display_name, author_planet)
 
 -- 상호 좋아요 연결 (World 그래프 간선)
 mutual_connections(viewer_id UUID) → TABLE(user_a UUID, user_b UUID)

@@ -7,6 +7,7 @@ export const TOKENS = {
     default: 'var(--surface-default)',
     subtle: 'var(--surface-subtle)',
     muted: 'var(--surface-muted)',
+    elevated: 'var(--surface-elevated)',
     inverse: 'var(--surface-inverse)',
   },
   text: {
