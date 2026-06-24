@@ -88,6 +88,22 @@ const PLANET_COLORS: Record<string, { light: string; mid: string; dark: string; 
   pluto:   { light: 'hsl(35, 20%, 70%)', mid: 'hsl(30, 15%, 49%)', dark: 'hsl(25, 15%, 36%)', glow: 'hsl(35, 25%, 65%)' },
 };
 
+const STAR_COLORS = [
+  'hsla(25,  90%, 65%, 0.9)',
+  'hsla(15,  85%, 60%, 0.9)',
+  'hsla(35,  95%, 70%, 0.9)',
+];
+
+const hashCode = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+};
+
 function drawPlanet(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, planetKey: string) {
   const colors = PLANET_COLORS[planetKey] ?? PLANET_COLORS.moon;
   const gradient = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, 0, cx, cy, radius);
@@ -206,10 +222,12 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
       y: author === currentUserId ? cy : cy + (Math.random() - 0.5) * dimensions.height * 0.6,
       fx: author === currentUserId ? cx : null,
       fy: author === currentUserId ? cy : null,
-      color: 'hsla(0, 0%, 100%, 0.7)',
+      color: author === currentUserId
+        ? 'hsla(0, 0%, 100%, 0.7)'
+        : STAR_COLORS[hashCode(author) % STAR_COLORS.length],
       glowColor: author === currentUserId
         ? 'hsla(45, 90%, 65%, 0.6)'
-        : 'hsla(0, 0%, 100%, 0.15)',
+        : 'transparent',
     }));
 
     // 3. Only edges from current user to connected (selected) users
@@ -363,18 +381,27 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
         ctx.stroke();
       }
 
-      // Draw other nodes as circles
+// Draw other nodes as glowing stars
       const currentNodes = nodesRef.current;
-      const nodeOpacity = dark ? 0.5 : 0.7;
       for (let i = 0; i < currentNodes.length; i++) {
         const node = currentNodes[i];
         if (node.x === undefined || node.y === undefined) continue;
         if (node.isCurrentUser) continue;
 
-        const r = 4;
+        const r = 5;
+        const isDark = isDarkModeRef.current;
+        const baseColor = isDark
+          ? 'hsla(0, 0%, 100%, 0.9)'
+          : node.color;
+
+        const glowGradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r);
+        glowGradient.addColorStop(0, baseColor);
+        glowGradient.addColorStop(0.4, baseColor.replace(/[\d.]+\)$/, (m) => String(parseFloat(m) * 0.5) + ')'));
+        glowGradient.addColorStop(1, 'transparent');
+
         ctx.beginPath();
         ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(0, 0%, 100%, ${nodeOpacity})`;
+        ctx.fillStyle = glowGradient;
         ctx.fill();
       }
 

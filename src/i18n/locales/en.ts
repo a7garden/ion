@@ -162,6 +162,11 @@ export const en = {
   'terms.contact.title': 'Contact',
   'terms.contact.content': 'For inquiries regarding these terms, please contact us through the settings page within the service.',
 
+  // Calendar
+  'calendar.title': 'Calendar',
+  'calendar.backToToday': 'to day',
+  'calendar.noPostsThisMonth': 'No posts this month',
+
   // General/Common
   'common.loading': 'Loading...',
 } as const;

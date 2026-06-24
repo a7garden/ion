@@ -50,4 +50,10 @@ export const TOKENS = {
     modal: 'var(--z-modal)',
     notification: 'var(--z-notification)',
   },
+  gradient: {
+    thread: 'var(--thread-gradient)',
+    threadPurple: 'hsl(var(--thread-purple))',
+    threadPink: 'hsl(var(--thread-pink))',
+    threadAccent: 'hsl(var(--thread-accent))',
+  },
 } as const;

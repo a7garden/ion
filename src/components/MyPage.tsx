@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreatePostModal } from '@/components/CreatePostModal';
 import { Button } from '@/components/ui/button';
-import { Plus, Image, Trash2, Settings } from 'lucide-react';
+import { Plus, Image, Trash2, Settings, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { NavLink } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PlanetAvatar } from '@/components/PlanetAvatar';
 import { PlanetSelector } from '@/components/PlanetSelector';
@@ -106,14 +107,23 @@ export function MyPage({
               <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">{userName}</h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{t('myPage.tagline')}</p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSettingsOpen(true)}
-              aria-label={t('myPage.settings')}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <NavLink
+                to="/calendar"
+                className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+                aria-label="Calendar"
+              >
+                <Calendar className="w-[18px] h-[18px]" strokeWidth={1.75} />
+              </NavLink>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSettingsOpen(true)}
+                aria-label={t('myPage.settings')}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </div>
           </motion.div>
         </div>
 

@@ -5,6 +5,7 @@ import { useFeedQuery, useDismissPost, useRefetchFeed } from '@/hooks/queries/us
 import { useLikedIdsQuery, useToggleLike } from '@/hooks/queries/useLikes';
 import { useCreatePost } from '@/hooks/queries/useMyPosts';
 import { FeedView } from '@/components/FeedView';
+import { FeedSkeleton } from '@/components/ui/skeleton';
 import { ZoomSlider } from '@/components/ZoomSlider';
 import { LoginModal } from '@/components/LoginModal';
 import { CreatePostModal } from '@/components/CreatePostModal';
@@ -66,11 +67,7 @@ export function FeedRoute() {
   };
 
   if (authLoading || feedLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-      </div>
-    );
+    return <FeedSkeleton />;
   }
 
   if (isError) {

@@ -22,6 +22,8 @@ export { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 export { Badge, badgeVariants } from '@/components/ui/badge';
 export type { BadgeProps } from '@/components/ui/badge';
 
+export { Skeleton, FeedSkeleton } from '@/components/ui/skeleton';
+
 // Toast (Sonner)
 export { toast } from 'sonner';
 

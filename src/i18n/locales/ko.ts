@@ -162,6 +162,11 @@ export const ko = {
   'terms.contact.title': '문의',
   'terms.contact.content': '이용약관 관련 문의는 서비스 내 설정 페이지를 통해 연락해 주세요.',
 
+  // Calendar
+  'calendar.title': '달력',
+  'calendar.backToToday': 'to day',
+  'calendar.noPostsThisMonth': '이 달에 게시물이 없습니다',
+
   // General/Common
   'common.loading': '로딩 중...',
 } as const;

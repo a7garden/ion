@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { getUserPosts, createPost, deletePost as deletePostDb, uploadMedia } from '@/lib/supabase';
+import { getUserPosts, createPost, deletePost as deletePostDb, uploadMedia, updatePost as updatePostDb } from '@/lib/supabase';
 import { toPost } from '@/lib/mappers';
 import type { Post } from '@/types';
 
@@ -71,6 +71,35 @@ export function useDeletePost(userId: string) {
       if (context?.prev) queryClient.setQueryData(key, context.prev);
     },
     onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed(userId) });
+    },
+  });
+}
+
+export function useUpdatePost(userId: string) {
+  const queryClient = useQueryClient();
+  const key = queryKeys.myPosts(userId);
+
+  return useMutation({
+    mutationFn: async ({ postId, content, mediaFile }: { postId: string; content: string; mediaFile?: File }) => {
+      let mediaUrl: string | undefined | null;
+      let mediaType: 'image' | 'video' | null | undefined;
+
+      if (mediaFile) {
+        const result = await uploadMedia(mediaFile, userId);
+        mediaUrl = result.url;
+        mediaType = result.type;
+      }
+
+      const row = await updatePostDb(postId, {
+        content,
+        media_url: mediaUrl,
+        media_type: mediaType,
+      });
+      return row;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed(userId) });
     },
