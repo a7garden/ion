@@ -2,6 +2,8 @@ import { useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { Post } from '@/types';
 import { positionStore } from '@/stores/positionStore';
+import { PlanetAvatar } from '@/components/PlanetAvatar';
+import { useI18n } from '@/i18n';
 
 interface PostCardProps {
   post: Post;
@@ -11,8 +13,28 @@ interface PostCardProps {
   opacity: number;
   isDragging: boolean;
   isDeleteMode?: boolean;
+  isLiked: boolean;
   onClick: () => void;
+  onToggleLike: () => void;
   onDelete?: () => void;
+}
+
+async function handleShare(post: Post) {
+  const shareData = {
+    title: 'ION',
+    text: post.content,
+    url: post.media || undefined,
+  };
+
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+    } catch {
+      // User cancelled
+    }
+  } else {
+    await navigator.clipboard.writeText(post.content);
+  }
 }
 
 export function PostCard({
@@ -23,9 +45,12 @@ export function PostCard({
   opacity,
   isDragging,
   isDeleteMode,
+  isLiked,
   onClick,
+  onToggleLike,
   onDelete,
 }: PostCardProps) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
   const hasMovedRef = useRef(false);
@@ -38,8 +63,6 @@ export function PostCard({
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const nearEdgeRef = useRef<'left' | 'right' | 'top' | 'bottom' | null>(null);
 
-  // 회전 스프링 애니메이션 — CSS custom property만 업데이트
-  // 위치(x,y)는 React style prop이 관리하므로 stale closure 문제 없음
   const animateRotation = useCallback(() => {
     const diff = targetRotationRef.current - currentRotationRef.current;
     if (Math.abs(diff) < 0.1) {
@@ -60,7 +83,6 @@ export function PostCard({
     }
   }, [animateRotation]);
 
-  // 언마운트 시 rAF 정리
   useEffect(() => {
     return () => {
       if (rotationFrameRef.current) cancelAnimationFrame(rotationFrameRef.current);
@@ -83,16 +105,13 @@ export function PostCard({
     hasMovedRef.current = false;
     nearEdgeRef.current = null;
 
-    // 마우스와 카드 중심 사이의 오프셋 저장 (카드가 마우스로 튀는 것 방지)
     dragOffsetRef.current = { x: e.clientX - x, y: e.clientY - y };
-
     dragStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
     prevDragRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
 
     positionStore.setDragging(post.id);
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
-    // 롱프레스 → 삭제 모드
     longPressTimerRef.current = setTimeout(() => {
       if (isDraggingRef.current) {
         positionStore.setDeleteMode(post.id);
@@ -107,7 +126,6 @@ export function PostCard({
     const newX = e.clientX;
     const newY = e.clientY;
 
-    // 움직임 감지 (클릭 vs 드래그 구분)
     if (dragStartRef.current) {
       const dx = newX - dragStartRef.current.x;
       const dy = newY - dragStartRef.current.y;
@@ -117,13 +135,11 @@ export function PostCard({
       }
     }
 
-    // 오프셋을 고려한 카드 중심 위치 (클램핑 전 원시값 보존)
     const rawCenterX = newX - dragOffsetRef.current.x;
     const rawCenterY = newY - dragOffsetRef.current.y;
     let centerX = rawCenterX;
     let centerY = rawCenterY;
 
-    // 헤더 영역 아래로 제한
     const TOP_OFFSET = 72;
     const minX = size / 2;
     const maxX = window.innerWidth - size / 2;
@@ -132,28 +148,23 @@ export function PostCard({
     centerX = Math.max(minX, Math.min(maxX, centerX));
     centerY = Math.max(minY, Math.min(maxY, centerY));
 
-    // 가장자리 감지 (인디케이터용): 원시 위치가 경계를 넘었으면 해당 edge 기록
     if (rawCenterX < minX) nearEdgeRef.current = 'left';
     else if (rawCenterX > maxX) nearEdgeRef.current = 'right';
     else if (rawCenterY < minY) nearEdgeRef.current = 'top';
     else if (rawCenterY > maxY) nearEdgeRef.current = 'bottom';
     else nearEdgeRef.current = null;
 
-    // 속도 계산
     if (prevDragRef.current) {
       const dt = Math.max(1, now - prevDragRef.current.time);
       const vx = (newX - prevDragRef.current.x) / dt * 16;
       const vy = (newY - prevDragRef.current.y) / dt * 16;
       positionStore.setDragVelocity(post.id, vx, vy);
 
-      // 드래그 중 회전: 수평 속도에 비례
       const targetRotation = Math.max(-12, Math.min(12, vx * 3));
       startRotationAnim(targetRotation);
     }
 
     prevDragRef.current = { x: newX, y: newY, time: now };
-
-    // 위치 업데이트 — React style prop이 transform을 관리
     positionStore.updateSinglePosition(post.id, centerX, centerY);
   }, [post.id, clearLongPress, startRotationAnim]);
 
@@ -163,7 +174,6 @@ export function PostCard({
     clearLongPress();
     isDraggingRef.current = false;
 
-    // --- 가장자리 dismiss: 붉은 라이트(nearEdge)가 켜진 상태로 놓으면 즉시 dismiss ---
     const edge = nearEdgeRef.current;
     if (hasMovedRef.current && edge) {
       const edgeDir: Record<'left' | 'right' | 'top' | 'bottom', { vx: number; vy: number }> = {
@@ -174,13 +184,11 @@ export function PostCard({
       };
       const dir = edgeDir[edge];
       const vel = positionStore.getDragVelocity(post.id) ?? { vx: 0, vy: 0 };
-      // 벽 바깥쪽으로 속도를 줘 자연스럽게 퇴장
       positionStore.markForDismissal(post.id, dir.vx * 4 + vel.vx * 0.3, dir.vy * 4 + vel.vy * 0.3);
       positionStore.setDragging(null);
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       return;
     }
-    // ---
 
     const deleteModeId = positionStore.getDeleteModeId();
     if (deleteModeId === post.id) {
@@ -197,10 +205,18 @@ export function PostCard({
     }
 
     nearEdgeRef.current = null;
-
-    // 놓을 때 회전 복귀 (스프링)
     startRotationAnim(0);
   }, [post.id, onClick, clearLongPress, startRotationAnim]);
+
+  const getCardShadow = () => {
+    if (isDeleteMode) {
+      return '0 0 30px hsla(5, 65%, 48%, 0.4)';
+    }
+    if (isDragging) {
+      return '0 20px 60px hsla(25, 15%, 35%, 0.3), 0 0 25px hsla(330, 65%, 55%, 0.25)';
+    }
+    return '0 4px 20px hsla(225, 45%, 40%, 0.12), 0 0 40px hsla(275, 60%, 55%, 0.15)';
+  };
 
   return (
     <div
@@ -214,9 +230,6 @@ export function PostCard({
         '--drag-rotation': `${currentRotationRef.current}deg`,
         transform: `translate3d(${x - size / 2}px, ${y - size / 2}px, 0) scale(${isDragging ? 1.08 : 1}) rotate(var(--drag-rotation, 0deg))`,
         opacity,
-        // 위치(x,y)는 FeedPhysics가 매 프레임 갱신 → transform transition을 빼야
-        // 매 프레임 이동(드리프트/entering/dismiss 퇴장)이 버벅이지 않고 부드러움.
-        // scale/rotate도 상태 전환 시 즉시 적용(box-shadow만 트랜지션).
         transition: 'box-shadow 0.3s ease',
         touchAction: 'none',
         willChange: 'transform',
@@ -225,56 +238,116 @@ export function PostCard({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      <motion.div
-        layoutId={`card-${post.id}`}
-        className={`w-full h-full bg-card rounded-2xl p-2.5 flex flex-col overflow-hidden transition-all duration-300 select-none ${
-          isDeleteMode ? 'border-2 border-destructive' : 'border border-border/50'
+      <div
+        className={`w-full h-full rounded-3xl flex flex-col overflow-hidden relative ${
+          isDeleteMode ? 'border-2 border-destructive' : 'border border-[hsla(275,60%,55%,0.2)]'
         }`}
         style={{
-          boxShadow: isDeleteMode
-            ? '0 0 30px hsl(var(--destructive) / 0.4)'
-            : isDragging
-            ? '0 20px 60px hsl(var(--warm-shadow) / 0.3), 0 0 25px hsl(var(--gold-glow) / 0.2)'
-            : 'var(--shadow-md)',
+          backgroundColor: 'hsl(45, 12%, 96%)',
+          boxShadow: getCardShadow(),
         }}
       >
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div
+          className="absolute inset-0 rounded-3xl pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, hsla(275, 60%, 55%, 0.08) 0%, transparent 50%, hsla(330, 65%, 55%, 0.06) 100%)',
+          }}
+        />
+
+        <div className="flex items-center gap-2 p-2.5 pb-2 relative z-10">
+          <PlanetAvatar planet={post.authorPlanet} size={28} />
+          <span className="text-[11px] font-semibold text-[hsl(25,18%,15%)] truncate">
+            {post.authorName || t('expanded.anonymous')}
+          </span>
+        </div>
 
         {post.media && (
-          <div className="mb-1.5 flex-shrink-0 relative">
-            <div className="relative overflow-hidden rounded-xl">
-              {(post.mediaType === 'video') ? (
-                <div className="relative">
+          <div className="flex-shrink-0 relative px-2 pb-2 z-10">
+            <div
+              className="relative overflow-hidden rounded-2xl"
+              style={{
+                boxShadow: '0 0 24px hsla(275, 60%, 55%, 0.2), 0 0 48px hsla(330, 65%, 55%, 0.12), 0 8px 32px hsla(225, 45%, 40%, 0.1)',
+              }}
+            >
+              {post.mediaType === 'video' ? (
+                <>
                   <video
                     src={post.media}
-                    className="w-full aspect-square object-cover transition-transform duration-300"
+                    className="w-full object-cover"
+                    style={{ aspectRatio: '4/3' }}
                     preload="metadata"
                     playsInline
                     muted
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
-                    <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                    <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
                       <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     </div>
                   </div>
-                </div>
+                </>
               ) : (
                 <img
                   src={post.media}
-                  alt="Post media"
-                  className="w-full aspect-square object-cover transition-transform duration-300"
+                  alt=""
+                  className="w-full object-cover"
+                  style={{ aspectRatio: '4/3' }}
                   draggable={false}
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-card/60 to-transparent pointer-events-none" />
             </div>
           </div>
         )}
 
-        <div className="text-[11px] font-medium text-muted-foreground/80 flex-1 flex items-center justify-center line-clamp-6 leading-relaxed text-center">
-          {post.content}
+        <div className="flex-1 min-h-0 px-2.5 pb-2 flex items-center justify-center relative z-10">
+          <p className="text-[10px] leading-relaxed text-[hsl(25,14%,50%)] line-clamp-4 text-center">
+            {post.content}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1 px-2.5 pb-2.5 pt-1 relative z-10">
+          <motion.button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleLike();
+            }}
+            whileTap={{ scale: 0.9 }}
+            className="p-1.5 rounded-full transition-colors"
+            style={{ backgroundColor: isLiked ? 'hsla(330, 65%, 55%, 0.15)' : 'transparent' }}
+            aria-label="like"
+          >
+            <svg
+              className="w-4 h-4"
+              style={{ fill: isLiked ? '#ec4899' : 'none', stroke: '#ec4899' }}
+              strokeWidth={1.75}
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          </motion.button>
+
+          <motion.button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShare(post);
+            }}
+            whileTap={{ scale: 0.9 }}
+            className="p-1.5 rounded-full hover:bg-[hsl(40,12%,90%)] transition-colors"
+            aria-label="share"
+          >
+            <svg
+              className="w-4 h-4"
+              style={{ stroke: 'hsl(25, 14%, 50%)' }}
+              fill="none"
+              strokeWidth={1.75}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+            </svg>
+          </motion.button>
         </div>
 
         {isDeleteMode && (
@@ -286,37 +359,39 @@ export function PostCard({
               e.stopPropagation();
               onDelete?.();
             }}
-            className="absolute -top-2 -right-2 w-8 h-8 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-destructive/90 transition-colors"
+            className="absolute -top-2 -right-2 w-8 h-8 bg-[hsl(5,65%,48%)] text-white rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition-colors z-20"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </motion.button>
         )}
-      </motion.div>
+      </div>
 
       {isDragging && (
-        <div className="absolute -inset-1 rounded-2xl border-2 border-accent/30 blur-sm pointer-events-none animate-pulse-slow" />
+        <div
+          className="absolute -inset-1 rounded-3xl pointer-events-none animate-pulse"
+          style={{ border: '1px solid hsla(275, 60%, 55%, 0.3)' }}
+        />
       )}
 
-      {/* 가장자리 dismiss 인디케이터 */}
       {isDragging && nearEdgeRef.current && (
         <>
           {nearEdgeRef.current === 'left' && (
             <div className="fixed inset-y-0 left-0 w-20 pointer-events-none z-20"
-              style={{ background: 'linear-gradient(to right, hsl(var(--destructive)/0.35), hsl(var(--destructive)/0.1) 40%, transparent 70%)' }} />
+              style={{ background: 'linear-gradient(to right, hsla(5, 65%, 48%, 0.35), transparent 70%)' }} />
           )}
           {nearEdgeRef.current === 'right' && (
             <div className="fixed inset-y-0 right-0 w-20 pointer-events-none z-20"
-              style={{ background: 'linear-gradient(to left, hsl(var(--destructive)/0.35), hsl(var(--destructive)/0.1) 40%, transparent 70%)' }} />
+              style={{ background: 'linear-gradient(to left, hsla(5, 65%, 48%, 0.35), transparent 70%)' }} />
           )}
           {nearEdgeRef.current === 'top' && (
             <div className="fixed inset-x-0 top-0 h-20 pointer-events-none z-20"
-              style={{ background: 'linear-gradient(to bottom, hsl(var(--destructive)/0.35), hsl(var(--destructive)/0.1) 40%, transparent 70%)' }} />
+              style={{ background: 'linear-gradient(to bottom, hsla(5, 65%, 48%, 0.35), transparent 70%)' }} />
           )}
           {nearEdgeRef.current === 'bottom' && (
             <div className="fixed inset-x-0 bottom-0 h-20 pointer-events-none z-20"
-              style={{ background: 'linear-gradient(to top, hsl(var(--destructive)/0.35), hsl(var(--destructive)/0.1) 40%, transparent 70%)' }} />
+              style={{ background: 'linear-gradient(to top, hsla(5, 65%, 48%, 0.35), transparent 70%)' }} />
           )}
         </>
       )}

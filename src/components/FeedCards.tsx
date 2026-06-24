@@ -14,9 +14,11 @@ interface FeedCardsProps {
   onCardClick: (post: Post, cardRect: CardPosition) => void;
   onDelete: (postId: string) => void;
   expandedPostId?: string | null;
+  likedIds?: string[];
+  onToggleLike?: (postId: string) => void;
 }
 
-export function FeedCards({ posts, onCardClick, onDelete, expandedPostId }: FeedCardsProps) {
+export function FeedCards({ posts, onCardClick, onDelete, expandedPostId, likedIds = [], onToggleLike }: FeedCardsProps) {
   const positions = useSyncExternalStore(
     positionStore.subscribe,
     positionStore.getSnapshot
@@ -34,8 +36,10 @@ export function FeedCards({ posts, onCardClick, onDelete, expandedPostId }: Feed
     if (id) onDelete(id);
   });
 
+  if (positions.length === 0) return null;
+
   return (
-    <div className="fixed inset-0 select-none">
+    <div className="fixed inset-0 select-none z-20">
       {positions.map((pos) => {
         const post = posts.find((p) => p.id === pos.id);
         if (!post) return null;
@@ -52,7 +56,9 @@ export function FeedCards({ posts, onCardClick, onDelete, expandedPostId }: Feed
             opacity={pos.opacity}
             isDragging={pos.isDragging}
             isDeleteMode={deleteModeId === pos.id}
+            isLiked={likedIds.includes(post.id)}
             onClick={() => onCardClick(post, { x: pos.x, y: pos.y, size: pos.size })}
+            onToggleLike={() => onToggleLike?.(post.id)}
             onDelete={() => handleDelete(pos.id)}
           />
         );

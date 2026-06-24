@@ -12,11 +12,13 @@ interface ImageCropModalProps {
 
 export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }: ImageCropModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
   const [imageEl, setImageEl] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
+  const isSliderDragging = useRef(false);
 
   useEffect(() => {
     if (!open || !imageFile) return;
@@ -77,6 +79,26 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
     isDragging.current = false;
   };
 
+  const handleSliderPointerDown = (e: React.PointerEvent) => {
+    if (!sliderRef.current) return;
+    isSliderDragging.current = true;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    setZoom(0.5 + ratio * 2);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handleSliderPointerMove = (e: React.PointerEvent) => {
+    if (!isSliderDragging.current || !sliderRef.current) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    setZoom(0.5 + ratio * 2);
+  };
+
+  const handleSliderPointerUp = () => {
+    isSliderDragging.current = false;
+  };
+
   const handleCrop = () => {
     if (!imageEl) return;
     const OUTPUT_SIZE = 800;
@@ -125,7 +147,8 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[360px] w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 shadow-glow">
+      <div className="fixed inset-0 z-[500] bg-black/80 cursor-pointer" onClick={() => onOpenChange(false)} />
+      <DialogContent className="sm:max-w-[360px] w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 shadow-glow z-[501]">
         <DialogHeader className="relative px-5 sm:px-6 pt-5 sm:pt-6 pb-3 text-center">
           <DialogTitle className="text-lg font-semibold text-foreground">이미지 크롭</DialogTitle>
           <p className="text-xs text-muted-foreground/70 mt-1">정방형으로 크롭합니다</p>
@@ -144,7 +167,13 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
             <Button variant="outline" size="icon" onClick={() => setZoom(z => Math.max(0.5, z - 0.1))} className="shrink-0">
               <ZoomOut className="w-4 h-4" />
             </Button>
-            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              ref={sliderRef}
+              className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden cursor-pointer"
+              onPointerDown={handleSliderPointerDown}
+              onPointerMove={handleSliderPointerMove}
+              onPointerUp={handleSliderPointerUp}
+            >
               <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${(zoom - 0.5) / 2 * 100}%` }} />
             </div>
             <Button variant="outline" size="icon" onClick={() => setZoom(z => Math.min(2.5, z + 0.1))} className="shrink-0">

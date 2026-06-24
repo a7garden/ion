@@ -178,6 +178,21 @@ export async function getUserPosts(userId: string): Promise<FeedRow[]> {
   }));
 }
 
+export async function updatePost(postId: string, opts: { content?: string; media_url?: string | null; media_type?: 'image' | 'video' | null }) {
+  const { data, error } = await supabase
+    .from('posts')
+    .update({
+      content: opts.content ?? null,
+      media_url: opts.media_url ?? null,
+      media_type: opts.media_type ?? null,
+    })
+    .eq('id', postId)
+    .select('id, author_id, content, media_url, media_type, created_at')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function deletePost(postId: string) {
   const { error } = await supabase.from('posts').delete()
     .eq('id', postId)

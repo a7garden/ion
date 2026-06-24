@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { FeedPhysics } from './FeedPhysics';
 import { FeedCards } from './FeedCards';
 import { MobileFeedCard } from './MobileFeedCard';
-import { Button } from '@/components/ui/button';
+import { EmptyFeedState } from '@/components/EmptyFeedState';
 import type { Post } from '@/types';
 import { useDeviceSize } from '@/hooks/useDeviceSize';
 import { useI18n } from '@/i18n';
@@ -226,25 +226,7 @@ function SwipeFeedView({
 
   // 빈 상태
   if (!currentPost) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background grain-overlay">
-        <div className="text-center animate-fade-in-up px-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-            <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <p className="text-muted-foreground text-sm">{t('feed.noPosts')}</p>
-          <p className="text-muted-foreground/60 text-xs mt-1">{t('feed.noPostsHint')}</p>
-          <Button
-            onClick={onCreatePostClick}
-            className="mt-4 bg-accent hover:bg-accent/90 text-accent-foreground"
-          >
-            {t('feed.createPost')}
-          </Button>
-        </div>
-      </div>
-    );
+    return <EmptyFeedState onCreatePost={onCreatePostClick} />;
   }
 
   // 성능을 위해 현재 기준 앞뒤 한 장씩만 렌더
@@ -303,7 +285,7 @@ function SwipeFeedView({
   const progressPct = posts.length > 1 ? (currentIndex / (posts.length - 1)) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 overflow-hidden overscroll-none bg-gradient-to-b from-background via-background to-card/20 grain-overlay select-none">
+    <div className="fixed inset-0 overflow-hidden overscroll-none bg-gradient-to-b from-background via-background to-card/20 select-none">
       {/* 우측 세로 진행 표시 + 카운터 (헤더와 겹치지 않게 우측) */}
       <div
         className="absolute right-3 -translate-y-1/2 z-50 pointer-events-none flex flex-col items-center gap-2"
@@ -317,8 +299,12 @@ function SwipeFeedView({
           style={{ height: Math.min(160, vh * 0.26) }}
         >
           <div
-            className="absolute left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-accent"
-            style={{ top: `calc(${progressPct}% - 5px)`, boxShadow: '0 0 10px hsl(var(--gold-glow) / 0.5)' }}
+            className="absolute left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full"
+            style={{
+              top: `calc(${progressPct}% - 5px)`,
+              background: 'linear-gradient(135deg, #664ead 0%, #a855f7 50%, #ec4899 100%)',
+              boxShadow: '0 0 12px hsla(330, 65%, 55%, 0.5), 0 0 24px hsla(275, 60%, 55%, 0.3)'
+            }}
           />
         </div>
       </div>
@@ -406,6 +392,10 @@ export function FeedView(props: FeedViewProps) {
     return <SwipeFeedView {...props} />;
   }
 
+  if (props.posts.length === 0) {
+    return <EmptyFeedState onCreatePost={props.onCreatePostClick} />;
+  }
+
   // 데스크톱: 캔버스 물리 시뮬레이션 + 떠다니는 카드
   return (
     <div className="fixed inset-0 select-none">
@@ -415,6 +405,8 @@ export function FeedView(props: FeedViewProps) {
         onCardClick={props.onCardClick}
         onDelete={props.onDelete}
         expandedPostId={props.expandedPostId}
+        likedIds={props.likedIds}
+        onToggleLike={props.onToggleLike}
       />
     </div>
   );

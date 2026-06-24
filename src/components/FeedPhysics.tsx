@@ -5,10 +5,10 @@ import { useDeviceSize, getCardCountForViewport, getDynamicCardSize } from '@/ho
 import type { Post } from '@/types';
 
 const TOP_OFFSET = 72;
-const MAX_VELOCITY = 3;
-const FRICTION = 0.992;
-const DRIFT_SPEED = 0.35;
-const DRIFT_THRESHOLD = 0.01;
+const MAX_VELOCITY = 20;
+const FRICTION = 0.9985;
+const MIN_SPEED = 1.5;
+const BOUNCE_RETENTION = 0.85;
 
 interface FloatingNode {
   id: string;
@@ -120,7 +120,15 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
       if (!ctx) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = isDarkModeRef.current ? 'hsl(20, 15%, 5%)' : 'hsl(60, 20%, 97%)';
+      if (isDarkModeRef.current) {
+        ctx.fillStyle = 'hsl(25, 15%, 8%)';
+      } else {
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, 'hsl(50, 20%, 97%)');
+        gradient.addColorStop(0.5, 'hsl(50, 15%, 95%)');
+        gradient.addColorStop(1, 'hsl(45, 12%, 93%)');
+        ctx.fillStyle = gradient;
+      }
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // dismiss 처리: 노드를 dismissing 상태로 만들고 onDelete 예약
@@ -152,8 +160,15 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
         } else {
           const releasedVelocity = positionStore.consumeDragVelocity(node.id);
           if (releasedVelocity) {
-            node.vx = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, releasedVelocity.vx));
-            node.vy = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, releasedVelocity.vy));
+            const speed = Math.sqrt(releasedVelocity.vx ** 2 + releasedVelocity.vy ** 2);
+            if (speed > MAX_VELOCITY) {
+              const scale = MAX_VELOCITY / speed;
+              node.vx = releasedVelocity.vx * scale;
+              node.vy = releasedVelocity.vy * scale;
+            } else {
+              node.vx = releasedVelocity.vx;
+              node.vy = releasedVelocity.vy;
+            }
           }
 
           node.x += node.vx;
@@ -169,19 +184,30 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
 
           if (!node.dismissing && !node.entering) {
             const b = getBounds(canvas, node.size);
-            if (node.x < b.minX || node.x > b.maxX) {
-              node.vx *= -0.5;
-              node.x = Math.max(b.minX, Math.min(b.maxX, node.x));
+
+            if (node.x < b.minX) {
+              node.x = b.minX;
+              node.vx = Math.abs(node.vx) * BOUNCE_RETENTION;
+            } else if (node.x > b.maxX) {
+              node.x = b.maxX;
+              node.vx = -Math.abs(node.vx) * BOUNCE_RETENTION;
             }
-            if (node.y < b.minY || node.y > b.maxY) {
-              node.vy *= -0.5;
-              node.y = Math.max(b.minY, Math.min(b.maxY, node.y));
+            if (node.y < b.minY) {
+              node.y = b.minY;
+              node.vy = Math.abs(node.vy) * BOUNCE_RETENTION;
+            } else if (node.y > b.maxY) {
+              node.y = b.maxY;
+              node.vy = -Math.abs(node.vy) * BOUNCE_RETENTION;
             }
+
             node.vx *= FRICTION;
             node.vy *= FRICTION;
-            if (Math.abs(node.vx) < DRIFT_THRESHOLD && Math.abs(node.vy) < DRIFT_THRESHOLD) {
-              node.vx = (Math.random() - 0.5) * DRIFT_SPEED;
-              node.vy = (Math.random() - 0.5) * DRIFT_SPEED;
+
+            const currentSpeed = Math.sqrt(node.vx ** 2 + node.vy ** 2);
+            if (currentSpeed > 0 && currentSpeed < MIN_SPEED) {
+              const scale = MIN_SPEED / currentSpeed;
+              node.vx *= scale;
+              node.vy *= scale;
             }
           } else if (node.entering) {
             // 진입 중: 벽 튕김은 없고 감속만 (자연스럽게 안으로 미끄러져 들어옴)
@@ -306,8 +332,8 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
   }, [zoomLevel, getCardSize]);
 
   return (
-    <div className="fixed inset-0 select-none">
-      <canvas ref={canvasRef} className="w-full h-full" />
+    <div className="fixed inset-0 select-none z-10">
+      <canvas ref={canvasRef} className="w-full h-full pointer-events-none" />
     </div>
   );
 }

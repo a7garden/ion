@@ -50,6 +50,12 @@
     --card-hover: 45 12% 94%;
     --border-hover: 40 10% 78%;
 
+    /* Threads-style gradient */
+    --thread-gradient: linear-gradient(135deg, #664ead 0%, #a855f7 50%, #ec4899 100%);
+    --thread-purple: 275 60% 55%;
+    --thread-pink: 330 65% 55%;
+    --thread-accent: 270 65% 55%;
+
     /* === Semantic aliases (DESIGN.md naming — usable in new components) === */
     --surface-default: var(--background);
     --surface-subtle: var(--card);
@@ -118,6 +124,12 @@
     --gold-glow: 40 55% 45%;
     --card-hover: 25 13% 16%;
     --border-hover: 25 12% 30%;
+
+    /* Threads-style gradient */
+    --thread-gradient: linear-gradient(135deg, #7c5cd4 0%, #b574f7 50%, #f06292 100%);
+    --thread-purple: 275 55% 60%;
+    --thread-pink: 330 60% 60%;
+    --thread-accent: 270 60% 60%;
 
     /* Semantic aliases (re-aliased to inherit dark values) */
     --surface-default: var(--background);
@@ -289,6 +301,42 @@
 .animate-fade-in-up-delay-4 { animation-delay: 0.4s; opacity: 0; }
 
 @layer utilities {
+  .thread-gradient {
+    background: var(--thread-gradient);
+  }
+
+  .thread-gradient-border {
+    position: relative;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .thread-gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--thread-gradient);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+
+  .thread-glow {
+    box-shadow:
+      0 0 24px hsl(var(--thread-purple) / 0.25),
+      0 0 48px hsl(var(--thread-pink) / 0.15),
+      0 8px 32px hsl(var(--cool-shadow) / 0.1);
+  }
+
+  .text-gradient-thread {
+    background: var(--thread-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   .mobile-safe-bottom {
     padding-bottom: calc(1.5rem + var(--safe-area-bottom));
   }

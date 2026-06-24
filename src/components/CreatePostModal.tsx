@@ -7,25 +7,38 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Image, X, Loader2, Sparkles } from 'lucide-react';
+import { Image, X, Loader2, Sparkles, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import type { Post } from '@/types';
 
 interface CreatePostModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (opts: { content: string; mediaFile?: File }) => Promise<void>;
   requestImageCrop: (file: File) => Promise<Blob>;
+  editPost?: Post | null;
+  onEdit?: (postId: string, opts: { content: string; mediaFile?: File }) => Promise<void>;
 }
 
-export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop }: CreatePostModalProps) {
+export function CreatePostModal({
+  open,
+  onOpenChange,
+  onSubmit,
+  requestImageCrop,
+  editPost,
+  onEdit,
+}: CreatePostModalProps) {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [removeExistingMedia, setRemoveExistingMedia] = useState(false);
   const mediaInputRef = useRef<HTMLInputElement>(null);
+
+  const isEditMode = !!editPost;
 
   useEffect(() => {
     if (!open) {
@@ -34,12 +47,22 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
       setMediaPreview(null);
       setIsSubmitting(false);
       setIsDragOver(false);
+      setRemoveExistingMedia(false);
       if (mediaInputRef.current) mediaInputRef.current.value = '';
+      return;
     }
-  }, [open]);
+
+    if (isEditMode && editPost) {
+      setContent(editPost.content || '');
+      setMediaPreview(editPost.media || null);
+      setMediaFile(null);
+      setRemoveExistingMedia(false);
+    }
+  }, [open, isEditMode, editPost]);
 
   const previewFile = (file: File) => {
     setMediaFile(file);
+    setRemoveExistingMedia(false);
     const reader = new FileReader();
     reader.onload = (e) => {
       setMediaPreview(e.target?.result as string);
@@ -67,8 +90,15 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
     }
   };
 
+  const handleRemoveMedia = () => {
+    setMediaFile(null);
+    setMediaPreview(null);
+    setRemoveExistingMedia(true);
+    if (mediaInputRef.current) mediaInputRef.current.value = '';
+  };
+
   const handleSubmit = async () => {
-    if (!content.trim() && !mediaFile) {
+    if (!content.trim() && !mediaFile && (!isEditMode || removeExistingMedia || !editPost?.media)) {
       toast('내용 또는 사진/동영상을 추가해주세요', { duration: 2000 });
       return;
     }
@@ -76,20 +106,30 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
     setIsSubmitting(true);
 
     try {
-      await onSubmit({
-        content: content,
-        mediaFile: mediaFile || undefined,
-      });
-
-      toast('게시물이 생성되었습니다!', { duration: 2000 });
+      if (isEditMode && editPost && onEdit) {
+        await onEdit(editPost.id, {
+          content,
+          mediaFile: mediaFile || undefined,
+        });
+        toast('게시물이 수정되었습니다!', { duration: 2000 });
+      } else {
+        await onSubmit({
+          content,
+          mediaFile: mediaFile || undefined,
+        });
+        toast('게시물이 생성되었습니다!', { duration: 2000 });
+      }
       onOpenChange(false);
     } catch (error) {
-      console.error('Failed to create post:', error);
-      toast('게시물 생성에 실패했습니다', { duration: 2000 });
+      console.error('Failed to submit post:', error);
+      toast(isEditMode ? '게시물 수정에 실패했습니다' : '게시물 생성에 실패했습니다', { duration: 2000 });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const displayMediaPreview = mediaPreview || (isEditMode && editPost?.media && !removeExistingMedia ? editPost.media : null);
+  const hasMedia = !!displayMediaPreview;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,8 +138,17 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
 
         <DialogHeader className="relative border-b border-border/50 px-4 sm:px-6 py-4 sm:py-5">
           <DialogTitle className="text-lg sm:text-xl font-semibold text-foreground flex items-center gap-2">
-            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
-            새로운 피드
+            {isEditMode ? (
+              <>
+                <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+                게시물 수정
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+                새로운 피드
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -122,31 +171,27 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
             />
 
             <div className="space-y-3 sm:space-y-4">
-              {mediaPreview ? (
+              {hasMedia ? (
                 <motion.div
                   className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-muted/50 border border-border/50"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                 >
-                  {mediaFile?.type.startsWith('video/') ? (
+                  {editPost?.mediaType === 'video' || (mediaFile?.type.startsWith('video/')) ? (
                     <video
-                      src={mediaPreview || undefined}
+                      src={displayMediaPreview || undefined}
                       controls
                       className="w-full max-h-[200px] sm:max-h-[280px] object-contain"
                     />
                   ) : (
                     <img
-                      src={mediaPreview || undefined}
+                      src={displayMediaPreview || undefined}
                       alt="Preview"
                       className="w-full max-h-[200px] sm:max-h-[280px] object-contain"
                     />
                   )}
                   <motion.button
-                    onClick={() => {
-                      setMediaFile(null);
-                      setMediaPreview(null);
-                      if (mediaInputRef.current) mediaInputRef.current.value = '';
-                    }}
+                    onClick={handleRemoveMedia}
                     className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-foreground/80 hover:bg-foreground text-background rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
                     whileHover={{ backgroundColor: 'hsl(var(--accent))' }}
                   >
@@ -216,12 +261,12 @@ export function CreatePostModal({ open, onOpenChange, onSubmit, requestImageCrop
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                게시 중...
+                {isEditMode ? '수정 중...' : '게시 중...'}
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                게시하기
+                {isEditMode ? '수정하기' : '게시하기'}
               </>
             )}
           </Button>
