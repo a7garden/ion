@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { getMutualConnections, getFeed } from '@/lib/supabase';
 import { toPost } from '@/lib/mappers';
+import type { Post } from '@/types';
 
 export interface WorldGraphData {
   connections: string[];
-  posts: ReturnType<typeof toPost>[];
+  posts: Post[];
 }
 
 export function useWorldGraphQuery(userId: string) {

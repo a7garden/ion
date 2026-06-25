@@ -90,7 +90,7 @@ export function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 h-14 sm:h-[64px] bg-background/75 backdrop-blur-2xl border-b border-border/40 z-sticky grid grid-cols-3 items-center px-4 sm:px-6 pt-[var(--safe-area-top)]"
-      style={{ boxShadow: '0 1px 0 0 hsl(var(--accent) / 0.06), 0 2px 8px 0 hsl(var(--foreground) / 0.04)' }}
+      style={{ boxShadow: '0 1px 0 0 oklch(var(--accent) / 0.06), 0 2px 8px 0 oklch(var(--foreground) / 0.04)' }}
     >
       {/* Left: Logo */}
       <div className="flex items-center justify-start">
@@ -99,7 +99,7 @@ export function Header() {
           className="group flex items-center gap-2 select-none"
         >
           {/* Decorative accent dot */}
-          <span className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-accent/10 ring-1 ring-accent/20 transition-all duration-300 group-hover:bg-accent/15 group-hover:ring-accent/30 group-hover:shadow-[0_0_12px_hsl(var(--accent)/0.15)]">
+          <span className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-accent/10 ring-1 ring-accent/20 transition-all duration-300 group-hover:bg-accent/15 group-hover:ring-accent/30 group-hover:shadow-[0_0_12px_oklch(var(--accent)/0.15)]">
             <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-accent transition-transform duration-300 group-hover:scale-125" />
           </span>
           <span className="text-lg sm:text-xl font-bold text-foreground tracking-tight transition-colors duration-300 font-display">

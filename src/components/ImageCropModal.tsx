@@ -45,7 +45,7 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
     canvas.height = CANVAS_SIZE;
 
     // Dark background
-    ctx.fillStyle = 'hsl(var(--muted))';
+    ctx.fillStyle = 'oklch(var(--muted))';
     ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     const scale = Math.min(CANVAS_SIZE / imageEl.width, CANVAS_SIZE / imageEl.height) * zoom;
@@ -129,7 +129,7 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
     const drawSourceSize = Math.min(maxSource, sSize);
     const drawDestSize = drawSourceSize * (OUTPUT_SIZE / sSize);
 
-    ctx.fillStyle = 'hsl(var(--background))';
+    ctx.fillStyle = 'oklch(var(--background))';
     ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
     ctx.drawImage(
       imageEl,
@@ -147,8 +147,7 @@ export function ImageCropModal({ open, onOpenChange, imageFile, onCropComplete }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <div className="fixed inset-0 z-[500] bg-black/80 cursor-pointer" onClick={() => onOpenChange(false)} />
-      <DialogContent className="sm:max-w-[360px] w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 shadow-glow z-[501]">
+      <DialogContent className="sm:max-w-[360px] w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl p-0 gap-0 overflow-hidden border-border/50 shadow-glow">
         <DialogHeader className="relative px-5 sm:px-6 pt-5 sm:pt-6 pb-3 text-center">
           <DialogTitle className="text-lg font-semibold text-foreground">이미지 크롭</DialogTitle>
           <p className="text-xs text-muted-foreground/70 mt-1">정방형으로 크롭합니다</p>

@@ -193,7 +193,7 @@ export function CreatePostModal({
                   <motion.button
                     onClick={handleRemoveMedia}
                     className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-foreground/80 hover:bg-foreground text-background rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
-                    whileHover={{ backgroundColor: 'hsl(var(--accent))' }}
+                    whileHover={{ backgroundColor: 'oklch(var(--accent))' }}
                   >
                     <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </motion.button>

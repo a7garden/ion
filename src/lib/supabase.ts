@@ -30,6 +30,8 @@ export interface FeedRow {
   content: string;
   media_url: string | null;
   media_type: 'image' | 'video' | null;
+  text_overlay?: 'white' | 'black' | 'color' | null;
+  text_color?: string | null;
   created_at: string;
   author_display_name: string;
   author_planet: string;

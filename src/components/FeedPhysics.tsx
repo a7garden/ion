@@ -8,6 +8,8 @@ const TOP_OFFSET = 72;
 const MAX_VELOCITY = 20;
 const FRICTION = 0.9985;
 const MIN_SPEED = 1.5;
+const HOVER_FRICTION = 0.92;
+const HOVER_MIN_SPEED = 0.3;
 const BOUNCE_RETENTION = 0.85;
 
 interface FloatingNode {
@@ -123,15 +125,13 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
       if (!ctx) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (isDarkModeRef.current) {
-        ctx.fillStyle = 'hsl(25, 15%, 8%)';
-      } else {
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, 'hsl(50, 20%, 97%)');
-        gradient.addColorStop(0.5, 'hsl(50, 15%, 95%)');
-        gradient.addColorStop(1, 'hsl(45, 12%, 93%)');
-        ctx.fillStyle = gradient;
-      }
+      const bgVar = getComputedStyle(document.documentElement)
+        .getPropertyValue('--background')
+        .trim();
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, `oklch(${bgVar})`);
+      gradient.addColorStop(1, `oklch(${bgVar})`);
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // dismiss 처리: 노드를 dismissing 상태로 만들고 onDelete 예약
@@ -203,12 +203,16 @@ export function FeedPhysics({ posts }: FeedPhysicsProps) {
               node.vy = -Math.abs(node.vy) * BOUNCE_RETENTION;
             }
 
-            node.vx *= FRICTION;
-            node.vy *= FRICTION;
+            const isHovered = node.id === positionStore.getHoveredId();
+            const friction = isHovered ? HOVER_FRICTION : FRICTION;
+            const minSpeed = isHovered ? HOVER_MIN_SPEED : MIN_SPEED;
+
+            node.vx *= friction;
+            node.vy *= friction;
 
             const currentSpeed = Math.sqrt(node.vx ** 2 + node.vy ** 2);
-            if (currentSpeed > 0 && currentSpeed < MIN_SPEED) {
-              const scale = MIN_SPEED / currentSpeed;
+            if (currentSpeed > 0 && currentSpeed < minSpeed) {
+              const scale = minSpeed / currentSpeed;
               node.vx *= scale;
               node.vy *= scale;
             }

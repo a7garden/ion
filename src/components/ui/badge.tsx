@@ -9,13 +9,13 @@ const badgeVariants = cva(
         default:
           "bg-muted text-muted-foreground",
         success:
-          "bg-[hsl(var(--state-success-bg)/0.15)] text-[hsl(var(--state-success))]",
+          "bg-[oklch(var(--state-success-bg)/0.15)] text-[oklch(var(--state-success))]",
         warning:
-          "bg-[hsl(var(--state-warning-bg)/0.15)] text-[hsl(var(--state-warning))]",
+          "bg-[oklch(var(--state-warning-bg)/0.15)] text-[oklch(var(--state-warning))]",
         error:
-          "bg-[hsl(var(--state-error-bg)/0.15)] text-[hsl(var(--state-error))]",
+          "bg-[oklch(var(--state-error-bg)/0.15)] text-[oklch(var(--state-error))]",
         info:
-          "bg-[hsl(var(--state-info-bg)/0.15)] text-[hsl(var(--state-info))]",
+          "bg-[oklch(var(--state-info-bg)/0.15)] text-[oklch(var(--state-info))]",
       },
     },
     defaultVariants: {

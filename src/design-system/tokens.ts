@@ -7,6 +7,7 @@ export const TOKENS = {
     default: 'var(--surface-default)',
     subtle: 'var(--surface-subtle)',
     muted: 'var(--surface-muted)',
+    elevated: 'var(--surface-elevated)',
     inverse: 'var(--surface-inverse)',
   },
   text: {
@@ -52,8 +53,8 @@ export const TOKENS = {
   },
   gradient: {
     thread: 'var(--thread-gradient)',
-    threadPurple: 'hsl(var(--thread-purple))',
-    threadPink: 'hsl(var(--thread-pink))',
-    threadAccent: 'hsl(var(--thread-accent))',
+    threadPurple: 'oklch(var(--thread-purple))',
+    threadPink: 'oklch(var(--thread-pink))',
+    threadAccent: 'oklch(var(--thread-accent))',
   },
 } as const;
