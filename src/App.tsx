@@ -10,6 +10,7 @@ import { WorldRoute } from '@/routes/WorldRoute';
 import { MyPageRoute } from '@/routes/MyPageRoute';
 import { PrivacyRoute } from '@/routes/PrivacyRoute';
 import { TermsRoute } from '@/routes/TermsRoute';
+import { DevModalHarnessRoute } from '@/routes/DevModalHarnessRoute';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
                   <Route path="privacy" element={<PrivacyRoute />} />
                   <Route path="terms" element={<TermsRoute />} />
                   <Route path="my" element={<MyPageRoute />} />
+                  <Route path="_dev/modal" element={<DevModalHarnessRoute />} />
                 </Route>
               </Routes>
             </I18nProvider>

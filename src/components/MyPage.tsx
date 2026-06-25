@@ -110,14 +110,14 @@ export function MyPage({
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{t('myPage.tagline')}</p>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setCalendarOpen(true)}
-                className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
                 aria-label={t('calendar.title')}
               >
-                <Calendar className="w-[18px] h-[18px]" strokeWidth={1.75} />
-              </button>
+                <Calendar className="w-4 h-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"

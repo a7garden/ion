@@ -15,15 +15,31 @@ export const ko = {
 
   // CreatePostModal
   'createPost.title': '새로운 피드',
+  'createPost.editTitle': '게시물 수정',
   'createPost.placeholder': '무슨 생각을 하고 있나요?',
   'createPost.addMedia': '사진 또는 동영상을 추가해주세요',
   'createPost.dragDrop': '또는 드래그하여 업로드',
+  'createPost.mediaFormats': 'JPG, PNG, MP4 · 30MB 이하',
   'createPost.media': '미디어',
   'createPost.posting': '게시 중...',
+  'createPost.editing': '수정 중...',
   'createPost.post': '게시하기',
+  'createPost.edit': '수정하기',
+  'createPost.cancel': '취소',
   'createPost.requireContent': '내용 또는 사진/동영상을 추가해주세요',
+  'createPost.tooLong': '내용이 너무 깁니다',
   'createPost.created': '게시물이 생성되었습니다!',
+  'createPost.edited': '게시물이 수정되었습니다!',
   'createPost.failed': '게시물 생성에 실패했습니다',
+  'createPost.editFailed': '게시물 수정에 실패했습니다',
+  'createPost.authorSub': '공개 게시물',
+  'createPost.markdownHint': 'Shift+Enter로 줄바꿈 · ⌘+Enter로 게시',
+  'createPost.shortcutHint': '⌘ + Enter',
+  'createPost.previewLabel': '미리보기',
+  'createPost.previewHint': '피드에서 보이는 모습',
+  'createPost.previewEmpty': '피드 카드 미리보기',
+  'createPost.previewAlt': '미디어 미리보기',
+  'createPost.removeMedia': '미디어 제거',
 
   // FeedView
   'feed.noPosts': '아직 게시물이 없습니다',
@@ -164,8 +180,8 @@ export const ko = {
 
   // Calendar
   'calendar.title': '달력',
-  'calendar.backToToday': 'to day',
-  'calendar.noPostsThisMonth': '이 달에 게시물이 없습니다',
+  'calendar.today': '오늘',
+  'calendar.noPostsThisDate': '이 날에 게시물이 없어요',
 
   // General/Common
   'common.loading': '로딩 중...',

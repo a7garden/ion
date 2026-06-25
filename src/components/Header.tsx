@@ -102,7 +102,7 @@ export function Header() {
           <span className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-accent/10 ring-1 ring-accent/20 transition-all duration-300 group-hover:bg-accent/15 group-hover:ring-accent/30 group-hover:shadow-[0_0_12px_oklch(var(--accent)/0.15)]">
             <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-accent transition-transform duration-300 group-hover:scale-125" />
           </span>
-          <span className="text-lg sm:text-xl font-bold text-foreground tracking-tight transition-colors duration-300 font-display">
+          <span className="text-[17px] sm:text-[19px] font-extrabold text-foreground tracking-[-0.035em] transition-colors duration-300 font-display">
             ION
           </span>
         </NavLink>

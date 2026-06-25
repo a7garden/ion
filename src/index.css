@@ -171,9 +171,35 @@
     @apply border-border;
   }
 
+  /* === Type system ===
+     Pretendard (한글+라틴) 단일 패밀리로 통일. 자체 weight ramp(100–900)와
+     alternate glyphs(ss01 단일 스토리 a, ss03 디스코넥트, cv01/02/11 라틴)
+     를 활용해 SNS 톤의 sans-serif 위계를 만든다. */
+  :root {
+    --font-sans:
+      'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+      'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    --font-display: var(--font-sans);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    font-feature-settings:
+      'ss01' on,    /* single-story a */
+      'ss03' on,    /* open six/nine */
+      'cv01' on,    /* alt g */
+      'cv02' on,    /* alt @ */
+      'cv11' on;    /* alt 3, 등 alternate glyph */
+    font-variant-numeric: tabular-nums;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     @apply bg-background text-foreground;
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: -0.005em;  /* 본문 미세 tight — SNS 피드 밀도 */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scrollbar-gutter: stable;
@@ -193,14 +219,29 @@
     -webkit-user-select: text;
   }
 
-  h1, h2, h3, h4 {
-    font-family: 'Hahmlet', Georgia, serif;
+  /* Headings: Pretendard 기반, 더 단단한 weight와 tighter tracking으로
+     SNS 헤더/카드 타이틀의 위계 형성. Hahmlet(serif) 제거. */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.25;
   }
 
-  h1 { font-size: 36px; font-weight: 600; line-height: 1.20; letter-spacing: -0.02em; }
-  h2 { font-size: 28px; font-weight: 600; line-height: 1.30; letter-spacing: -0.02em; }
-  h3 { font-size: 22px; font-weight: 600; line-height: 1.35; }
-  h4 { font-size: 18px; font-weight: 600; line-height: 1.35; }
+  h1 { font-size: 36px; line-height: 1.18; }
+  h2 { font-size: 28px; line-height: 1.25; }
+  h3 { font-size: 22px; line-height: 1.32; font-weight: 600; letter-spacing: -0.018em; }
+  h4 { font-size: 18px; line-height: 1.36; font-weight: 600; letter-spacing: -0.014em; }
+  h5 { font-size: 16px; line-height: 1.40; font-weight: 600; letter-spacing: -0.01em; }
+  h6 { font-size: 14px; line-height: 1.40; font-weight: 600; letter-spacing: -0.005em; }
+
+  /* small / caption 류 — 본문보다 살짝 tight */
+  small, .text-caption { letter-spacing: -0.002em; }
+
+  /* Buttons / links — UI 텍스트는 살짝 더 단단하게 */
+  button, a {
+    font-weight: 500;
+  }
 
   ::selection {
     background: oklch(var(--accent) / 0.3);
@@ -227,14 +268,25 @@
   }
 }
 
+/* === Display utility (Korean + Latin SNS tone) ===
+   Tailwind `font-display` 유틸리티는 `tailwind.config.js`의
+   `theme.extend.fontFamily.display`에 매핑된다. HMR이 옛 tail config
+   를 들고 있을 때(이전 Hahmlet 등)로 인한 회귀를 막기 위해, 동일
+   셀렉터를 @layer utilities 안에 직접 정의해 캐시 미스 상황에서도
+   Pretendard Variable이 강제 적용되도록 한다. */
 @layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-sans {
+    font-family: var(--font-sans);
+  }
   .cool-glow {
     box-shadow:
       0 0 20px oklch(var(--blue-glow) / 0.15),
       0 0 40px oklch(var(--blue-glow) / 0.08),
       0 8px 32px oklch(var(--cool-shadow) / 0.12);
   }
-
   .cool-glow-hover:hover {
     box-shadow:
       0 0 24px oklch(var(--blue-glow) / 0.25),
