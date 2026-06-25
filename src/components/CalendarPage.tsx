@@ -445,15 +445,7 @@ export function CalendarPage({
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div
-            className="relative w-full flex flex-col select-text"
-            style={{
-              paddingTop: 'calc(var(--safe-area-top) + 16px)',
-              paddingBottom: 'calc(var(--safe-area-bottom) + 24px)',
-              paddingLeft: 'max(16px, var(--safe-area-left))',
-              paddingRight: 'max(16px, var(--safe-area-right))',
-            }}
-          >
+          <div className="relative w-full flex flex-col select-text px-4 pb-6 pt-2">
             <div className="mx-auto w-full max-w-[420px] flex flex-col">
               <div className="flex items-center gap-3 mb-4">
                 <PlanetAvatar planet={selectedPost.authorPlanet} size={42} showGlow />
@@ -514,8 +506,8 @@ export function CalendarPage({
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-hidden pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)]">
-      <div className="mx-auto h-full flex flex-col px-2 sm:px-3 py-4 w-full max-w-[800px]">
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="mx-auto flex h-full w-full max-w-[800px] flex-col px-2 py-3 sm:px-3 sm:py-4">
         <div className="flex items-center justify-between mb-4">
           <div />
           {view === 'detail' && (

@@ -8,7 +8,6 @@ import { Layout } from '@/routes/Layout';
 import { FeedRoute } from '@/routes/FeedRoute';
 import { WorldRoute } from '@/routes/WorldRoute';
 import { MyPageRoute } from '@/routes/MyPageRoute';
-import { CalendarRoute } from '@/routes/CalendarRoute';
 import { PrivacyRoute } from '@/routes/PrivacyRoute';
 import { TermsRoute } from '@/routes/TermsRoute';
 
@@ -23,7 +22,6 @@ export default function App() {
                 <Route element={<Layout />}>
                   <Route index element={<FeedRoute />} />
                   <Route path="world" element={<WorldRoute />} />
-                  <Route path="calendar" element={<CalendarRoute />} />
                   <Route path="privacy" element={<PrivacyRoute />} />
                   <Route path="terms" element={<TermsRoute />} />
                   <Route path="my" element={<MyPageRoute />} />
