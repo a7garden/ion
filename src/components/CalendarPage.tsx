@@ -278,7 +278,7 @@ export function CalendarPage({
                             preload="metadata"
                           />
                           <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-                            <svg className="w-4 h-4 dark:text-white text-black drop-shadow-md" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 dark:text-gray-100 text-black drop-shadow-md" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </div>
@@ -292,7 +292,7 @@ export function CalendarPage({
                             draggable={false}
                           />
                           {postCount > 1 && (
-                            <div className="absolute bottom-1 right-1 dark:text-white text-black text-[10px] font-medium px-1">
+                            <div className="absolute bottom-1 right-1 dark:text-gray-100 text-black text-[10px] font-medium px-1">
                               +{postCount - 1}
                             </div>
                           )}
@@ -300,12 +300,12 @@ export function CalendarPage({
                       ) : (
                         <>
                           <div className="w-full h-full flex items-center justify-center rounded-lg px-1">
-                            <span className="text-[11px] dark:text-white text-black leading-relaxed line-clamp-2 text-center truncate">
+                            <span className="text-[11px] dark:text-gray-100 text-black leading-relaxed line-clamp-2 text-center truncate">
                               {firstPost.content.slice(0, 8)}{firstPost.content.length > 8 ? '…' : ''}
                             </span>
                           </div>
                           {postCount > 1 && (
-                            <div className="absolute bottom-1 right-1 dark:text-white text-black text-[11px] font-medium px-1">
+                            <div className="absolute bottom-1 right-1 dark:text-gray-100 text-black text-[11px] font-medium px-1">
                               +{postCount - 1}
                             </div>
                           )}

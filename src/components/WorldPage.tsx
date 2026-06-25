@@ -134,7 +134,7 @@ function drawPlanet(ctx: CanvasRenderingContext2D, cx: number, cy: number, radiu
 
 export function WorldPage({ posts, connections, currentUserId, currentUserPlanet, isLoading, isError, onRetry }: WorldPageProps) {
   const { t } = useI18n();
-  const { theme, setZoomLevel } = useClient();
+  const { theme, zoomLevel, setZoomLevel } = useClient();
   const isDarkMode = theme === 'black';
   const isDarkModeRef = useRef(isDarkMode);
   useEffect(() => { isDarkModeRef.current = isDarkMode; }, [isDarkMode]);
@@ -165,7 +165,6 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
     initialPinchDistance: null,
     initialScale: 1,
   });
-  const isInternalZoomRef = useRef(false);
 
   const scaleToZoom = useCallback((scale: number) => Math.round(10 + (scale - MIN_SCALE) / (MAX_SCALE - MIN_SCALE) * 90), []);
   // WorldPage는 자체 zoom 관리, ZoomSlider에 동기화만
@@ -182,13 +181,32 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
     cohesionRef.current = cohesion;
   }, [cohesion]);
 
+  useEffect(() => {
+    const myNode = nodesRef.current.find(n => n.isCurrentUser);
+    if (!myNode || myNode.x === undefined || myNode.y === undefined) return;
+    if (dimensions.width === 0 || dimensions.height === 0) return;
+
+    const currentScale = MIN_SCALE + (zoomLevel - 10) / 90 * (MAX_SCALE - MIN_SCALE);
+    const screenCenterX = dimensions.width / 2;
+    const screenCenterY = dimensions.height / 2;
+    const newX = screenCenterX - myNode.x * currentScale;
+    const newY = screenCenterY - myNode.y * currentScale;
+
+    setTransform(prev => {
+      const scaleDiff = Math.abs(prev.scale - currentScale);
+      if (scaleDiff < 0.001) return prev;
+      return { x: newX, y: newY, scale: currentScale };
+    });
+  }, [zoomLevel, dimensions]);
+
   const buildGraph = useCallback(() => {
     const authorSet = new Set<string>();
     posts.forEach(post => authorSet.add(post.authorId));
     const allAuthors = Array.from(authorSet);
     const myConnections = new Set(connections);
 
-    const MAX_NODES = 100;
+    const MIN_NODES = 20;
+    const MAX_NODES = Math.round(MIN_NODES + (100 - zoomLevel) / 90 * (100 - MIN_NODES));
 
     // 1. Divide authors: current user, connected, unconnected
     const connected = allAuthors.filter(a => myConnections.has(a));
@@ -238,7 +256,7 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
     }
 
     return { nodes: graphNodes, edges: graphEdges };
-  }, [posts, connections, currentUserId, dimensions]);
+  }, [posts, connections, currentUserId, dimensions, zoomLevel]);
 
   const renderLoopRef = useRef<(() => void) | null>(null);
 
@@ -317,8 +335,6 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
       ctx.translate(currentTransform.x, currentTransform.y);
       ctx.scale(currentTransform.scale, currentTransform.scale);
 
-      const myNode = nodesRef.current.find(n => n.isCurrentUser);
-
       const moonBaseRadius = 50;
 
       const elapsed = Date.now() - moonAnimStartRef.current;
@@ -326,27 +342,18 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
       const t = rawT === 0 ? 0 : rawT >= 1 ? 1 : Math.pow(2, -10 * rawT) * Math.sin((rawT * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1;
       moonAnimProgressRef.current = t;
 
-      const screenCenterX = (dimensions.width / 2 - currentTransform.x) / currentTransform.scale;
-      const screenCenterY = (dimensions.height / 2 - currentTransform.y) / currentTransform.scale;
-
-      let targetX = screenCenterX;
-      let targetY = screenCenterY;
-      if (myNode && myNode.x !== undefined && myNode.y !== undefined) {
-        targetX = myNode.x;
-        targetY = myNode.y;
-      }
-
-      const blendT = Math.min(1, rawT * 2);
-      const moonX = screenCenterX + (targetX - screenCenterX) * blendT;
-      const moonY = screenCenterY + (targetY - screenCenterY) * blendT;
+      const screenCenterX = dimensions.width / 2;
+      const screenCenterY = dimensions.height / 2;
 
       const moonScale = t;
       const moonYOffset = (1 - t) * 120;
       const moonRadius = moonBaseRadius * moonScale;
 
+      const dark = isDarkModeRef.current;
+
       // Draw edges: only from current user to connected users
       const currentEdges = edgesRef.current;
-      const dark = isDarkModeRef.current;
+
       for (let i = 0; i < currentEdges.length; i++) {
         const edge = currentEdges[i];
         const source = edge.source as GraphNode;
@@ -371,7 +378,6 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
         ctx.lineTo(target.x, target.y);
         ctx.stroke();
 
-        // Outer glow
         const glowAlpha = dark ? 0.15 : 0.25;
         ctx.beginPath();
         ctx.strokeStyle = `hsla(45, 100%, 85%, ${glowAlpha})`;
@@ -381,45 +387,59 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
         ctx.stroke();
       }
 
-// Draw other nodes as glowing stars
       const currentNodes = nodesRef.current;
       for (let i = 0; i < currentNodes.length; i++) {
         const node = currentNodes[i];
         if (node.x === undefined || node.y === undefined) continue;
         if (node.isCurrentUser) continue;
 
-        const r = 5;
+        const r = 3;
         const isDark = isDarkModeRef.current;
         const baseColor = isDark
           ? 'hsla(0, 0%, 100%, 0.9)'
           : node.color;
 
-        const glowGradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r);
-        glowGradient.addColorStop(0, baseColor);
-        glowGradient.addColorStop(0.4, baseColor.replace(/[\d.]+\)$/, (m) => String(parseFloat(m) * 0.5) + ')'));
+        const glowGradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r * 1.5);
+        glowGradient.addColorStop(0, baseColor.replace(/[\d.]+\)$/, (m) => String(parseFloat(m) * 0.5) + ')'));
         glowGradient.addColorStop(1, 'transparent');
-
         ctx.beginPath();
-        ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+        ctx.arc(node.x, node.y, r * 1.5, 0, Math.PI * 2);
         ctx.fillStyle = glowGradient;
         ctx.fill();
+
+        const lineLen = r * 1.2;
+        const directions = [
+          [1, 0], [-1, 0], [0, 1], [0, -1],
+          [0.707, 0.707], [-0.707, 0.707], [0.707, -0.707], [-0.707, -0.707]
+        ];
+        for (const [dx, dy] of directions) {
+          ctx.beginPath();
+          ctx.moveTo(node.x - dx * lineLen, node.y - dy * lineLen);
+          ctx.lineTo(node.x + dx * lineLen, node.y + dy * lineLen);
+          ctx.strokeStyle = baseColor;
+          ctx.lineWidth = 0.8;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
       }
 
-      // Draw moon on TOP (last, so it's never obscured)
-      drawPlanet(ctx, moonX, moonY + moonYOffset, moonRadius, currentUserPlanet);
+      ctx.restore();
 
-      if (t < 1 && moonRadius > 5) {
+      // Draw moon glow at screen center (NO transform - fixed position)
+      if (moonRadius > 0 && t < 1) {
+        const fixedMoonRadius = moonBaseRadius;
         const glowAlpha = (1 - t) * 0.4;
-        const glowGrad = ctx.createRadialGradient(moonX, moonY + moonYOffset, moonRadius * 0.5, moonX, moonY + moonYOffset, moonRadius * 2.5);
+        const glowGrad = ctx.createRadialGradient(screenCenterX, screenCenterY + moonYOffset, fixedMoonRadius * 0.5, screenCenterX, screenCenterY + moonYOffset, fixedMoonRadius * 2.5);
         glowGrad.addColorStop(0, `hsla(45, 80%, 85%, ${glowAlpha})`);
-        glowGrad.addColorStop(1, 'hsla(45, 80%, 85%, 0)');
+        glowGrad.addColorStop(1, `hsla(45, 80%, 85%, 0)`);
         ctx.beginPath();
-        ctx.arc(moonX, moonY + moonYOffset, moonRadius * 2.5, 0, Math.PI * 2);
+        ctx.arc(screenCenterX, screenCenterY + moonYOffset, fixedMoonRadius * 2.5, 0, Math.PI * 2);
         ctx.fillStyle = glowGrad;
         ctx.fill();
       }
 
-      ctx.restore();
+      // Draw moon at screen center (NO transform - fixed position and size)
+      drawPlanet(ctx, screenCenterX, screenCenterY + moonYOffset, moonRadius, currentUserPlanet);
     };
 
     simulation.on('tick', () => {
@@ -498,22 +518,22 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
 
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const currentScale = transformRef.current.scale;
-    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * delta));
+    const currentZoom = scaleToZoom(transformRef.current.scale);
+    const newZoom = Math.max(10, Math.min(100, currentZoom + (e.deltaY > 0 ? -5 : 5)));
+    const newScale = MIN_SCALE + (newZoom - 10) / 90 * (MAX_SCALE - MIN_SCALE);
 
-    const currentTransform = transformRef.current;
-    const mouseX = (e.clientX - currentTransform.x) / currentScale;
-    const mouseY = (e.clientY - currentTransform.y) / currentScale;
+    const myNode = nodesRef.current.find(n => n.isCurrentUser);
+    if (!myNode || myNode.x === undefined || myNode.y === undefined) return;
 
-    const newX = currentTransform.x - mouseX * (newScale - currentScale);
-    const newY = currentTransform.y - mouseY * (newScale - currentScale);
+    const screenCenterX = dimensions.width / 2;
+    const screenCenterY = dimensions.height / 2;
+    const newX = screenCenterX - myNode.x * newScale;
+    const newY = screenCenterY - myNode.y * newScale;
 
     setTransform({ x: newX, y: newY, scale: newScale });
-    isInternalZoomRef.current = true;
-    setZoomLevel(scaleToZoom(newScale));
+    setZoomLevel(newZoom);
     startRenderLoop();
-  }, [startRenderLoop, setZoomLevel, scaleToZoom]);
+  }, [startRenderLoop, setZoomLevel, scaleToZoom, dimensions]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isDraggingRef.current = true;
@@ -584,7 +604,6 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
       const newX = currentTransform.x - pinchCenterX * (newScale - currentTransform.scale);
       const newY = currentTransform.y - pinchCenterY * (newScale - currentTransform.scale);
       setTransform({ x: newX, y: newY, scale: newScale });
-      isInternalZoomRef.current = true;
       setZoomLevel(scaleToZoom(newScale));
       startRenderLoop();
     }

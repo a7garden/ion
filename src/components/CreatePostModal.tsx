@@ -200,7 +200,7 @@ export function CreatePostModal({
                 </motion.div>
               ) : (
                 <motion.div
-                  className={`border-2 border-dashed rounded-xl sm:rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center transition-all duration-200 ${
+                  className={`border-2 border-dashed rounded-xl sm:rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer ${
                     isDragOver
                       ? 'border-accent bg-accent/5'
                       : 'border-border/50 hover:border-accent/30 hover:bg-muted/20'
@@ -221,6 +221,7 @@ export function CreatePostModal({
                       handleImageFile(file);
                     }
                   }}
+                  onClick={() => mediaInputRef.current?.click()}
                 >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-2 sm:mb-3">
                     <Image className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground/60" />
@@ -234,24 +235,13 @@ export function CreatePostModal({
         </div>
 
         <div className="relative border-t border-border/50 p-3 sm:p-4">
-          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <input
-              ref={mediaInputRef}
-              type="file"
-              accept="image/*,video/*"
-              className="hidden"
-              onChange={handleMediaSelect}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => mediaInputRef.current?.click()}
-              className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center border-accent/30 hover:bg-accent/10 hover:border-accent/50 transition-all touch-target"
-            >
-              <Image className="w-4 h-4" />
-              <span>미디어</span>
-            </Button>
-          </div>
+          <input
+            ref={mediaInputRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={handleMediaSelect}
+          />
 
           <Button
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-medium transition-all duration-200 hover:shadow-lg hover:shadow-accent/20 touch-target"

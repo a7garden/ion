@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreatePostModal } from '@/components/CreatePostModal';
 import { Button } from '@/components/ui/button';
-import { Plus, Image, Trash2, Settings, Calendar } from 'lucide-react';
+import { Plus, Image, Trash2, Settings } from 'lucide-react';
+import { CiCalendar } from 'react-icons/ci';
 import { motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -110,16 +111,17 @@ export function MyPage({
             <div className="flex items-center gap-1">
               <NavLink
                 to="/calendar"
-                className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+                className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:shadow-[0_0_12px_oklch(var(--accent)/0.5)] transition-all duration-200"
                 aria-label="Calendar"
               >
-                <Calendar className="w-[18px] h-[18px]" strokeWidth={1.75} />
+                <CiCalendar className="w-[18px] h-[18px]" />
               </NavLink>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setSettingsOpen(true)}
                 aria-label={t('myPage.settings')}
+                className="hover:text-foreground hover:shadow-[0_0_12px_oklch(var(--accent)/0.5)]"
               >
                 <Settings className="w-4 h-4" />
               </Button>

@@ -56,8 +56,8 @@ export function Header() {
   const isLoggedIn = !!user;
   const [devModalOpen, setDevModalOpen] = useState(false);
 
-  // Determine which nav is active (account for /my)
-  const activeNav = location.pathname === '/my' ? '/my' : location.pathname === '/world' ? '/world' : '/';
+  // Determine which nav is active (account for /my and /calendar)
+  const activeNav = location.pathname === '/my' || location.pathname === '/calendar' ? '/my' : location.pathname === '/world' ? '/world' : '/';
 
   // Long-press state for theme toggle button
   const longPressTimer = useRef<number | null>(null);
