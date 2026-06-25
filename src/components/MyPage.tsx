@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { CreatePostModal } from '@/components/CreatePostModal';
 import { Button } from '@/components/ui/button';
-import { Plus, Image, Trash2, Settings, Calendar } from 'lucide-react';
+import { Plus, Image, Settings, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { NavLink } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PlanetAvatar } from '@/components/PlanetAvatar';
 import { PlanetSelector } from '@/components/PlanetSelector';
 import { SettingsModal } from '@/components/SettingsModal';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { CalendarModal } from '@/components/CalendarModal';
+import { MyPostDetail } from '@/components/MyPostDetail';
 import { useI18n } from '@/i18n';
 import type { PlanetKey } from '@/constants/planets';
 import type { Post } from '@/types';
@@ -51,6 +51,8 @@ export function MyPage({
   const [planetSelectorOpen, setPlanetSelectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const handleDelete = async (postId: string) => {
     setDeletingPostId(postId);
@@ -108,13 +110,14 @@ export function MyPage({
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{t('myPage.tagline')}</p>
             </div>
             <div className="flex items-center gap-1">
-              <NavLink
-                to="/calendar"
+              <button
+                type="button"
+                onClick={() => setCalendarOpen(true)}
                 className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
-                aria-label="Calendar"
+                aria-label={t('calendar.title')}
               >
                 <Calendar className="w-[18px] h-[18px]" strokeWidth={1.75} />
-              </NavLink>
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -148,33 +151,52 @@ export function MyPage({
             </Button>
           </motion.div>
         ) : (
-          <div className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-3 gap-0.5 sm:gap-1">
             {posts.map((post, idx) => (
-              <motion.div key={post.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-                <Card className="overflow-hidden border-border/50 hover:border-accent/30 transition-all duration-300 hover:shadow-glow transition-shadow">
-                  <CardContent className="p-3 sm:p-4">
-                    {post.media && (
-                      <div className="mb-3 sm:mb-4 rounded-xl overflow-hidden">
-                        {post.mediaType === 'video' ? (
-                          <video src={post.media} className="w-full max-h-[250px] object-contain" controls />
-                        ) : (
-                          <img src={post.media} alt="" className="w-full max-h-[250px] object-contain" />
-                        )}
-                      </div>
-                    )}
-                    {post.content && (
-                      <p className="text-sm text-foreground leading-relaxed mb-3 whitespace-pre-wrap select-text">{post.content}</p>
-                    )}
-                    <div className="flex items-center justify-end pt-2 border-t border-border/30">
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(post.id)}
-                        disabled={deletingPostId === post.id}
-                        className="hover:bg-destructive/10 hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <motion.button
+                key={post.id}
+                type="button"
+                onClick={() => setSelectedPost(post)}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: Math.min(idx * 0.03, 0.3), duration: 0.25 }}
+                whileTap={{ scale: 0.96 }}
+                aria-label={post.content ? post.content.slice(0, 50) : t('myPage.myPosts')}
+                className="group relative aspect-square overflow-hidden bg-muted/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+              >
+                {post.media ? (
+                  post.mediaType === 'video' ? (
+                    <>
+                      <video
+                        src={post.media}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        preload="metadata"
+                        playsInline
+                        muted
+                      />
+                      <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-foreground/70 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+                        <svg className="w-2.5 h-2.5 text-background ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </span>
+                    </>
+                  ) : (
+                    <img
+                      src={post.media}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                      draggable={false}
+                    />
+                  )
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center p-2.5 bg-muted/20">
+                    <p className="text-[11px] sm:text-xs leading-snug text-muted-foreground text-center line-clamp-5 whitespace-pre-wrap break-words">
+                      {post.content}
+                    </p>
+                  </div>
+                )}
+              </motion.button>
             ))}
           </div>
         )}
@@ -209,6 +231,16 @@ export function MyPage({
           await onDeleteAccount();
           setDeleteDialogOpen(false);
         }}
+      />
+      <CalendarModal open={calendarOpen} onOpenChange={setCalendarOpen} />
+      <MyPostDetail
+        post={selectedPost}
+        onClose={() => setSelectedPost(null)}
+        onDelete={(id) => {
+          handleDelete(id);
+          setSelectedPost(null);
+        }}
+        isDeleting={deletingPostId !== null}
       />
     </div>
   );
