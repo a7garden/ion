@@ -52,8 +52,26 @@ export default {
         '3xl': "1.5rem",
       },
       fontFamily: {
-        display: ['Hahmlet', 'Georgia', 'serif'],
-        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        sans: [
+          '"Pretendard Variable"',
+          'Pretendard',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          '"Apple SD Gothic Neo"',
+          '"Noto Sans KR"',
+          'sans-serif',
+        ],
+        display: [
+          '"Pretendard Variable"',
+          'Pretendard',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          '"Apple SD Gothic Neo"',
+          '"Noto Sans KR"',
+          'sans-serif',
+        ],
         mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       fontSize: {

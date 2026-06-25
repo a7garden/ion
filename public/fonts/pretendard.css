@@ -1,0 +1,48 @@
+/*
+ * Pretendard (self-hosted subset)
+ * --------------------------------
+ * Source: pretendard npm package, dist/web/static/woff2-subset/
+ * License: SIL OFL 1.1
+ *
+ * The subset is a Korean + Latin balanced cut (~270 KB per weight)
+ * used by Google Fonts and the official Pretendard distribution.
+ * It covers the glyphs we need for SNS-feed style Korean + Latin
+ * text without shipping the full font face (~765 KB / weight).
+ *
+ * Weights shipped: 400, 500, 600, 700, 800 (see DESIGN.md §3).
+ */
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/subset/Pretendard-Regular.subset.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/subset/Pretendard-Medium.subset.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/subset/Pretendard-SemiBold.subset.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/subset/Pretendard-Bold.subset.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/subset/Pretendard-ExtraBold.subset.woff2') format('woff2');
+}

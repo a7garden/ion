@@ -139,27 +139,31 @@ The visual identity balances warm and cool: warm HSL-60° neutral backgrounds (h
 ## 3. Typography Rules
 
 ### Font Families
-- **Display / Heading**: `Hahmlet`, fallback: `Georgia, serif` — Korean + Latin serif with editorial character
-- **Body / UI**: `Pretendard`, fallback: `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` — Korean + Latin sans-serif
-- **Monospace**: `ui-monospace, SFMono-Regular, monospace`
+단일 패밀리(Pretendard) 정책을 따른다. 한글+라틴 동시 지원, weight ramp(100–900), alternate glyphs(ss01, ss03, cv01/02/11)를 활용해 sans-serif 위계만으로 SNS 톤을 만든다.
+
+- **Display / Heading / Body / UI**: `Pretendard Variable`, fallback: `Pretendard`, `-apple-system`, `BlinkMacSystemFont`, `'Segoe UI'`, `'Apple SD Gothic Neo'`, `'Noto Sans KR'`, `sans-serif`
+- **Monospace**: `ui-monospace`, `SFMono-Regular`, `monospace`
+
+전역(`html`)에 `font-feature-settings: 'ss01','ss03','cv01','cv02','cv11'`과 `font-variant-numeric: tabular-nums`를 켜서 라틴 glyph와 숫자의 톤을 통일한다.
 
 ### Hierarchy
 
 | Role | Font | Size | Weight | Line Height | Letter Spacing |
 |------|------|------|--------|-------------|----------------|
-| Display | Hahmlet | 48px | 600 | 1.10 | -0.02em |
-| Heading 1 | Hahmlet | 36px | 600 | 1.20 | -0.02em |
-| Heading 2 | Hahmlet | 28px | 600 | 1.30 | -0.02em |
-| Heading 3 | Hahmlet | 22px | 600 | 1.35 | normal |
-| Body Large | Pretendard | 18px | 400 | 1.60 | normal |
-| Body | Pretendard | 16px | 400 | 1.60 | normal |
-| Body Small | Pretendard | 14px | 400 | 1.50 | normal |
-| Label | Pretendard | 13px | 500 | 1.40 | normal |
-| Caption | Pretendard | 11px | 400 | 1.40 | normal |
+| Display | Pretendard | 48px | 700 | 1.10 | -0.022em |
+| Heading 1 | Pretendard | 36px | 700 | 1.18 | -0.022em |
+| Heading 2 | Pretendard | 28px | 700 | 1.25 | -0.022em |
+| Heading 3 | Pretendard | 22px | 600 | 1.32 | -0.018em |
+| Heading 4 | Pretendard | 18px | 600 | 1.36 | -0.014em |
+| Body Large | Pretendard | 18px | 400 | 1.60 | -0.005em |
+| Body | Pretendard | 16px | 400 | 1.60 | -0.005em |
+| Body Small | Pretendard | 14px | 400 | 1.50 | -0.005em |
+| Label | Pretendard | 13px | 500 | 1.40 | -0.002em |
+| Caption | Pretendard | 11px | 400 | 1.40 | -0.002em |
 | Button | Pretendard | 14px | 500 | 1.00 | normal |
 
 ### Typography Principles
-Hahmlet provides Korean text with the serif elegance that Cormorant Garamond brought to Latin. The -0.02em tracking on headings tightens the serif for a refined editorial feel. Pretendard's clean geometry ensures body text remains highly readable at small sizes. The weight range is deliberately narrow (400–600 for most roles) to maintain the calm, understated personality.
+Pretendard 단일 패밀리로 본문·헤딩·UI를 모두 커버한다. heading은 weight 700/600 + tighter tracking(-0.022em~-0.014em)으로 serif 없이 위계를 형성한다. 본문은 -0.005em 정도의 미세 tight tracking으로 SNS 피드 밀도를 살린다. weight ramp은 400/500/600/700/800을 사용하며, 브랜드 wordmark("ION")는 800을 쓴다.
 
 ---
 
@@ -417,6 +421,7 @@ Ion uses generous whitespace to create a calm reading experience. The warm-tinte
 - `2026-06-13` — Greenfield strategy: building new `src/design-system/` alongside existing components
 - `2026-06-13` — Extracted existing HSL palette, converted to OKLCH with 11-step scales for accent (blue), warm neutral, and destructive (red)
 - `2026-06-13` — Changed heading font from Cormorant Garamond → Hahmlet for Korean language support
+- `2026-06-25` — Switched to single-family type system: removed Hahmlet, all roles (display/heading/body/UI) use Pretendard with weight ramp + alternate glyphs + tighter tracking for SNS-tone hierarchy
 - `2026-06-13` — Styling approach: Tailwind CSS v3 with CSS custom properties for tokens
 - `2026-06-13` — Theme: `data-theme` attribute switching, custom ThemeProvider (client-only Vite SPA)
 - `2026-06-13` — Radius tone: soft (6px / 12px / 16px / full)
