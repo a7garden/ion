@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/AuthProvider';
 import { useFeedQuery, useDismissPost, useRefetchFeed } from '@/hooks/queries/useFeed';
@@ -29,7 +29,9 @@ export function FeedRoute() {
 
   useEffect(() => {
     if (location.state?.showLogin) {
-      setLoginModalOpen(true);
+      startTransition(() => {
+        setLoginModalOpen(true);
+      });
       window.history.replaceState({}, '');
     }
   }, [location.state]);
@@ -62,7 +64,7 @@ export function FeedRoute() {
     setCreatePostModalOpen(true);
   };
 
-  const handleCardClick = (post: any) => {
+  const handleCardClick = (post: { id: string }) => {
     setExpandedPostId(post.id);
   };
 

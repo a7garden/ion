@@ -465,8 +465,8 @@ export function WorldPage({ posts, connections, currentUserId, currentUserPlanet
     loop();
 
     return () => {
-      simulation.on('tick', null as any);
-      simulation.on('end', null as any);
+      simulation.on('tick', null);
+      simulation.on('end', null);
       simulation.stop();
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);

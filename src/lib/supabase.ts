@@ -37,6 +37,16 @@ export interface FeedRow {
   author_planet: string;
 }
 
+export interface ResonanceRow {
+  id: string;
+  user_a: string;
+  user_b: string;
+  post_a: string;
+  post_b: string;
+  seen: boolean;
+  created_at: string;
+}
+
 // ============================================
 // Auth
 // ============================================
@@ -53,8 +63,8 @@ export function signInWithEmail(email: string, password: string) {
   return supabase.auth.signInWithPassword({ email, password });
 }
 
-export function signOut() {
-  return supabase.auth.signOut();
+export async function signOut(): Promise<void> {
+  await supabase.auth.signOut();
 }
 
 export function onAuthStateChange(
@@ -173,10 +183,17 @@ export async function getUserPosts(userId: string): Promise<FeedRow[]> {
     .limit(50);
   if (error) throw error;
 
-  return (data ?? []).map((p: any) => ({
-    ...p,
-    author_display_name: p.author_display_name?.display_name ?? p.author_display_name,
-    author_planet: p.author_planet?.planet ?? p.author_planet ?? 'moon',
+  return (data ?? []).map((p: Record<string, unknown>) => ({
+    id: p.id as string,
+    author_id: p.author_id as string,
+    content: p.content as string,
+    media_url: p.media_url as string | null,
+    media_type: p.media_type as 'image' | 'video' | null,
+    text_overlay: p.text_overlay as 'white' | 'black' | 'color' | null | undefined,
+    text_color: p.text_color as string | null | undefined,
+    created_at: p.created_at as string,
+    author_display_name: ((p.author_display_name as { display_name: string }[])?.[0]?.display_name) ?? '',
+    author_planet: ((p.author_planet as { planet: string }[])?.[0]?.planet) ?? 'moon',
   }));
 }
 
@@ -219,7 +236,7 @@ export async function unlikePost(userId: string, postId: string) {
 export async function getMyLikedPostIds(userId: string): Promise<string[]> {
   const { data, error } = await supabase.from('likes').select('post_id').eq('user_id', userId);
   if (error) throw error;
-  return (data ?? []).map((r: any) => r.post_id as string);
+  return (data ?? []).map((r: { post_id: string }) => r.post_id);
 }
 
 // ============================================
@@ -236,7 +253,7 @@ export async function getMutualConnections(viewerId: string): Promise<string[]> 
   const { data, error } = await supabase.rpc('mutual_connections', { viewer_id: viewerId });
   if (error) throw error;
   // user_a가 항상 viewer, user_b가 상대방
-  return (data ?? []).map((r: any) => r.user_b as string);
+  return (data ?? []).map((r: { user_b: string }) => r.user_b);
 }
 
 // ============================================
@@ -256,7 +273,7 @@ export async function unblockUser(blockerId: string, blockedId: string) {
 export async function getBlockedUserIds(userId: string): Promise<string[]> {
   const { data, error } = await supabase.from('blocks').select('blocked_id').eq('blocker_id', userId);
   if (error) throw error;
-  return (data ?? []).map((r: any) => r.blocked_id as string);
+  return (data ?? []).map((r: { blocked_id: string }) => r.blocked_id);
 }
 
 // ============================================
