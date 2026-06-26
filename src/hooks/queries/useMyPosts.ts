@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { getUserPosts, createPost, deletePost as deletePostDb, uploadMedia, updatePost as updatePostDb } from '@/lib/supabase';
 import { toPost } from '@/lib/mappers';
+import type { FeedRow } from '@/lib/supabase';
 import type { Post } from '@/types';
 
 export function useMyPostsQuery(userId: string) {
@@ -39,7 +40,7 @@ export function useCreatePost(userId: string, authorName: string) {
       return toPost({
         ...row,
         author_display_name: authorName,
-      } as any);
+      } as FeedRow);
     },
     onSuccess: (newPost) => {
       // myPosts에 낙관적 추가

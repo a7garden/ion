@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X } from 'lucide-react';
 import { useUnseenResonancesQuery, useMarkResonanceSeen } from '@/hooks/queries/useResonances';
+import type { ResonanceRow } from '@/lib/supabase';
 
 interface ResonanceNotificationProps {
   userId: string;
@@ -72,7 +73,7 @@ export function ResonanceNotification({ userId }: ResonanceNotificationProps) {
                   </div>
                 ) : (
                   <div className="divide-y divide-border/30">
-                    {resonances.map((r: any) => (
+                    {resonances.map((r: ResonanceRow) => (
                       <div key={r.id} className="px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors">
                         <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
                           <Sparkles className="w-4 h-4 text-accent" />

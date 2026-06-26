@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, startTransition } from 'react';
 import { useClient } from '@/hooks/ClientProvider';
 import { getCardCountForViewport, getDynamicCardSize } from '@/hooks/useDeviceSize';
 
@@ -9,7 +9,9 @@ export function ZoomSlider() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    setIsMobile(window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window);
+    startTransition(() => {
+      setIsMobile(window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window);
+    });
   }, []);
 
   useEffect(() => {

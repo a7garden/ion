@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { CreatePostModal } from '@/components/CreatePostModal';
 import { Button } from '@/components/ui/button';
 import { Plus, Image, Settings } from 'lucide-react';

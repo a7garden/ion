@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, startTransition } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Loader2 } from 'lucide-react';
@@ -16,8 +16,10 @@ export function DeleteAccountDialog({ open, onOpenChange, onConfirm }: DeleteAcc
 
   useEffect(() => {
     if (!open) {
-      setConfirmText('');
-      setIsDeleting(false);
+      startTransition(() => {
+        setConfirmText('');
+        setIsDeleting(false);
+      });
     } else {
       // Focus input when dialog opens
       setTimeout(() => inputRef.current?.focus(), 100);

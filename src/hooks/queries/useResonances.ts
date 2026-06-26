@@ -1,3 +1,4 @@
+import type { ResonanceRow } from '@/lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { getUnseenResonances, markResonanceSeen, markAllResonancesSeen } from '@/lib/supabase';
@@ -19,8 +20,8 @@ export function useMarkResonanceSeen(userId: string) {
     mutationFn: (resonanceId: string) => markResonanceSeen(resonanceId),
     onMutate: async (resonanceId) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const prev = queryClient.getQueryData<any[]>(key) ?? [];
-      queryClient.setQueryData<any[]>(key, prev.filter((r) => r.id !== resonanceId));
+      const prev = queryClient.getQueryData<ResonanceRow[]>(key) ?? [];
+      queryClient.setQueryData<ResonanceRow[]>(key, prev.filter((r) => r.id !== resonanceId));
       return { prev };
     },
     onError: (_err, _id, context) => {
@@ -40,8 +41,8 @@ export function useMarkAllResonancesSeen(userId: string) {
     mutationFn: () => markAllResonancesSeen(userId),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: key });
-      const prev = queryClient.getQueryData<any[]>(key) ?? [];
-      queryClient.setQueryData<any[]>(key, []);
+      const prev = queryClient.getQueryData<ResonanceRow[]>(key) ?? [];
+      queryClient.setQueryData<ResonanceRow[]>(key, []);
       return { prev };
     },
     onError: (_err, _vars, context) => {

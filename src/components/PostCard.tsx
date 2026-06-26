@@ -43,7 +43,7 @@ export function PostCard({
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const nearEdgeRef = useRef<'left' | 'right' | 'top' | 'bottom' | null>(null);
 
-  const animateRotation = useCallback(() => {
+  function animateRotation() {
     const diff = targetRotationRef.current - currentRotationRef.current;
     if (Math.abs(diff) < 0.1) {
       currentRotationRef.current = targetRotationRef.current;
@@ -60,7 +60,7 @@ export function PostCard({
       `${currentRotationRef.current}deg`,
     );
     rotationFrameRef.current = requestAnimationFrame(animateRotation);
-  }, []);
+  }
 
   const startRotationAnim = useCallback(
     (target: number) => {

@@ -94,7 +94,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
                   </div>
                 ) : (
                   <div className="divide-y divide-border/30">
-                    {resonances.map((r: any) => (
+                    {resonances.map((r: { id: string; user_a: string; user_b: string; post_a: string; post_b: string; seen: boolean; created_at: string }) => (
                       <div key={r.id} className="px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors">
                         <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
                           <Bell className="w-4 h-4 text-accent" />

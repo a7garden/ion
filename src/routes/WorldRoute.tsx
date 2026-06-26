@@ -5,7 +5,7 @@ import { ZoomSlider } from '@/components/ZoomSlider';
 
 export function WorldRoute() {
   const { user } = useAuth();
-  const currentUserPlanet = (user as any)?.planet ?? 'moon';
+  const currentUserPlanet = user?.planet ?? 'moon';
   const userId = user?.id ?? '';
 
   const worldQuery = useWorldGraphQuery(userId);
