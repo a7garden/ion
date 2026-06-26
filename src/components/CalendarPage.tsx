@@ -1,19 +1,18 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Pencil, Trash2, X, Plus } from 'lucide-react';
-import { useI18n } from '@/i18n';
-import { Card, CardContent } from '@/components/ui/card';
+import { ChevronLeft, ChevronRight, Pencil, Trash2, CalendarDays, AlignLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { CreatePostModal } from '@/components/CreatePostModal';
-import { PlanetAvatar } from '@/components/PlanetAvatar';
 import { toast } from 'sonner';
-import type { Post } from '@/types';
+import { useI18n } from '@/i18n';
 import { useImageCropper } from '@/hooks/useImageCropper';
+import { cn } from '@/lib/utils';
+import type { Post } from '@/types';
 
 interface CalendarPageProps {
   posts: Post[];
   onDeletePost: (postId: string) => void;
   onUpdatePost: (postId: string, opts: { content: string; mediaFile?: File }) => Promise<void>;
-  onCreatePost: (opts: { content: string; mediaFile?: File }) => Promise<void>;
 }
 
 type View = 'month' | 'detail' | 'expanded';
@@ -22,6 +21,8 @@ const DAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
 const DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS_KO = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WEEKDAYS_KO = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+const WEEKDAYS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function getDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -30,30 +31,12 @@ function getDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function formatTimeAgo(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (days > 7) {
-    return date.toLocaleDateString();
-  }
-  if (days > 0) return `${days}d`;
-  if (hours > 0) return `${hours}h`;
-  if (minutes > 0) return `${minutes}m`;
-  return 'now';
+function formatTime(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-export function CalendarPage({
-  posts,
-  onDeletePost,
-  onUpdatePost,
-  onCreatePost,
-}: CalendarPageProps) {
+export function CalendarPage({ posts, onDeletePost, onUpdatePost }: CalendarPageProps) {
   const { t, locale } = useI18n();
   const { requestCrop, CropModal } = useImageCropper();
 
@@ -64,11 +47,14 @@ export function CalendarPage({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [createPostOpen, setCreatePostOpen] = useState(false);
 
   const isKorean = locale === 'ko';
   const DAYS = isKorean ? DAYS_KO : DAYS_EN;
   const MONTHS = isKorean ? MONTHS_KO : MONTHS_EN;
+  const WEEKDAYS = isKorean ? WEEKDAYS_KO : WEEKDAYS_EN;
+
+  const isOnCurrentMonth =
+    currentYear === today.getFullYear() && currentMonth === today.getMonth();
 
   const postsByDate = useMemo(() => {
     const map = new Map<string, Post[]>();
@@ -82,20 +68,21 @@ export function CalendarPage({
   }, [posts]);
 
   const calendarDays = useMemo(() => {
-    const year = currentYear;
-    const month = currentMonth;
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const days: (number | null)[] = [];
-
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-    for (let d = 1; d <= daysInMonth; d++) {
-      days.push(d);
-    }
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let d = 1; d <= daysInMonth; d++) days.push(d);
     return days;
   }, [currentYear, currentMonth]);
+
+  // Always render 6 rows so the grid is visually stable across months.
+  // Pad with nulls to a multiple of 7 (already true) and to 42 cells total.
+  const paddedCalendarDays = useMemo(() => {
+    const out = [...calendarDays];
+    while (out.length < 42) out.push(null);
+    return out;
+  }, [calendarDays]);
 
   const selectedDatePosts = useMemo(() => {
     if (!selectedDate) return [];
@@ -108,11 +95,7 @@ export function CalendarPage({
         const d = new Date(post.createdAt);
         return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
       })
-      .sort((a, b) => {
-        const dateA = new Date(a.createdAt!).getTime();
-        const dateB = new Date(b.createdAt!).getTime();
-        return dateB - dateA;
-      });
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }, [selectedDate, posts]);
 
   const handlePrevMonth = () => {
@@ -133,9 +116,13 @@ export function CalendarPage({
     }
   };
 
+  const goToToday = () => {
+    setCurrentYear(today.getFullYear());
+    setCurrentMonth(today.getMonth());
+  };
+
   const handleDateClick = (day: number) => {
-    const date = new Date(currentYear, currentMonth, day);
-    setSelectedDate(date);
+    setSelectedDate(new Date(currentYear, currentMonth, day));
     setView('detail');
   };
 
@@ -154,7 +141,7 @@ export function CalendarPage({
     }
   };
 
-  const handleDelete = async (postId: string) => {
+  const handleDelete = (postId: string) => {
     onDeletePost(postId);
     toast(t('myPage.deleted'), { duration: 2000 });
     setView('detail');
@@ -168,105 +155,147 @@ export function CalendarPage({
     setView('detail');
   };
 
-  const requestImageCropForEdit = useCallback(async (file: File) => {
-    return requestCrop(file);
-  }, [requestCrop]);
+  const isToday = (day: number) =>
+    day === today.getDate() &&
+    currentMonth === today.getMonth() &&
+    currentYear === today.getFullYear();
 
-  const isToday = (day: number) => {
-    return (
-      day === today.getDate() &&
-      currentMonth === today.getMonth() &&
-      currentYear === today.getFullYear()
-    );
-  };
-
-  const getPostsForCell = (day: number): Post[] => {
-    const dateKey = getDateKey(new Date(currentYear, currentMonth, day));
-    return postsByDate.get(dateKey) || [];
-  };
+  const getPostsForCell = (day: number): Post[] =>
+    postsByDate.get(getDateKey(new Date(currentYear, currentMonth, day))) || [];
 
   const renderMonthView = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <AnimatePresence mode="wait">
         <motion.div
           key={`${currentYear}-${currentMonth}`}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className="flex-1 flex flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="flex flex-1 flex-col"
         >
-          <div className="flex items-center justify-between mb-4 px-1">
-            <button
+          {/* ── Header ── */}
+          <div className="mb-4 flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handlePrevMonth}
-              className="p-2 rounded-full hover:bg-muted/50 transition-colors"
               aria-label="Previous month"
+              className="h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground"
             >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-3">
-              <select
-                value={currentYear}
-                onChange={e => setCurrentYear(Number(e.target.value))}
-                className="text-lg font-semibold bg-transparent border-none outline-none cursor-pointer text-foreground"
-              >
-                {Array.from({ length: 10 }, (_, i) => currentYear - 5 + i).map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-              <select
-                value={currentMonth}
-                onChange={e => setCurrentMonth(Number(e.target.value))}
-                className="text-lg font-semibold bg-transparent border-none outline-none cursor-pointer text-foreground"
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={i} value={i}>{m}</option>
-                ))}
-              </select>
+              <ChevronLeft className="h-[18px] w-[18px]" />
+            </Button>
+
+            <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
+              <h2 className="font-display text-[16px] font-semibold tracking-tight text-foreground whitespace-nowrap">
+                {isKorean
+                  ? `${currentYear}년 ${MONTHS[currentMonth]}`
+                  : `${MONTHS[currentMonth]} ${currentYear}`}
+              </h2>
+              {!isOnCurrentMonth && (
+                <button
+                  onClick={goToToday}
+                  className="shrink-0 rounded-full bg-accent/12 px-2.5 py-0.5 text-[11px] font-medium text-accent transition-colors hover:bg-accent/20"
+                  aria-label={t('calendar.today')}
+                >
+                  {t('calendar.today')}
+                </button>
+              )}
             </div>
-            <button
+
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleNextMonth}
-              className="p-2 rounded-full hover:bg-muted/50 transition-colors"
               aria-label="Next month"
+              className="h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground"
             >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+              <ChevronRight className="h-[18px] w-[18px]" />
+            </Button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {DAYS.map(day => (
-              <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
+          {/* ── Day-of-week labels ── */}
+          <div className="mb-2 grid grid-cols-7">
+            {DAYS.map((day, idx) => (
+              <div
+                key={day}
+                className={cn(
+                  'py-1.5 text-center text-[10.5px] font-semibold uppercase tracking-[0.1em]',
+                  idx === 0
+                    ? 'text-rose-500/80 dark:text-rose-400/80'
+                    : idx === 6
+                      ? 'text-sky-500/80 dark:text-sky-400/80'
+                      : 'text-muted-foreground',
+                )}
+              >
                 {day}
               </div>
             ))}
           </div>
 
-          <div className="flex-1 grid grid-cols-7 gap-0.5 auto-rows-fr">
-            {calendarDays.map((day, idx) => {
+          {/* ── Calendar grid (6 stable rows) ── */}
+          <div className="grid flex-1 grid-cols-7 grid-rows-6 gap-1.5">
+            {paddedCalendarDays.map((day, idx) => {
               if (day === null) {
-                return <div key={`empty-${idx}`} className="min-h-[100px]" />;
+                return <div key={`empty-${idx}`} aria-hidden className="rounded-xl" />;
               }
-              const posts = getPostsForCell(day);
-              const postCount = posts.length;
-              const firstPost = posts[0];
+
+              const dayPosts = getPostsForCell(day);
+              const postCount = dayPosts.length;
+              const firstPost = dayPosts[0];
               const isTodayCell = isToday(day);
+              const hasMedia = !!firstPost?.media;
+
               return (
                 <button
                   key={day}
                   onClick={() => handleDateClick(day)}
-                  className={`
-                    min-h-[100px] rounded-xl border-2 transition-all duration-200 overflow-hidden
-                    flex flex-col items-center justify-start p-1
-                    ${isTodayCell
-                      ? 'border-accent shadow-[0_0_12px_oklch(var(--accent)/0.3)]'
-                      : 'border-transparent hover:border-border'
-                    }
-                    ${postCount > 0 ? 'bg-muted/30' : 'bg-muted/10'}
-                  `}
+                  className={cn(
+                    'group relative flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card/40 text-left transition-all duration-200',
+                    'hover:border-accent/40 hover:bg-card hover:shadow-sm',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
+                    isTodayCell &&
+                      'border-accent bg-accent/[0.08] shadow-[0_0_0_1px_oklch(var(--accent)/0.45)]',
+                  )}
                 >
-                  <span className={`text-sm font-medium mt-1 ${isTodayCell ? 'text-accent' : 'text-foreground'}`}>
+                  {/* Media thumbnail (full bleed) */}
+                  {hasMedia && (
+                    <>
+                      {firstPost.mediaType === 'video' ? (
+                        <video
+                          src={firstPost.media}
+                          className="absolute inset-0 h-full w-full object-cover opacity-95 transition-opacity duration-200 group-hover:opacity-100"
+                          muted
+                          preload="metadata"
+                        />
+                      ) : (
+                        <img
+                          src={firstPost.media}
+                          alt=""
+                          className="absolute inset-0 h-full w-full object-cover opacity-95 transition-opacity duration-200 group-hover:opacity-100"
+                          draggable={false}
+                        />
+                      )}
+                      {/* Bottom scrim for dots legibility */}
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    </>
+                  )}
+
+                  {/* Day number chip — top-left, always visible */}
+                  <span
+                    className={cn(
+                      'relative z-10 m-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full px-1.5 text-[11px] font-semibold tabular-nums leading-none',
+                      hasMedia
+                        ? 'bg-background/90 text-foreground backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.2)]'
+                        : isTodayCell
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-foreground/80 group-hover:text-foreground',
+                    )}
+                  >
                     {day}
                   </span>
+
+                  {/* Post thumbnail */}
                   {postCount > 0 && (
                     <div className="relative flex-1 w-full mt-1 overflow-hidden rounded-lg">
                       {firstPost.mediaType === 'video' ? (
@@ -323,85 +352,89 @@ export function CalendarPage({
   );
 
   const renderDetailView = () => {
-    const dateStr = selectedDate
-      ? `${selectedDate.getFullYear()}. ${selectedDate.getMonth() + 1}. ${selectedDate.getDate()}.`
-      : '';
+    if (!selectedDate) return null;
+
+    const weekdayName = WEEKDAYS[selectedDate.getDay()];
+    const dateLabel = isKorean
+      ? `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 ${weekdayName}`
+      : `${weekdayName}, ${MONTHS[selectedDate.getMonth()]} ${selectedDate.getDate()}`;
 
     return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 mb-4">
-          <button
+      <div className="flex h-full flex-col">
+        {/* Header */}
+        <div className="mb-4 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleBack}
-            className="p-2 rounded-full hover:bg-muted/50 transition-colors"
             aria-label="Back"
+            className="h-9 w-9 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground"
           >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <span className="text-lg font-semibold">{dateStr}</span>
+            <ChevronLeft className="h-[18px] w-[18px]" />
+          </Button>
+          <span className="font-display text-[16px] font-semibold tracking-tight text-foreground">
+            {dateLabel}
+          </span>
+          {selectedDatePosts.length > 0 && (
+            <span className="ml-auto rounded-full bg-muted/60 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {selectedDatePosts.length}
+            </span>
+          )}
         </div>
 
         {selectedDatePosts.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-muted-foreground/50" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-              </svg>
+          <div className="flex flex-1 flex-col items-center justify-center text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/40">
+              <CalendarDays className="h-7 w-7 text-muted-foreground/40" strokeWidth={1.5} />
             </div>
-            <p className="text-muted-foreground">
-              {isKorean ? '이 달에 게시물이 없습니다' : 'No posts this month'}
-            </p>
+            <p className="text-sm text-muted-foreground">{t('calendar.noPostsThisDate')}</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-            {selectedDatePosts.map((post, idx) => {
-              const postDate = post.createdAt ? new Date(post.createdAt) : null;
-              const dayStr = postDate
-                ? `${postDate.getMonth() + 1}/${postDate.getDate()}`
-                : '';
-              return (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                >
-                  <Card
-                    className="overflow-hidden border-border/50 hover:border-accent/30 transition-all duration-200 cursor-pointer hover:shadow-md"
-                    onClick={() => handlePostClick(post)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <PlanetAvatar planet={post.authorPlanet} size={24} />
-                        <span className="text-xs font-medium text-foreground">{post.authorName}</span>
-                        <span className="text-xs text-muted-foreground ml-auto">{dayStr}</span>
-                      </div>
-                      {post.media && (
-                        <div className="mb-2 rounded-lg overflow-hidden">
-                          {post.mediaType === 'video' ? (
-                            <video
-                              src={post.media}
-                              className="w-full max-h-[120px] object-contain"
-                              muted
-                              preload="metadata"
-                            />
-                          ) : (
-                            <img
-                              src={post.media}
-                              alt=""
-                              className="w-full max-h-[120px] object-contain"
-                              draggable={false}
-                            />
-                          )}
-                        </div>
-                      )}
-                      {post.content && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">{post.content}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
+          <div className="flex-1 space-y-2 overflow-y-auto pr-1">
+            {selectedDatePosts.map((post, idx) => (
+              <motion.button
+                key={post.id}
+                onClick={() => handlePostClick(post)}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.04 }}
+                className="flex w-full items-center gap-3 rounded-xl border border-border/40 bg-card p-2.5 text-left transition-all duration-200 hover:border-accent/40 hover:bg-card/80 hover:shadow-sm"
+              >
+                {post.media ? (
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
+                    {post.mediaType === 'video' ? (
+                      <video
+                        src={post.media}
+                        className="h-full w-full object-cover"
+                        muted
+                        preload="metadata"
+                      />
+                    ) : (
+                      <img
+                        src={post.media}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        draggable={false}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted/50">
+                    <AlignLeft className="h-5 w-5 text-muted-foreground/50" strokeWidth={1.5} />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 text-sm text-foreground/90">
+                    {post.content || (isKorean ? '미디어' : 'Media')}
+                  </p>
+                  {post.createdAt && (
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {formatTime(post.createdAt)}
+                    </span>
+                  )}
+                </div>
+              </motion.button>
+            ))}
           </div>
         )}
       </div>
@@ -410,94 +443,76 @@ export function CalendarPage({
 
   const renderExpandedView = () => {
     if (!selectedPost) return null;
-    const postDate = selectedPost.createdAt ? new Date(selectedPost.createdAt) : null;
-    const timeAgo = selectedPost.createdAt ? formatTimeAgo(selectedPost.createdAt) : '';
 
     return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 mb-4">
-          <button
+      <div className="flex h-full flex-col">
+        {/* Header */}
+        <div className="mb-4 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleBack}
-            className="p-2 rounded-full hover:bg-muted/50 transition-colors"
             aria-label="Back"
+            className="h-9 w-9 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground"
           >
-            <X className="w-5 h-5" />
-          </button>
-          <span className="text-lg font-semibold">
-            {postDate ? `${postDate.getMonth() + 1}/${postDate.getDate()}` : ''}
+            <ChevronLeft className="h-[18px] w-[18px]" />
+          </Button>
+          <span className="font-display text-[16px] font-semibold tracking-tight text-foreground">
+            {selectedDate
+              ? isKorean
+                ? `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`
+                : `${MONTHS[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${currentYear}`
+              : ''}
           </span>
           <div className="ml-auto flex items-center gap-1">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setEditModalOpen(true)}
-              className="p-2 rounded-full hover:bg-muted/50 transition-colors"
               aria-label="Edit"
+              className="h-9 w-9 rounded-full text-muted-foreground hover:bg-muted/60 hover:text-foreground"
             >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
+              <Pencil className="h-[16px] w-[16px]" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => handleDelete(selectedPost.id)}
-              className="p-2 rounded-full hover:bg-destructive/10 transition-colors text-destructive"
               aria-label="Delete"
+              className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
-              <Trash2 className="w-4 h-4" />
-            </button>
+              <Trash2 className="h-[16px] w-[16px]" />
+            </Button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <div
-            className="relative w-full flex flex-col select-text"
-            style={{
-              paddingTop: 'calc(var(--safe-area-top) + 16px)',
-              paddingBottom: 'calc(var(--safe-area-bottom) + 24px)',
-              paddingLeft: 'max(16px, var(--safe-area-left))',
-              paddingRight: 'max(16px, var(--safe-area-right))',
-            }}
-          >
-            <div className="mx-auto w-full max-w-[420px] flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <PlanetAvatar planet={selectedPost.authorPlanet} size={42} showGlow />
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-[15px] font-semibold text-foreground truncate leading-tight">
-                    {selectedPost.authorName || t('expanded.anonymous')}
-                  </h2>
-                  <p className="text-xs text-muted-foreground/70">{timeAgo}</p>
-                </div>
+        {/* Content */}
+        <div className="flex flex-1 justify-center overflow-y-auto">
+          <div className="w-full max-w-[400px]">
+            {selectedPost.media && (
+              <div className="mb-3 overflow-hidden rounded-xl bg-muted">
+                {selectedPost.mediaType === 'video' ? (
+                  <video
+                    src={selectedPost.media}
+                    className="aspect-[4/5] w-full object-cover"
+                    controls
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={selectedPost.media}
+                    alt=""
+                    className="aspect-[4/5] w-full object-cover"
+                    draggable={false}
+                  />
+                )}
               </div>
-
-              {selectedPost.media && (
-                <div className="mb-4 flex-shrink-0">
-                  <div className="relative rounded-2xl overflow-hidden thread-glow">
-                    {selectedPost.mediaType === 'video' ? (
-                      <>
-                        <video
-                          src={selectedPost.media}
-                          className="w-full object-cover"
-                          style={{ aspectRatio: '4/5' }}
-                          controls
-                          playsInline
-                        />
-                      </>
-                    ) : (
-                      <img
-                        src={selectedPost.media}
-                        alt=""
-                        className="w-full object-cover"
-                        style={{ aspectRatio: '4/5' }}
-                        draggable={false}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex-1 min-h-0 mb-4">
-                <p className="text-[15px] leading-[1.55] text-foreground/90 whitespace-pre-wrap">
-                  {selectedPost.content}
-                </p>
-              </div>
-            </div>
+            )}
+            {selectedPost.content && (
+              <p className="whitespace-pre-wrap text-[15px] leading-[1.6] text-foreground/90">
+                {selectedPost.content}
+              </p>
+            )}
           </div>
         </div>
 
@@ -505,7 +520,7 @@ export function CalendarPage({
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
           onSubmit={async () => {}}
-          requestImageCrop={requestImageCropForEdit}
+          requestImageCrop={requestCrop}
           editPost={selectedPost}
           onEdit={handleEditSubmit}
         />
@@ -514,45 +529,8 @@ export function CalendarPage({
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-card/20 z-[400] overflow-hidden pt-14 sm:pt-[64px] pb-[var(--safe-area-bottom)]">
-      <div className="mx-auto h-full flex flex-col px-2 sm:px-3 py-4 w-full max-w-[800px]">
-        <div className="flex items-center justify-between mb-4">
-          <div />
-          {view === 'detail' && (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setCreatePostOpen(true)}
-                className="flex items-center gap-1.5 text-sm text-accent hover:text-accent/80 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                {isKorean ? '글쓰기' : 'New'}
-              </button>
-              <button
-                onClick={() => {
-                  setView('month');
-                  setSelectedDate(null);
-                  setSelectedPost(null);
-                }}
-                className="text-sm text-accent hover:text-accent/80 transition-colors"
-              >
-                {t('calendar.backToToday')}
-              </button>
-            </div>
-          )}
-          {view === 'expanded' && (
-            <button
-              onClick={() => {
-                setView('month');
-                setSelectedDate(null);
-                setSelectedPost(null);
-              }}
-              className="text-sm text-accent hover:text-accent/80 transition-colors"
-            >
-              {t('calendar.backToToday')}
-            </button>
-          )}
-        </div>
-
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="mx-auto flex h-full w-full max-w-[640px] flex-col px-3 py-4 sm:px-5 sm:py-5">
         <div className="flex-1 overflow-hidden">
           {view === 'month' && renderMonthView()}
           {view === 'detail' && renderDetailView()}
@@ -560,12 +538,6 @@ export function CalendarPage({
         </div>
       </div>
       {CropModal}
-      <CreatePostModal
-        open={createPostOpen}
-        onOpenChange={setCreatePostOpen}
-        onSubmit={onCreatePost}
-        requestImageCrop={requestCrop}
-      />
     </div>
   );
 }

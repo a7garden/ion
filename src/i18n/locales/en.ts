@@ -15,15 +15,31 @@ export const en = {
 
   // CreatePostModal
   'createPost.title': 'New post',
+  'createPost.editTitle': 'Edit post',
   'createPost.placeholder': "What's on your mind?",
   'createPost.addMedia': 'Add a photo or video',
   'createPost.dragDrop': 'Or drag and drop',
+  'createPost.mediaFormats': 'JPG, PNG, MP4 · up to 30MB',
   'createPost.media': 'Media',
   'createPost.posting': 'Posting...',
+  'createPost.editing': 'Saving...',
   'createPost.post': 'Post',
+  'createPost.edit': 'Save changes',
+  'createPost.cancel': 'Cancel',
   'createPost.requireContent': 'Please add content or media',
+  'createPost.tooLong': 'Your text is too long',
   'createPost.created': 'Post created!',
+  'createPost.edited': 'Post updated!',
   'createPost.failed': 'Failed to create post',
+  'createPost.editFailed': 'Failed to update post',
+  'createPost.authorSub': 'Public post',
+  'createPost.markdownHint': 'Shift+Enter for newline · ⌘+Enter to post',
+  'createPost.shortcutHint': '⌘ + Enter',
+  'createPost.previewLabel': 'Preview',
+  'createPost.previewHint': 'How it will look in the feed',
+  'createPost.previewEmpty': 'Feed card preview',
+  'createPost.previewAlt': 'Media preview',
+  'createPost.removeMedia': 'Remove media',
 
   // FeedView
   'feed.noPosts': 'No posts yet',
@@ -164,8 +180,8 @@ export const en = {
 
   // Calendar
   'calendar.title': 'Calendar',
-  'calendar.backToToday': 'to day',
-  'calendar.noPostsThisMonth': 'No posts this month',
+  'calendar.today': 'Today',
+  'calendar.noPostsThisDate': 'No posts on this date',
 
   // General/Common
   'common.loading': 'Loading...',

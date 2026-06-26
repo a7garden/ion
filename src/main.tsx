@@ -1,13 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import '@fontsource/pretendard/400.css'
-import '@fontsource/pretendard/500.css'
-import '@fontsource/pretendard/600.css'
-import '@fontsource/pretendard/700.css'
-import '@fontsource/hahmlet/400.css'
-import '@fontsource/hahmlet/500.css'
-import '@fontsource/hahmlet/600.css'
-import '@fontsource/hahmlet/700.css'
+// Pretendard (한글+라틴 subset)는 index.html의 <link>로 /fonts/pretendard.css
+// 를 통해 자체 호스팅됩니다. 추가 fontsource import 없음.
 import './index.css'
 import App from './App.tsx'
 
