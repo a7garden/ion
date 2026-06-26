@@ -259,8 +259,12 @@ export function CreatePostModal({
                   onRemove={handleRemoveMedia}
                 />
               ) : (
-                <Dropzone
-                  isDragOver={isDragOver}
+                <motion.div
+                  className={`border-2 border-dashed rounded-xl sm:rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer ${
+                    isDragOver
+                      ? 'border-accent bg-accent/5'
+                      : 'border-border/50 hover:border-accent/30 hover:bg-muted/20'
+                  }`}
                   onDragOver={(e) => {
                     e.preventDefault();
                     setIsDragOver(true);
@@ -274,8 +278,14 @@ export function CreatePostModal({
                     if (isVideo(file)) previewFile(file);
                     else if (isImage(file)) handleImageFile(file);
                   }}
-                  onPick={() => mediaInputRef.current?.click()}
-                />
+                  onClick={() => mediaInputRef.current?.click()}
+                >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-2 sm:mb-3">
+                    <Image className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground/60" />
+                  </div>
+                  <span className="text-xs sm:text-sm text-muted-foreground/70">사진 또는 동영상을 추가해주세요</span>
+                  <span className="text-xs text-muted-foreground/50 mt-1">또는 드래그하여 업로드</span>
+                </motion.div>
               )}
               <input
                 ref={mediaInputRef}
@@ -361,15 +371,33 @@ export function CreatePostModal({
           </div>
         </div>
 
-        {/* Mobile-only close button (top right) — hidden on laptop where Radix X is visible */}
-        <button
-          type="button"
-          aria-label={t('createPost.cancel')}
-          onClick={() => onOpenChange(false)}
-          className="laptop:hidden absolute top-2.5 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="relative border-t border-border/50 p-3 sm:p-4">
+          <input
+            ref={mediaInputRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={handleMediaSelect}
+          />
+
+          <Button
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-medium transition-all duration-200 hover:shadow-lg hover:shadow-accent/20 touch-target"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {isEditMode ? '수정 중...' : '게시 중...'}
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                {isEditMode ? '수정하기' : '게시하기'}
+              </>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

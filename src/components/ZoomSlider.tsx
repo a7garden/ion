@@ -17,9 +17,9 @@ export function ZoomSlider() {
     if (isMobile) return;
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest('[role="dialog"]') || target.closest('.world-page')) return;
+      if (target.closest('[role="dialog"]')) return;
       e.preventDefault();
-      const delta = e.deltaY > 0 ? -3 : 3;
+      const delta = e.deltaY > 0 ? -5 : 5;
       setZoomLevel(Math.max(10, Math.min(100, zoomLevel + delta)));
     };
     window.addEventListener('wheel', handleWheel, { passive: false });
@@ -36,7 +36,7 @@ export function ZoomSlider() {
       if (!trackRef.current) return;
       const dy = startY - moveEvent.clientY;
       const change = (dy / trackRef.current.offsetHeight) * 90;
-      setZoomLevel(Math.max(10, Math.min(100, Math.round(startValue + change))));
+      setZoomLevel(Math.max(10, Math.min(100, Math.round((startValue + change) / 5) * 5)));
     };
 
     const handleMouseUp = () => {

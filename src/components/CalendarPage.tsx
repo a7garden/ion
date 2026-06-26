@@ -298,27 +298,46 @@ export function CalendarPage({ posts, onDeletePost, onUpdatePost }: CalendarPage
 
                   {/* Bottom row: dots + overflow count */}
                   {postCount > 0 && (
-                    <div className="relative z-10 mt-auto flex items-center gap-1 p-1.5">
-                      {Array.from({ length: dotCount }).map((_, i) => (
-                        <span
-                          key={i}
-                          className={cn(
-                            'h-1.5 w-1.5 rounded-full',
-                            hasMedia
-                              ? 'bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.25)]'
-                              : isTodayCell
-                                ? 'bg-accent'
-                                : 'bg-accent/70',
+                    <div className="relative flex-1 w-full mt-1 overflow-hidden rounded-lg">
+                      {firstPost.mediaType === 'video' ? (
+                        <div className="relative w-full h-full flex items-center justify-center">
+                          <video
+                            src={firstPost.media}
+                            className="w-full h-full object-cover rounded-lg"
+                            muted
+                            preload="metadata"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center rounded-lg">
+                            <svg className="w-4 h-4 dark:text-gray-100 text-black drop-shadow-md" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                        </div>
+                      ) : firstPost.media ? (
+                        <>
+                          <img
+                            src={firstPost.media}
+                            alt=""
+                            className="w-full h-full object-cover rounded-lg"
+                            draggable={false}
+                          />
+                          {postCount > 1 && (
+                            <div className="absolute bottom-1 right-1 dark:text-gray-100 text-black text-[10px] font-medium px-1">
+                              +{postCount - 1}
+                            </div>
                           )}
-                        />
-                      ))}
-                      {postCount > 3 && (
-                        <span
-                          className={cn(
-                            'ml-auto rounded-full px-1.5 text-[10px] font-semibold leading-[1.4]',
-                            hasMedia
-                              ? 'bg-white/90 text-foreground'
-                              : 'bg-muted text-muted-foreground',
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-full h-full flex items-center justify-center rounded-lg px-1">
+                            <span className="text-[11px] dark:text-gray-100 text-black leading-relaxed line-clamp-2 text-center truncate">
+                              {firstPost.content.slice(0, 8)}{firstPost.content.length > 8 ? '…' : ''}
+                            </span>
+                          </div>
+                          {postCount > 1 && (
+                            <div className="absolute bottom-1 right-1 dark:text-gray-100 text-black text-[11px] font-medium px-1">
+                              +{postCount - 1}
+                            </div>
                           )}
                         >
                           +{postCount - 3}
