@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CreatePostModal } from '@/components/CreatePostModal';
 import { Button } from '@/components/ui/button';
-import { Plus, Image, Trash2, Settings } from 'lucide-react';
+import { Plus, Image, Settings } from 'lucide-react';
 import { CiCalendar } from 'react-icons/ci';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -9,7 +9,6 @@ import { PlanetAvatar } from '@/components/PlanetAvatar';
 import { PlanetSelector } from '@/components/PlanetSelector';
 import { SettingsModal } from '@/components/SettingsModal';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
-import { CalendarModal } from '@/components/CalendarModal';
 import { MyPostDetail } from '@/components/MyPostDetail';
 import { useI18n } from '@/i18n';
 import type { PlanetKey } from '@/constants/planets';
@@ -52,7 +51,6 @@ export function MyPage({
   const [planetSelectorOpen, setPlanetSelectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const handleDelete = async (postId: string) => {
@@ -233,7 +231,6 @@ export function MyPage({
           setDeleteDialogOpen(false);
         }}
       />
-      <CalendarModal open={calendarOpen} onOpenChange={setCalendarOpen} />
       <MyPostDetail
         post={selectedPost}
         onClose={() => setSelectedPost(null)}

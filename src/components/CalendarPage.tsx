@@ -245,7 +245,6 @@ export function CalendarPage({ posts, onDeletePost, onUpdatePost }: CalendarPage
               const firstPost = dayPosts[0];
               const isTodayCell = isToday(day);
               const hasMedia = !!firstPost?.media;
-              const dotCount = Math.min(postCount, 3);
 
               return (
                 <button
@@ -296,7 +295,7 @@ export function CalendarPage({ posts, onDeletePost, onUpdatePost }: CalendarPage
                     {day}
                   </span>
 
-                  {/* Bottom row: dots + overflow count */}
+                  {/* Post thumbnail */}
                   {postCount > 0 && (
                     <div className="relative flex-1 w-full mt-1 overflow-hidden rounded-lg">
                       {firstPost.mediaType === 'video' ? (
@@ -339,9 +338,7 @@ export function CalendarPage({ posts, onDeletePost, onUpdatePost }: CalendarPage
                               +{postCount - 1}
                             </div>
                           )}
-                        >
-                          +{postCount - 3}
-                        </span>
+                        </>
                       )}
                     </div>
                   )}

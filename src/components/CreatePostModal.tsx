@@ -47,6 +47,7 @@ export function CreatePostModal({
   const isEditMode = !!editPost;
 
   // Reset / hydrate state on open
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!open) {
       setContent('');
@@ -65,6 +66,7 @@ export function CreatePostModal({
       setRemoveExistingMedia(false);
     }
   }, [open, isEditMode, editPost]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Auto-grow textarea
   useEffect(() => {
@@ -400,55 +402,6 @@ export function CreatePostModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────────────────────── */
-/* Subcomponents                                                                */
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-function Dropzone({
-  isDragOver,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-  onPick,
-}: {
-  isDragOver: boolean;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: () => void;
-  onDrop: (e: React.DragEvent) => void;
-  onPick: () => void;
-}) {
-  const { t } = useI18n();
-  return (
-    <button
-      type="button"
-      onClick={onPick}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-      className={cn(
-        'group relative w-full rounded-xl border-2 border-dashed',
-        'p-5 laptop:p-6 laptop:flex-1 laptop:min-h-0',
-        'flex flex-col items-center justify-center text-center',
-        'transition-all duration-200',
-        isDragOver
-          ? 'border-accent bg-accent/5'
-          : 'border-border/60 hover:border-accent/40 hover:bg-muted/30',
-      )}
-    >
-      <div className="flex h-10 w-10 laptop:h-12 laptop:w-12 items-center justify-center rounded-xl bg-muted/60 group-hover:bg-accent/10 transition-colors mb-2 laptop:mb-3">
-        <Image className="w-5 h-5 laptop:w-6 laptop:h-6 text-muted-foreground/70 group-hover:text-accent transition-colors" />
-      </div>
-      <span className="text-sm font-medium text-foreground/90">{t('createPost.addMedia')}</span>
-      <span className="text-[11px] laptop:text-xs text-muted-foreground/70 mt-1">
-        {t('createPost.dragDrop')}
-      </span>
-      <span className="text-[10.5px] text-muted-foreground/50 mt-0.5 laptop:mt-1.5">
-        {t('createPost.mediaFormats')}
-      </span>
-    </button>
   );
 }
 
