@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+
 import { CreatePostModal } from '@/components/CreatePostModal';
 import { Button } from '@/components/ui/button';
-import { Plus, Image, Settings } from 'lucide-react';
-import { CiCalendar } from 'react-icons/ci';
+import { Plus, Image, Settings, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { PlanetAvatar } from '@/components/PlanetAvatar';
 import { PlanetSelector } from '@/components/PlanetSelector';
 import { SettingsModal } from '@/components/SettingsModal';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { CalendarModal } from '@/components/CalendarModal';
 import { MyPostDetail } from '@/components/MyPostDetail';
 import { useI18n } from '@/i18n';
 import type { PlanetKey } from '@/constants/planets';
@@ -53,6 +53,7 @@ export function MyPage({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const handleDelete = async (postId: string) => {
     setDeletingPostId(postId);
@@ -109,14 +110,15 @@ export function MyPage({
               <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">{userName}</h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{t('myPage.tagline')}</p>
             </div>
-            <div className="flex items-center gap-1">
-              <NavLink
-                to="/calendar"
-                className="flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:shadow-[0_0_12px_oklch(var(--accent)/0.5)] transition-all duration-200"
-                aria-label="Calendar"
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCalendarOpen(true)}
+                aria-label={t('calendar.title')}
+                className="hover:text-foreground hover:shadow-[0_0_12px_oklch(var(--accent)/0.5)]"
               >
-                <CiCalendar className="w-[18px] h-[18px]" />
-              </NavLink>
+                <Calendar className="w-4 h-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -126,7 +128,6 @@ export function MyPage({
               >
                 <Settings className="w-4 h-4" />
               </Button>
-            </div>
           </motion.div>
         </div>
 
@@ -232,6 +233,7 @@ export function MyPage({
           setDeleteDialogOpen(false);
         }}
       />
+      <CalendarModal open={calendarOpen} onOpenChange={setCalendarOpen} />
       <MyPostDetail
         post={selectedPost}
         onClose={() => setSelectedPost(null)}
